@@ -37,11 +37,12 @@ Tools.docVerifier = {
   title: 'ドキュメント検証',
   // 曖昧語辞書（severityは影響度で分類）
   AMBIGUOUS: [
-    { re: /(TBD|未定|要検討|追って|別途|可及的)/g, sev: 'Major', msg: '未確定・先送り表現' },
-    { re: /(適宜|随時|なるべく|可能な限り|極力|柔軟に|臨機応変|必要に応じて)/g, sev: 'Minor', msg: 'あいまいな程度表現' },
-    { re: /(など|等|その他)/g, sev: 'Minor', msg: '列挙の不完全（範囲が曖昧）' },
-    { re: /(基本的に|原則|一般的に)/g, sev: 'Minor', msg: '例外が不明確な表現' },
-    { re: /(と思われる|はずである|だろう|可能性がある)/g, sev: 'Minor', msg: '推量・非断定表現' },
+    { re: /TBD|未定|要検討|追って|別途|可及的/g, sev: 'Major', msg: '未確定・先送り表現' },
+    { re: /適宜|随時|なるべく|可能な限り|極力|柔軟に|臨機応変|必要に応じて/g, sev: 'Minor', msg: 'あいまいな程度表現' },
+    // 「等」は列挙の助詞/句読点が続く場合のみ検出し、平等・均等等の複合語を除外（精度向上）
+    { re: /など|その他|(?<![平均同高対上初中本])等(?=[、。\sのをがにはでや）)]|$)/g, sev: 'Minor', msg: '列挙の不完全（範囲が曖昧）' },
+    { re: /基本的に|原則|一般的に/g, sev: 'Minor', msg: '例外が不明確な表現' },
+    { re: /と思われる|はずである|だろう|可能性がある/g, sev: 'Minor', msg: '推量・非断定表現' },
   ],
   REQUIRED_HEADINGS: ['目的', '範囲', '前提', '受入基準'],
 
@@ -73,7 +74,8 @@ Tools.docVerifier = {
         let m;
         const re = new RegExp(rule.re.source, 'g');
         while ((m = re.exec(line)) !== null) {
-          findings.push({ sev: rule.sev, line: ln, term: m[1], msg: rule.msg, text: line.trim() });
+          if (m.index === re.lastIndex) re.lastIndex++; // ゼロ幅マッチ対策
+          findings.push({ sev: rule.sev, line: ln, term: m[0], msg: rule.msg, text: line.trim() });
         }
       });
       // 冗長文（一文100字超）

@@ -1,0 +1,11 @@
+{
+  "name": "uiux-verifier-tools",
+  "private": true,
+  "description": "UI/UX検証で使用するNode製の確立ツール（Lighthouse）。a11y検査はPython側のaxe-playwright-pythonがaxe-coreを利用する。",
+  "scripts": {
+    "lighthouse": "lighthouse"
+  },
+  "dependencies": {
+    "lighthouse": "^12.0.0"
+  }
+}

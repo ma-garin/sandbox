@@ -1,26 +1,33 @@
 # CURRENT STATE
 
 ## プロジェクト
-PMOサービスメニューツール（QA-PMO/pmo-menu.html）
+PMOサービス提供基盤（QA-PMO）
+
+## 全体アーキテクチャ
+- **フロント**: pmo-menu.html（営業・提案用カタログ・完成）
+- **バックエンド**: apps/ 配下に各AIサービスを段階的にモジュール実装
+  - 方針: 確立OSSの薄いオーケストレーション（車輪の再発明をしない）
 
 ## 現在のフェーズ
-QAレビュー待ち（T-10）
+第一弾スライス「UI/UX検証」実装完了 → 実環境結合確認待ち
 
 ## 直近の決定事項
-- SDD 3点セット（requirements / design / tasks）作成済み
-- T-05〜T-09 実装完了
-  - T-05: font-display:swap 適用
-  - T-06: Home ビュー（全サービスカード一覧）実装
-  - T-07: インクリメンタル検索（タイトル・カテゴリ・タグ対応）実装
-  - T-08: 問い合わせモーダル（バリデーション付き）実装
-  - T-09: :focus-visible でフォーカス可視化、aria-* 属性付与
+- スコープ: フロント（カタログ）＋裏（実working AIツール）を段階構築
+- 第一弾: UI/UX検証
+- AI基盤: OpenAI API（GPT-4o系。業務judge方針）
+- UI/UX検証の採用技術: Playwright / axe-core / Lighthouse / GPT-4o Vision / DeepEval
+
+## 完了
+- apps/uiux-verifier/ 一式（SDD・core・app.py・evals・設定）
+- 全Pythonファイル構文チェック済み
 
 ## 未解決事項
-- T-10: qa-review-standards による severity 付きレビュー
+- UX-10: 実環境での結合確認（OPENAI_API_KEY・playwright install・lighthouse導入が必要）
+- 次スライス候補: ドキュメント検証 / テスト設計（純LLMで横展開しやすい）
 
 ## 次回セッションでやること
-- QAレビュー実施 → 指摘事項を修正
-- 必要に応じて Streamlit 版への移行検討（streamlit-rag-app スキル参照）
+- ユーザー環境でstreamlit起動・実URLで結合確認
+- 問題なければ次のAIサービスを同パターンで横展開
 
 ## 最終更新
 2026-06-19

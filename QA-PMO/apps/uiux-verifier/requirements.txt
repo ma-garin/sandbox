@@ -1,0 +1,10 @@
+# UI/UX検証モジュール Python依存（確立OSSのみ。検証エンジンは自作しない）
+streamlit>=1.36
+openai>=1.40
+pydantic>=2.7
+python-dotenv>=1.0
+playwright>=1.45
+axe-playwright-python>=0.1.4
+# 評価・観測（agent-evalスキル）
+deepeval>=1.0
+# langfuse>=2.0   # 観測を使う場合は有効化（任意・セルフホスト）

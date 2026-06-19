@@ -12,4 +12,5 @@
 | T-UX  | UI/UX検証（axe-core＋ヒューリスティック） | js/tools.js | ✅ |
 | T-AUTO| テスト自動化（Playwright/pytest/bats生成） | js/tools.js | ✅ |
 | T-CI  | CI/CD構築（GitHub Actions生成） | js/tools.js | ✅ |
-| QA    | qa-review-standardsレビュー | — | 🔲 次フェーズ |
+| QA    | qa-review-standardsレビュー（12/12 PASS・Critical/Major 0件） | docs/qa-review.md | ✅ |
+| TEST  | E2Eスモークテスト（回帰資産） | tests/smoke.js | ✅ |

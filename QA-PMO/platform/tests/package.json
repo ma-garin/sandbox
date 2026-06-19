@@ -1,0 +1,12 @@
+{
+  "name": "pmo-platform-tests",
+  "private": true,
+  "description": "PMOプラットフォームのE2Eスモークテスト（Playwright）",
+  "scripts": {
+    "test": "node smoke.js",
+    "setup": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

@@ -49,9 +49,9 @@
 </div>
 
 <!-- 問い合わせモーダル -->
-<div id="modal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeModal()">
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <div class="modal-head"><span class="modal-t">お問い合わせ</span><button class="modal-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-head"><span class="modal-t" id="modal-title">お問い合わせ</span><button class="modal-x" onclick="closeModal()" aria-label="閉じる">✕</button></div>
     <div class="m-row">
       <label class="lbl">会社名<span class="req">*</span><input id="m-company" class="inp" type="text"></label>
       <label class="lbl">お名前<span class="req">*</span><input id="m-name" class="inp" type="text"></label>

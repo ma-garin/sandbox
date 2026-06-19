@@ -1,0 +1,15 @@
+# 機密（CLAUDE.md: APIキーは絶対コミットしない）
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# 生成物
+*.report.md
+.deepeval/

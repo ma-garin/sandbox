@@ -1,0 +1,7 @@
+{
+  "name": "低コントラストボタンの検出",
+  "input_context": "axe-core違反: [serious] color-contrast: 要素のコントラスト比が不足（2件）。Lighthouse accessibility=0.62。スクリーンショット上、送信ボタンの文字色が背景と同系色で判読しづらい。",
+  "expected_evidence_keywords": ["color-contrast", "コントラスト"],
+  "expected_min_severity": "Major",
+  "expected_iso25010": "UI快美性/アクセシビリティ"
+}

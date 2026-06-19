@@ -1,0 +1,32 @@
+# Yuki Global CLAUDE.md
+
+## 環境
+- メイン開発機: MacBook Air M1
+- 常時稼働サーバー: NEC Mate SFF（Win11）。Tailscale経由でアクセス
+- モバイル: Galaxy Z Fold5（Tailscale + Remote Desktop）
+- 個人プロジェクトのデプロイ先: GitHub Pages（`ma-garin`アカウント）
+
+## 予算制約
+- **個人プロジェクトは厳格にゼロ予算。** AI APIはGemini無料枠のみ。OpenAI APIは業務利用限定（個人では使わない）
+- 課金が発生しうる外部サービス（有料MCP含む）は個人プロジェクトで導入しない
+
+## コーディング規約
+- コメント・エラーメッセージは日本語
+- 型ヒント必須（Python: 全関数に付与）
+
+## 絶対にやらないこと
+- 公開リポジトリへのAPIキー直接コミット
+- 個人プロジェクトでの有料APIの導入（Exa MCP含む。billing懸念で過去に却下済み）
+- AIの品質判断にEvidence-onlyでない曖昧な「良さそう」判定をさせる
+- 大きいファイルの全体再生成（`str_replace`差分編集を使う）
+
+## 標準フロー
+1. 単一HTMLでデモ作成（single-html-tool）
+2. デザインはdesign-systemスキルのトークンを使用
+3. 本実装が必要ならSDD+ECC（sdd-ecc-workflow）
+4. 完成時はqa-review-standardsでレビュー
+5. エージェント系はagent-evalで回帰テスト基盤を用意
+
+## トークン規律
+- フェーズ単位で`/clear`
+- セッション開始時にCURRENT_STATE.mdを確認、終了時に更新

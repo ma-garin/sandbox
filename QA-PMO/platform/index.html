@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PMOプラットフォーム</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <!-- UI/UX検証で使用する確立OSS（取得不可ならヒューリスティックにフォールバック） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js" defer></script>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="logo">
+    <div class="logo-ico">🏛️</div>
+    <span class="logo-t">PMOプラットフォーム</span>
+    <span class="logo-s">Quality PMO &amp; AI Tools</span>
+  </div>
+  <div class="search-wrap">
+    <span class="s-ico">🔍</span>
+    <input id="search" type="search" placeholder="サービスを検索…" aria-label="サービスを検索" autocomplete="off">
+  </div>
+</header>
+
+<div id="layout">
+  <nav id="sidenav" aria-label="サービスナビ"></nav>
+
+  <main id="main">
+    <!-- ホーム -->
+    <div id="view-home">
+      <div class="home-head">
+        <h1>PMOサービスプラットフォーム</h1>
+        <p>品質PMOの提供メニューと、各AIツールの<strong>実working MVP</strong>を1つに統合（AIなし・確立技術ベース）</p>
+      </div>
+      <div class="home-cat"><div class="home-cat-t">🛡️ 品質PMO</div><div class="h-cards" id="home-q"></div></div>
+      <div class="home-cat"><div class="home-cat-t">🤖 AIサービス（実機能MVP）</div><div class="h-cards" id="home-a"></div></div>
+    </div>
+
+    <!-- 検索結果 -->
+    <div id="view-search" style="display:none">
+      <p class="search-label" id="search-label"></p>
+      <div class="h-cards" id="search-cards"></div>
+    </div>
+
+    <!-- 詳細/ツール -->
+    <div id="view-detail" style="display:none"></div>
+  </main>
+</div>
+
+<!-- 問い合わせモーダル -->
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-t" id="modal-title">お問い合わせ</span><button class="modal-x" onclick="closeModal()" aria-label="閉じる">✕</button></div>
+    <div class="m-row">
+      <label class="lbl">会社名<span class="req">*</span><input id="m-company" class="inp" type="text"></label>
+      <label class="lbl">お名前<span class="req">*</span><input id="m-name" class="inp" type="text"></label>
+    </div>
+    <label class="lbl">メールアドレス<span class="req">*</span><input id="m-email" class="inp" type="email"></label>
+    <label class="lbl">ご希望のサービス<input id="m-service" class="inp" type="text" readonly></label>
+    <label class="lbl">お問い合わせ内容<textarea id="m-body" class="inp ta"></textarea></label>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="submitModal()">送信する</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/viewpoints.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

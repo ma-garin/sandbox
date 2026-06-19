@@ -131,6 +131,15 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
 .tool-table .muted,.muted{color:var(--tx3)}
 .codeblock{background:var(--p-d);color:#e3ecff;padding:16px;border-radius:var(--r-s);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;overflow-x:auto;white-space:pre;margin-top:12px}
 
+/* 観点ベース設計 */
+.vp-field-row{display:flex;gap:8px;margin-bottom:6px}
+.vp-field-row .vp-fn{flex:2}.vp-field-row .vp-ft{flex:1}
+.vp-field-row .vp-del{padding:6px 10px}
+.vp-flags{display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:6px}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer}
+.vp-warn{background:#fff8e1;border:1px solid #ffe082;color:#8a6d00;padding:10px 14px;border-radius:var(--r-s);font-size:12.5px;margin:10px 0}
+.vp-ok{background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:10px 14px;border-radius:var(--r-s);font-size:12.5px;margin:10px 0}
+
 /* modal */
 #modal{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);backdrop-filter:blur(3px);z-index:500;align-items:center;justify-content:center}
 #modal.open{display:flex}

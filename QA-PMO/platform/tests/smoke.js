@@ -39,6 +39,10 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
   ok('計画策定: ISO29119生成', (await page.locator('#tp-result .codeblock').innerText()).includes('ISO/IEC 29119'));
 
   await openTool('test-design');
+  // 観点ベース設計（デフォルトタブ・差別化機能）
+  await page.waitForTimeout(80);
+  ok('テスト設計: 観点ベース既定生成', await page.locator('#vp-out .tool-table tbody tr').count() > 0);
+  ok('テスト設計: 観点カバレッジ表示', (await page.locator('#vp-out .score-chip').innerText()).includes('%'));
   await page.locator('.subtab[data-t="pw"]').click(); await page.waitForTimeout(80);
   await page.locator('#pw-run').click(); await page.waitForTimeout(100);
   ok('テスト設計: ペアワイズ生成', await page.locator('#pw-out .tool-table tbody tr').count() > 0);

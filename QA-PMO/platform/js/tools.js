@@ -284,9 +284,10 @@ Tools.testDesign = {
   title: 'テスト設計',
   render(c) {
     c.innerHTML = `
-      <p class="tool-desc">ISTQBのテスト技法でテストケースを自動生成します（決定的アルゴリズム／AIなし）。</p>
+      <p class="tool-desc">ISTQBのテスト技法に加え、<strong>テスト観点ライブラリ</strong>を駆使してテスト条件を自動生成します（決定的アルゴリズム／AIなし）。観点ベース設計は観点カバレッジと追跡証跡を出力します。</p>
       <div class="subtabs">
-        <button class="subtab active" data-t="bva">境界値分析</button>
+        <button class="subtab active" data-t="vp">★ 観点ベース設計</button>
+        <button class="subtab" data-t="bva">境界値分析</button>
         <button class="subtab" data-t="ep">同値分割</button>
         <button class="subtab" data-t="pw">ペアワイズ</button>
       </div>
@@ -298,7 +299,7 @@ Tools.testDesign = {
       t.classList.add('active');
       this['render_' + t.dataset.t](panel);
     });
-    this.render_bva(panel);
+    this.render_vp(panel);
   },
 
   render_bva(p) {
@@ -413,6 +414,122 @@ Tools.testDesign = {
       cases.push(test);
     }
     return cases;
+  },
+
+  // ── 観点ベース設計（差別化の中核：観点ライブラリ駆動） ──
+  render_vp(p) {
+    p.innerHTML = `
+      <p class="muted">機能と入力項目・特性を入力すると、観点ライブラリ(v${VIEWPOINTS.version})から該当観点を適用し、観点カバレッジ付きでテスト条件を生成します。各条件は観点→技法→カテゴリに追跡可能（監査証跡）。</p>
+      <label class="lbl">機能名<input id="vp-feat" class="inp" value="ユーザー登録フォーム"></label>
+      <div style="margin:12px 0">
+        <div class="lbl" style="margin-bottom:6px">入力項目（名称と型）</div>
+        <div id="vp-fields"></div>
+        <button class="btn-ghost" id="vp-add" style="margin-top:8px">＋ 項目を追加</button>
+      </div>
+      <div class="lbl" style="margin-bottom:6px">機能特性（該当するものを選択）</div>
+      <div class="vp-flags" id="vp-flags">
+        ${[['auth', '認証あり'], ['integration', '外部連携あり'], ['money', '金額を扱う'], ['pii', '個人情報を扱う'], ['state', '状態遷移あり'], ['concurrent', '同時実行あり'], ['perf', '性能要件あり']]
+        .map(([k, l]) => `<label class="chk"><input type="checkbox" value="${k}">${l}</label>`).join('')}
+      </div>
+      <div class="tool-actions">
+        <button class="btn-primary" id="vp-run">観点ベースで生成</button>
+        <button class="btn-ghost" id="vp-csv" disabled>CSV</button>
+        <button class="btn-ghost" id="vp-md" disabled>Markdown</button>
+      </div>
+      <div id="vp-out"></div>`;
+
+    const fieldsBox = p.querySelector('#vp-fields');
+    const addField = (name = '', type = 'text') => {
+      const row = document.createElement('div');
+      row.className = 'vp-field-row';
+      row.innerHTML = `
+        <input class="inp vp-fn" placeholder="項目名" value="${esc(name)}">
+        <select class="inp vp-ft">
+          ${['text', 'number', 'date', 'select', 'email', 'file'].map(t => `<option ${t === type ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+        <button class="btn-ghost vp-del" title="削除">✕</button>`;
+      row.querySelector('.vp-del').onclick = () => row.remove();
+      fieldsBox.appendChild(row);
+    };
+    addField('メールアドレス', 'email');
+    addField('年齢', 'number');
+    addField('プロフィール', 'text');
+    p.querySelector('#vp-add').onclick = () => addField();
+
+    let lastResult = null;
+    p.querySelector('#vp-run').onclick = () => {
+      const feat = p.querySelector('#vp-feat').value || '対象機能';
+      const fields = [...fieldsBox.querySelectorAll('.vp-field-row')].map(r => ({
+        name: r.querySelector('.vp-fn').value.trim() || '(無名)',
+        type: r.querySelector('.vp-ft').value,
+      }));
+      const flags = [...p.querySelectorAll('#vp-flags input:checked')].map(i => i.value);
+      lastResult = this.genViewpoints(feat, fields, flags);
+      this.renderVpResult(p, lastResult);
+      p.querySelector('#vp-csv').disabled = false;
+      p.querySelector('#vp-md').disabled = false;
+    };
+    p.querySelector('#vp-csv').onclick = () => download('test_conditions.csv', this.vpToCsv(lastResult), 'text/csv');
+    p.querySelector('#vp-md').onclick = () => download('test_design.md', this.vpToMd(lastResult), 'text/markdown');
+    p.querySelector('#vp-run').click();
+  },
+
+  // 観点ライブラリを適用してテスト条件を生成（決定的）
+  genViewpoints(feature, fields, flags) {
+    const rows = [];
+    let n = 0;
+    const add = (target, item) => rows.push({
+      id: 'TC-' + String(++n).padStart(3, '0'),
+      target, viewpoint: item.vp, technique: item.tech, cat: item.cat, catName: VIEWPOINTS.catName(item.cat),
+    });
+    // 常時観点
+    VIEWPOINTS.always.forEach(v => add(feature, v));
+    // 項目型別観点
+    fields.forEach(f => (VIEWPOINTS.byFieldType[f.type] || []).forEach(v => add(`${f.name}（${f.type}）`, v)));
+    // 特性別観点
+    flags.forEach(fl => (VIEWPOINTS.byFlag[fl] || []).forEach(v => add(feature, v)));
+
+    // 観点カバレッジ
+    const touched = new Set(rows.map(r => r.cat));
+    const covered = VIEWPOINTS.categories.filter(c => touched.has(c.id));
+    const missing = VIEWPOINTS.categories.filter(c => !touched.has(c.id));
+    return {
+      feature, rows, total: VIEWPOINTS.categories.length,
+      coveredCats: covered, missingCats: missing,
+      coverage: Math.round(covered.length / VIEWPOINTS.categories.length * 100),
+    };
+  },
+
+  renderVpResult(p, r) {
+    const rowsHtml = r.rows.map(x =>
+      `<tr><td>${x.id}</td><td>${esc(x.target)}</td><td>${esc(x.viewpoint)}</td><td>${esc(x.technique)}</td><td><code>${x.cat}</code> ${esc(x.catName)}</td></tr>`).join('');
+    const missing = r.missingCats.length
+      ? `<div class="vp-warn">⚠ 未カバー観点（要確認）: ${r.missingCats.map(c => esc(c.name)).join(' / ')}</div>`
+      : `<div class="vp-ok">✓ 全観点カテゴリをカバー</div>`;
+    p.querySelector('#vp-out').innerHTML = `
+      <div class="result-head">
+        <div class="score-chip">観点カバレッジ <strong>${r.coverage}</strong>% (${r.coveredCats.length}/${r.total})</div>
+        <div class="muted">テスト条件 ${r.rows.length}件 ｜ 監査証跡: 各条件が観点→技法→カテゴリに紐づく</div>
+      </div>
+      ${missing}
+      ${this.table(['ID', '対象', 'テスト観点', '技法', 'カテゴリ'], rowsHtml)}`;
+  },
+
+  vpToCsv(r) {
+    return ['ID,対象,テスト観点,技法,カテゴリID,カテゴリ名']
+      .concat(r.rows.map(x => [x.id, x.target, x.viewpoint, x.technique, x.cat, x.catName]
+        .map(s => `"${String(s).replace(/"/g, '""')}"`).join(','))).join('\n');
+  },
+
+  vpToMd(r) {
+    const lines = [`# テスト設計（観点ベース） — ${r.feature}`, ''];
+    lines.push(`- 観点ライブラリ: v${VIEWPOINTS.version}`);
+    lines.push(`- 観点カバレッジ: ${r.coverage}% (${r.coveredCats.length}/${r.total}カテゴリ)`);
+    lines.push(`- テスト条件数: ${r.rows.length}`);
+    if (r.missingCats.length) lines.push(`- ⚠ 未カバー観点: ${r.missingCats.map(c => c.name).join(' / ')}`);
+    lines.push('', '| ID | 対象 | テスト観点 | 技法 | カテゴリ |', '|---|---|---|---|---|');
+    r.rows.forEach(x => lines.push(`| ${x.id} | ${x.target} | ${x.viewpoint} | ${x.technique} | ${x.catName} |`));
+    return lines.join('\n');
   },
 
   table(head, rows) {

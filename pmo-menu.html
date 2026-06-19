@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PMOメニュー</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --md-primary:       #1a3a6b;
+      --md-primary-light: #2e5aa8;
+      --md-primary-dark:  #0d2240;
+      --md-bg:            #f0f2f7;
+      --md-surface:       #ffffff;
+      --md-surface-v:     #f7f8fc;
+      --md-border:        #dde2ee;
+      --md-divider:       #eaedf5;
+      --md-text:          #1a1f2e;
+      --md-text-secondary:#4a5568;
+      --md-text-disabled: #a0aec0;
+      --md-accent:        #2e5aa8;
+      --md-accent-light:  #e8edf8;
+      --color-critical:   #c62828;
+      --color-success:    #2e7d32;
+      --nav-w:            260px;
+      --top-h:            60px;
+      --r:                10px;
+      --r-sm:             6px;
+      --el1: 0 1px 3px rgba(26,58,107,.08), 0 1px 2px rgba(26,58,107,.12);
+      --el2: 0 3px 8px rgba(26,58,107,.10), 0 2px 4px rgba(26,58,107,.08);
+      --el3: 0 8px 24px rgba(26,58,107,.12), 0 4px 8px rgba(26,58,107,.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--md-bg);
+      color: var(--md-text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
+    #topbar {
+      height: var(--top-h);
+      background: var(--md-primary);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: var(--el2);
+      z-index: 100;
+    }
+    #topbar .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #topbar .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.15);
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    #topbar .logo-text {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    #topbar .logo-sub {
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      font-weight: 400;
+      margin-left: 4px;
+    }
+    #topbar .spacer { flex: 1; }
+    #topbar .tag {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* ── Layout ── */
+    #layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidenav {
+      width: var(--nav-w);
+      background: var(--md-surface);
+      border-right: 1px solid var(--md-border);
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding-bottom: 24px;
+    }
+    #sidenav::-webkit-scrollbar { width: 4px; }
+    #sidenav::-webkit-scrollbar-track { background: transparent; }
+    #sidenav::-webkit-scrollbar-thumb { background: var(--md-border); border-radius: 2px; }
+
+    .nav-category {
+      padding: 20px 16px 8px;
+    }
+    .nav-category-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--md-text-disabled);
+    }
+
+    .nav-section {
+      margin: 4px 0;
+    }
+    .nav-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px 10px 20px;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 0;
+      transition: background 0.15s;
+    }
+    .nav-section-header:hover { background: var(--md-bg); }
+    .nav-section-header .section-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .nav-section-header .section-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--md-text);
+      flex: 1;
+    }
+    .nav-section-header .chevron {
+      font-size: 10px;
+      color: var(--md-text-disabled);
+      transition: transform 0.2s;
+    }
+    .nav-section.open .chevron { transform: rotate(90deg); }
+
+    .nav-sub-section {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+    .nav-section.open .nav-sub-section { max-height: 600px; }
+
+    .nav-sub-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px 7px 36px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--md-text-secondary);
+      transition: background 0.15s;
+    }
+    .nav-sub-header:hover { background: var(--md-bg); }
+    .nav-sub-header .sub-chevron {
+      font-size: 9px;
+      color: var(--md-text-disabled);
+      transition: transform 0.2s;
+      margin-left: auto;
+    }
+    .nav-sub-section.open .nav-sub-header .sub-chevron { transform: rotate(90deg); }
+
+    .nav-items {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.2s ease;
+    }
+    .nav-sub-section.open .nav-items { max-height: 400px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px 8px 52px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--md-text-secondary);
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item:hover {
+      background: var(--md-accent-light);
+      color: var(--md-primary);
+    }
+    .nav-item.active {
+      background: var(--md-accent-light);
+      color: var(--md-primary);
+      border-left-color: var(--md-primary);
+      font-weight: 600;
+    }
+    .nav-item .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+    .nav-item.active .dot { opacity: 1; }
+
+    /* Direct leaf items in nav-section (プロジェクト推進, テスト推進) */
+    .nav-leaf {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px 9px 36px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--md-text-secondary);
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-leaf:hover {
+      background: var(--md-accent-light);
+      color: var(--md-primary);
+    }
+    .nav-leaf.active {
+      background: var(--md-accent-light);
+      color: var(--md-primary);
+      border-left-color: var(--md-primary);
+      font-weight: 600;
+    }
+    .nav-leaf .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+    .nav-leaf.active .dot { opacity: 1; }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--md-divider);
+      margin: 12px 16px;
+    }
+
+    /* ── Main content ── */
+    #main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+    }
+    #main::-webkit-scrollbar { width: 6px; }
+    #main::-webkit-scrollbar-track { background: transparent; }
+    #main::-webkit-scrollbar-thumb { background: var(--md-border); border-radius: 3px; }
+
+    /* Welcome state */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      gap: 16px;
+      color: var(--md-text-secondary);
+    }
+    .welcome-icon {
+      font-size: 56px;
+      opacity: 0.3;
+    }
+    .welcome h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--md-text);
+      opacity: 0.6;
+    }
+    .welcome p { font-size: 14px; opacity: 0.7; }
+
+    /* Service page */
+    .service-page { max-width: 820px; }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--md-text-disabled);
+      margin-bottom: 24px;
+    }
+    .breadcrumb span { color: var(--md-text-secondary); }
+    .breadcrumb .sep { font-size: 10px; }
+    .breadcrumb .current { color: var(--md-primary); font-weight: 500; }
+
+    .service-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .service-icon-large {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--r);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+    .service-header-text h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--md-primary-dark);
+      margin-bottom: 6px;
+    }
+    .service-header-text .service-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--md-accent-light);
+      color: var(--md-primary);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .service-desc {
+      background: var(--md-surface);
+      border-radius: var(--r);
+      padding: 24px 28px;
+      box-shadow: var(--el1);
+      margin-bottom: 24px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--md-text-secondary);
+      border-left: 4px solid var(--md-primary);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .feature-card {
+      background: var(--md-surface);
+      border-radius: var(--r);
+      padding: 20px;
+      box-shadow: var(--el1);
+      transition: box-shadow 0.2s, transform 0.2s;
+      border-top: 3px solid var(--md-accent);
+    }
+    .feature-card:hover {
+      box-shadow: var(--el2);
+      transform: translateY(-2px);
+    }
+    .feature-card .card-icon { font-size: 22px; margin-bottom: 10px; }
+    .feature-card .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--md-text);
+      margin-bottom: 8px;
+    }
+    .feature-card .card-desc {
+      font-size: 12px;
+      color: var(--md-text-secondary);
+      line-height: 1.6;
+    }
+
+    .flow-section {
+      background: var(--md-surface);
+      border-radius: var(--r);
+      padding: 24px 28px;
+      box-shadow: var(--el1);
+      margin-bottom: 24px;
+    }
+    .flow-section h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--md-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .flow-steps {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+    .flow-step {
+      flex: 1;
+      text-align: center;
+      padding: 12px 8px;
+      position: relative;
+    }
+    .flow-step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--md-primary-light);
+      font-size: 14px;
+    }
+    .flow-step .step-num {
+      width: 28px;
+      height: 28px;
+      background: var(--md-primary);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+    }
+    .flow-step .step-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--md-text);
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .tag-item {
+      background: var(--md-surface);
+      border: 1px solid var(--md-border);
+      color: var(--md-text-secondary);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .cta-bar {
+      background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+      border-radius: var(--r);
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .cta-bar .cta-text h4 {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .cta-bar .cta-text p {
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+    }
+    .cta-btn {
+      background: #fff;
+      color: var(--md-primary);
+      border: none;
+      padding: 12px 24px;
+      border-radius: var(--r-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: box-shadow 0.2s, transform 0.15s;
+      box-shadow: var(--el1);
+    }
+    .cta-btn:hover {
+      box-shadow: var(--el2);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">🏛️</div>
+    <span class="logo-text">PMOメニュー</span>
+    <span class="logo-sub">Project Management Office</span>
+  </div>
+  <div class="spacer"></div>
+  <span class="tag">品質 &amp; AI</span>
+</div>
+
+<!-- Layout -->
+<div id="layout">
+
+  <!-- Sidenav -->
+  <nav id="sidenav">
+
+    <!-- 品質PMO -->
+    <div class="nav-category">
+      <span class="nav-category-label">サービスメニュー</span>
+    </div>
+
+    <div class="nav-section open" id="sec-quality">
+      <div class="nav-section-header" onclick="toggleSection('sec-quality')">
+        <div class="section-icon" style="background:#e8edf8;">🛡️</div>
+        <span class="section-label">品質PMO</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="nav-sub-section open" id="sub-hyoka">
+        <div class="nav-sub-header" onclick="toggleSub('sub-hyoka')">
+          <span>品質評価支援軸</span>
+          <span class="sub-chevron">▶</span>
+        </div>
+        <div class="nav-items">
+          <!-- プロフェッショナル支援 -->
+          <div class="nav-sub-section open" id="sub-pro" style="max-height:600px; overflow:visible;">
+            <div class="nav-sub-header" style="padding-left:52px;" onclick="toggleSub('sub-pro')">
+              <span>プロフェッショナル支援</span>
+              <span class="sub-chevron">▶</span>
+            </div>
+            <div class="nav-items" style="max-height:600px;">
+              <div class="nav-item" onclick="showService('consultant')" data-id="consultant"><span class="dot"></span>コンサルタント派遣</div>
+              <div class="nav-item" onclick="showService('planning')" data-id="planning"><span class="dot"></span>各種策定支援</div>
+              <div class="nav-item" onclick="showService('impl')" data-id="impl"><span class="dot"></span>実装推進支援</div>
+              <div class="nav-item" onclick="showService('advisor')" data-id="advisor"><span class="dot"></span>顧問型支援</div>
+            </div>
+          </div>
+          <div class="nav-item" style="padding-left:52px;" onclick="showService('education')" data-id="education"><span class="dot"></span>教育・示唆</div>
+        </div>
+      </div>
+      <div class="nav-leaf" onclick="showService('project')" data-id="project"><span class="dot"></span>プロジェクト推進</div>
+      <div class="nav-leaf" onclick="showService('test-promo')" data-id="test-promo"><span class="dot"></span>テスト推進</div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <!-- AIサービス -->
+    <div class="nav-section open" id="sec-ai">
+      <div class="nav-section-header" onclick="toggleSection('sec-ai')">
+        <div class="section-icon" style="background:#e8f5e9;">🤖</div>
+        <span class="section-label">AIサービス</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="nav-sub-section open" id="sub-aitools">
+        <div class="nav-sub-header" onclick="toggleSub('sub-aitools')">
+          <span>AIツール</span>
+          <span class="sub-chevron">▶</span>
+        </div>
+        <div class="nav-items">
+          <div class="nav-item" onclick="showService('doc-verify')" data-id="doc-verify"><span class="dot"></span>ドキュメント検証</div>
+          <div class="nav-item" onclick="showService('trace')" data-id="trace"><span class="dot"></span>トレーサビリティ</div>
+          <div class="nav-item" onclick="showService('plan-ai')" data-id="plan-ai"><span class="dot"></span>計画策定</div>
+          <div class="nav-item" onclick="showService('test-design')" data-id="test-design"><span class="dot"></span>テスト設計</div>
+          <div class="nav-item" onclick="showService('uiux')" data-id="uiux"><span class="dot"></span>UI/UX検証</div>
+        </div>
+      </div>
+      <div class="nav-sub-section open" id="sub-auto">
+        <div class="nav-sub-header" onclick="toggleSub('sub-auto')">
+          <span>自動化サービス</span>
+          <span class="sub-chevron">▶</span>
+        </div>
+        <div class="nav-items">
+          <div class="nav-item" onclick="showService('test-auto')" data-id="test-auto"><span class="dot"></span>テスト自動化（UI、API、BAT）</div>
+          <div class="nav-item" onclick="showService('cicd')" data-id="cicd"><span class="dot"></span>CI/CD構築</div>
+        </div>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+    <div class="welcome" id="welcome-state">
+      <div class="welcome-icon">🏛️</div>
+      <h2>PMOサービスメニュー</h2>
+      <p>左のメニューからサービスを選択してください</p>
+    </div>
+    <div class="service-page" id="service-state" style="display:none;"></div>
+  </main>
+
+</div>
+
+<script>
+  const SERVICES = {
+    consultant: {
+      icon: '👔',
+      iconBg: '#e8edf8',
+      title: 'コンサルタント派遣',
+      category: '品質PMO › プロフェッショナル支援',
+      breadcrumb: ['品質PMO', '品質評価支援軸', 'プロフェッショナル支援', 'コンサルタント派遣'],
+      desc: '豊富なプロジェクト経験を持つ品質コンサルタントをお客様のチームに派遣します。現場に入り込み、課題を即座に特定・解決することで、プロジェクトの品質を迅速に向上させます。',
+      features: [
+        { icon: '🔍', title: '課題アセスメント', desc: '現状の品質課題を多角的に分析し、優先度付きで整理します' },
+        { icon: '🤝', title: '伴走支援', desc: '単なる助言にとどまらず、チームに入って実務レベルで支援します' },
+        { icon: '📊', title: '定量的改善', desc: 'KPIを設定し、品質改善の進捗を可視化・報告します' },
+        { icon: '🔄', title: '知識移転', desc: '支援終了後も自走できるよう、ノウハウをチームへ移転します' },
+      ],
+      steps: ['ヒアリング', '課題分析', '改善計画策定', '現場支援', '効果測定'],
+      tags: ['品質改善', 'PMO支援', 'アジャイル', 'ウォーターフォール', 'ISO 25010'],
+      cta: 'コンサルタント派遣について相談する',
+    },
+    planning: {
+      icon: '📋',
+      iconBg: '#e8edf8',
+      title: '各種策定支援',
+      category: '品質PMO › プロフェッショナル支援',
+      breadcrumb: ['品質PMO', '品質評価支援軸', 'プロフェッショナル支援', '各種策定支援'],
+      desc: 'テスト計画書・品質計画書・プロセス定義書などの重要ドキュメントの策定を支援します。ISTQB・ISO 29119等の国際標準に準拠した成果物を提供します。',
+      features: [
+        { icon: '📝', title: 'テスト計画策定', desc: 'ISO 29119準拠のテスト計画書を作成します' },
+        { icon: '⚙️', title: 'プロセス定義', desc: '組織に合わせた品質プロセスを定義・文書化します' },
+        { icon: '✅', title: '品質基準設計', desc: '終了基準・受入条件を明確に定義します' },
+        { icon: '🗂️', title: 'テンプレート整備', desc: '再利用可能なドキュメントテンプレートを整備します' },
+      ],
+      steps: ['要件ヒアリング', 'ドラフト作成', 'レビュー・修正', '承認・展開'],
+      tags: ['ISO 29119', 'ISTQB', 'テスト計画', '品質計画', 'プロセス定義'],
+      cta: '策定支援について相談する',
+    },
+    impl: {
+      icon: '⚡',
+      iconBg: '#e8edf8',
+      title: '実装推進支援',
+      category: '品質PMO › プロフェッショナル支援',
+      breadcrumb: ['品質PMO', '品質評価支援軸', 'プロフェッショナル支援', '実装推進支援'],
+      desc: '品質改善施策・新プロセスの実装フェーズを強力に推進します。現場の抵抗を乗り越え、計画を確実に実行に移すための推進支援を提供します。',
+      features: [
+        { icon: '🚀', title: '推進管理', desc: '実装タスクの進捗を管理し、ボトルネックを早期解消します' },
+        { icon: '🛠️', title: 'ツール導入支援', desc: '品質管理ツールの選定・導入・定着を支援します' },
+        { icon: '👥', title: 'ステークホルダー調整', desc: '関係者間の合意形成を円滑に進めます' },
+        { icon: '📈', title: '定着化支援', desc: '新プロセスがチームに定着するまでフォローします' },
+      ],
+      steps: ['計画確認', '実装準備', 'パイロット実施', '本展開', '定着確認'],
+      tags: ['変革管理', 'プロセス改善', 'ツール導入', 'チェンジマネジメント'],
+      cta: '実装推進支援について相談する',
+    },
+    advisor: {
+      icon: '🎯',
+      iconBg: '#e8edf8',
+      title: '顧問型支援',
+      category: '品質PMO › プロフェッショナル支援',
+      breadcrumb: ['品質PMO', '品質評価支援軸', 'プロフェッショナル支援', '顧問型支援'],
+      desc: '継続的な顧問契約により、中長期的な品質向上を伴走支援します。月次レビュー・相談対応・戦略立案など、品質の専門家としてパートナーシップを構築します。',
+      features: [
+        { icon: '📅', title: '月次品質レビュー', desc: '定期的に品質状況をレビューし、改善提言を行います' },
+        { icon: '💬', title: '随時相談対応', desc: '品質に関する疑問・課題に素早く対応します' },
+        { icon: '🗺️', title: '品質ロードマップ', desc: '中長期の品質向上ロードマップを共同で策定します' },
+        { icon: '🏅', title: '組織能力向上', desc: '組織全体の品質マインドセットを底上げします' },
+      ],
+      steps: ['顧問契約', '初期アセスメント', '月次レビュー', '改善推進', '継続的改善'],
+      tags: ['継続支援', '顧問契約', '品質戦略', '中長期改善'],
+      cta: '顧問型支援について相談する',
+    },
+    education: {
+      icon: '🎓',
+      iconBg: '#fff3e0',
+      title: '教育・示唆',
+      category: '品質PMO › 品質評価支援軸',
+      breadcrumb: ['品質PMO', '品質評価支援軸', '教育・示唆'],
+      desc: 'チームメンバーへの品質教育・トレーニングを提供します。ISTQBを軸にした体系的な教育から、現場で即活かせるワークショップまで幅広くカバーします。',
+      features: [
+        { icon: '📚', title: 'ISTQB研修', desc: 'ISTQB Foundation〜Advancedレベルの試験対応研修' },
+        { icon: '🖥️', title: 'ハンズオン研修', desc: '実際のツール・事例を使った実践的なワークショップ' },
+        { icon: '💡', title: '品質思考醸成', desc: '品質を「作り込む」文化を組織に根付かせます' },
+        { icon: '📊', title: '習熟度評価', desc: 'before/afterで習熟度を測定し、効果を可視化します' },
+      ],
+      steps: ['ニーズ把握', 'カリキュラム設計', '研修実施', '実践演習', '効果測定'],
+      tags: ['ISTQB', 'トレーニング', 'ワークショップ', '品質文化', '人材育成'],
+      cta: '教育プログラムについて相談する',
+    },
+    project: {
+      icon: '📌',
+      iconBg: '#fce4ec',
+      title: 'プロジェクト推進',
+      category: '品質PMO',
+      breadcrumb: ['品質PMO', 'プロジェクト推進'],
+      desc: 'プロジェクト全体の推進管理を品質の視点からサポートします。スケジュール管理・リスク管理・ステークホルダーマネジメントをワンストップで支援します。',
+      features: [
+        { icon: '📆', title: 'スケジュール管理', desc: 'WBS・ガントチャートの作成・更新・可視化を支援します' },
+        { icon: '⚠️', title: 'リスク管理', desc: 'リスクの早期特定・評価・対策立案を実施します' },
+        { icon: '📣', title: '報告体制整備', desc: '適切な報告ラインと報告書フォーマットを整備します' },
+        { icon: '🔗', title: '横断調整', desc: '部門・チーム間の調整を円滑化します' },
+      ],
+      steps: ['計画策定', 'キックオフ', '推進管理', '課題対応', 'クローズ'],
+      tags: ['PM', 'PMO', 'リスク管理', 'WBS', 'ステークホルダー'],
+      cta: 'プロジェクト推進支援について相談する',
+    },
+    'test-promo': {
+      icon: '🧪',
+      iconBg: '#e8f5e9',
+      title: 'テスト推進',
+      category: '品質PMO',
+      breadcrumb: ['品質PMO', 'テスト推進'],
+      desc: 'テスト活動全体の計画・実行・報告を推進します。テストマネージャーとして品質ゲートを管理し、リリース判定まで一貫して支援します。',
+      features: [
+        { icon: '📋', title: 'テスト計画管理', desc: 'テスト計画の立案から承認まで一気通貫で管理します' },
+        { icon: '🔬', title: 'テスト実施管理', desc: 'テストの進捗・カバレッジをリアルタイムで管理します' },
+        { icon: '🚦', title: '品質ゲート管理', desc: 'リリース判定基準を設定・運用します' },
+        { icon: '📊', title: 'テスト報告', desc: 'ISO 29119準拠のテストサマリーレポートを作成します' },
+      ],
+      steps: ['テスト計画', 'テスト設計', 'テスト実施', '結果分析', 'リリース判定'],
+      tags: ['テスト管理', 'ISO 29119', '品質ゲート', 'カバレッジ', 'ISTQB'],
+      cta: 'テスト推進支援について相談する',
+    },
+    'doc-verify': {
+      icon: '📄',
+      iconBg: '#e8f5e9',
+      title: 'ドキュメント検証',
+      category: 'AIサービス › AIツール',
+      breadcrumb: ['AIサービス', 'AIツール', 'ドキュメント検証'],
+      desc: 'AIを活用して要件定義書・設計書・テスト仕様書等のドキュメントを自動検証します。曖昧性・矛盾・抜け漏れを高精度で検出し、手動レビューの負荷を大幅に削減します。',
+      features: [
+        { icon: '🔎', title: '曖昧性検出', desc: '解釈が複数ある表現を自動検出・指摘します' },
+        { icon: '⚡', title: '矛盾チェック', desc: 'ドキュメント内・ドキュメント間の矛盾を発見します' },
+        { icon: '📌', title: '抜け漏れ検出', desc: '必要な記述・項目の抜け漏れをAIが指摘します' },
+        { icon: '📊', title: '品質スコア', desc: 'ドキュメント品質を定量スコアで可視化します' },
+      ],
+      steps: ['ドキュメント入力', 'AI解析', '問題抽出', 'レポート生成', '修正フィードバック'],
+      tags: ['AI', 'NLP', '要件定義', '設計書', 'テスト仕様', '自動化'],
+      cta: 'ドキュメント検証ツールを試す',
+    },
+    trace: {
+      icon: '🔗',
+      iconBg: '#e8f5e9',
+      title: 'トレーサビリティ',
+      category: 'AIサービス › AIツール',
+      breadcrumb: ['AIサービス', 'AIツール', 'トレーサビリティ'],
+      desc: '要件〜設計〜テストケース間のトレーサビリティをAIで自動生成・管理します。変更影響分析やカバレッジ可視化を自動化し、品質保証の抜け漏れを防ぎます。',
+      features: [
+        { icon: '🗺️', title: '自動マッピング', desc: '要件とテストケースの紐づけをAIが自動生成します' },
+        { icon: '📈', title: 'カバレッジ可視化', desc: '要件カバレッジをリアルタイムでダッシュボード表示します' },
+        { icon: '💥', title: '影響分析', desc: '要件変更時の影響範囲を即座に特定します' },
+        { icon: '📋', title: 'マトリクス生成', desc: 'トレーサビリティマトリクスを自動生成・更新します' },
+      ],
+      steps: ['要件取込', 'テストケース取込', '自動マッピング', 'カバレッジ確認', '影響分析'],
+      tags: ['AI', 'トレーサビリティ', '要件管理', 'カバレッジ', '影響分析'],
+      cta: 'トレーサビリティツールについて相談する',
+    },
+    'plan-ai': {
+      icon: '🗓️',
+      iconBg: '#e8f5e9',
+      title: '計画策定（AI支援）',
+      category: 'AIサービス › AIツール',
+      breadcrumb: ['AIサービス', 'AIツール', '計画策定'],
+      desc: 'AIがプロジェクト情報を分析し、テスト計画・品質計画のドラフトを自動生成します。過去プロジェクトのデータを学習し、現実的なスケジュール・リソース計画を提案します。',
+      features: [
+        { icon: '⚙️', title: '計画ドラフト生成', desc: 'プロジェクト情報を入力するだけで計画書のドラフトを生成' },
+        { icon: '⏱️', title: '工数見積り支援', desc: '類似プロジェクトのデータからテスト工数を見積もります' },
+        { icon: '⚠️', title: 'リスク自動抽出', desc: '計画段階でリスクを自動列挙・優先度付けします' },
+        { icon: '✏️', title: '計画最適化提案', desc: 'ボトルネックを特定し、計画の最適化を提案します' },
+      ],
+      steps: ['プロジェクト情報入力', 'AI分析', '計画ドラフト生成', 'レビュー・調整', '計画確定'],
+      tags: ['AI', '計画策定', '工数見積り', 'リスク分析', '自動生成'],
+      cta: 'AI計画策定ツールを試す',
+    },
+    'test-design': {
+      icon: '✏️',
+      iconBg: '#e8f5e9',
+      title: 'テスト設計（AI支援）',
+      category: 'AIサービス › AIツール',
+      breadcrumb: ['AIサービス', 'AIツール', 'テスト設計'],
+      desc: '仕様書・要件定義書をAIが解析し、テストケースを自動生成します。境界値・同値分割・デシジョンテーブル等のテスト技法をAIが自動適用し、網羅的なテスト設計を支援します。',
+      features: [
+        { icon: '🤖', title: 'テストケース自動生成', desc: '仕様書からテストケースをAIが自動生成します' },
+        { icon: '📐', title: 'テスト技法自動適用', desc: '境界値・同値分割等のテスト技法をAIが選択・適用します' },
+        { icon: '🔍', title: '観点チェック', desc: '抜け観点をAIが指摘し、テスト設計を補完します' },
+        { icon: '📊', title: 'カバレッジ分析', desc: 'テスト設計のカバレッジを多角的に分析します' },
+      ],
+      steps: ['仕様書入力', 'AI解析', 'テスト観点抽出', 'テストケース生成', 'レビュー・承認'],
+      tags: ['AI', 'テスト設計', 'テスト技法', '自動生成', 'ISTQB', 'カバレッジ'],
+      cta: 'AIテスト設計ツールを試す',
+    },
+    uiux: {
+      icon: '🖥️',
+      iconBg: '#e8f5e9',
+      title: 'UI/UX検証',
+      category: 'AIサービス › AIツール',
+      breadcrumb: ['AIサービス', 'AIツール', 'UI/UX検証'],
+      desc: 'AIとWCAG準拠チェックを組み合わせ、UI/UXの品質を自動検証します。アクセシビリティ・ユーザービリティ・デザイン一貫性を多角的に評価し、改善提案を自動生成します。',
+      features: [
+        { icon: '♿', title: 'アクセシビリティ検証', desc: 'WCAG 2.1 AA準拠チェックをAIで自動実行します' },
+        { icon: '🎨', title: 'デザイン一貫性チェック', desc: 'UIコンポーネントの一貫性をAIが自動チェックします' },
+        { icon: '👁️', title: 'UX品質評価', desc: 'ISO 25010ユーザービリティ観点でUIを評価します' },
+        { icon: '💡', title: '改善提案生成', desc: 'AI が具体的な改善提案をseverity付きで自動生成します' },
+      ],
+      steps: ['画面/仕様入力', 'AI解析', 'WCAG検証', 'UX評価', '改善レポート生成'],
+      tags: ['AI', 'WCAG', 'アクセシビリティ', 'UX', 'ISO 25010', 'ユーザビリティ'],
+      cta: 'UI/UX検証ツールを試す',
+    },
+    'test-auto': {
+      icon: '🤖',
+      iconBg: '#e3f2fd',
+      title: 'テスト自動化（UI・API・BAT）',
+      category: 'AIサービス › 自動化サービス',
+      breadcrumb: ['AIサービス', '自動化サービス', 'テスト自動化（UI、API、BAT）'],
+      desc: 'UI・API・BATの各レイヤーにおけるテスト自動化を一気通貫で支援します。ツール選定から実装・保守まで伴走し、持続可能なテスト自動化基盤を構築します。',
+      features: [
+        { icon: '🖥️', title: 'UI自動化', desc: 'Playwright/Selenium等によるE2Eテスト自動化を実装します' },
+        { icon: '🔌', title: 'API自動化', desc: 'REST/GraphQL APIのテスト自動化をRest Assured等で実装します' },
+        { icon: '💾', title: 'BAT自動化', desc: 'バッチ処理・データ検証のテスト自動化を実装します' },
+        { icon: '🔧', title: '保守性設計', desc: 'Page Object等のパターンで保守コストを最小化します' },
+      ],
+      steps: ['ツール選定', '環境構築', 'フレームワーク設計', 'テスト実装', '保守体制整備'],
+      tags: ['Playwright', 'Selenium', 'REST API', 'JUnit', '自動化', 'E2E', 'BAT'],
+      cta: 'テスト自動化について相談する',
+    },
+    cicd: {
+      icon: '🔄',
+      iconBg: '#e3f2fd',
+      title: 'CI/CD構築',
+      category: 'AIサービス › 自動化サービス',
+      breadcrumb: ['AIサービス', '自動化サービス', 'CI/CD構築'],
+      desc: 'GitHub Actions・Jenkins等を活用したCI/CDパイプラインを構築します。自動テスト・品質ゲート・デプロイ自動化を組み込み、デリバリーの高速化と品質担保を両立します。',
+      features: [
+        { icon: '⚙️', title: 'パイプライン設計', desc: 'ビルド→テスト→品質ゲート→デプロイの一連のパイプラインを設計します' },
+        { icon: '🚦', title: '品質ゲート組込み', desc: 'カバレッジ・静的解析・セキュリティスキャンをパイプラインに組み込みます' },
+        { icon: '🚀', title: 'デプロイ自動化', desc: 'ステージング・本番環境への自動デプロイを実装します' },
+        { icon: '📊', title: '可視化ダッシュボード', desc: 'パイプラインの実行状況・品質メトリクスを可視化します' },
+      ],
+      steps: ['現状分析', 'パイプライン設計', '環境構築', '自動テスト組込み', '本番展開'],
+      tags: ['GitHub Actions', 'Jenkins', 'Docker', 'Kubernetes', 'DevOps', 'CI/CD'],
+      cta: 'CI/CD構築について相談する',
+    },
+  };
+
+  function toggleSection(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function toggleSub(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function showService(id) {
+    // Update active state
+    document.querySelectorAll('.nav-item, .nav-leaf').forEach(el => el.classList.remove('active'));
+    const target = document.querySelector(`[data-id="${id}"]`);
+    if (target) target.classList.add('active');
+
+    const s = SERVICES[id];
+    if (!s) return;
+
+    document.getElementById('welcome-state').style.display = 'none';
+    const sp = document.getElementById('service-state');
+    sp.style.display = 'block';
+
+    const breadcrumbHtml = s.breadcrumb.map((b, i) =>
+      i === s.breadcrumb.length - 1
+        ? `<span class="current">${b}</span>`
+        : `<span>${b}</span><span class="sep">›</span>`
+    ).join('');
+
+    const featuresHtml = s.features.map(f => `
+      <div class="feature-card">
+        <div class="card-icon">${f.icon}</div>
+        <div class="card-title">${f.title}</div>
+        <div class="card-desc">${f.desc}</div>
+      </div>
+    `).join('');
+
+    const stepsHtml = s.steps.map((step, i) => `
+      <div class="flow-step">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-label">${step}</div>
+      </div>
+    `).join('');
+
+    const tagsHtml = s.tags.map(t => `<span class="tag-item">${t}</span>`).join('');
+
+    sp.innerHTML = `
+      <div class="breadcrumb">${breadcrumbHtml}</div>
+      <div class="service-header">
+        <div class="service-icon-large" style="background:${s.iconBg};">${s.icon}</div>
+        <div class="service-header-text">
+          <h1>${s.title}</h1>
+          <span class="service-category">${s.category}</span>
+        </div>
+      </div>
+      <div class="service-desc">${s.desc}</div>
+      <div class="cards-grid">${featuresHtml}</div>
+      <div class="flow-section">
+        <h3>⚡ 支援フロー</h3>
+        <div class="flow-steps">${stepsHtml}</div>
+      </div>
+      <div class="tag-list">${tagsHtml}</div>
+      <div class="cta-bar">
+        <div class="cta-text">
+          <h4>まずはお気軽にご相談ください</h4>
+          <p>サービス内容・費用・スケジュールについて詳しくご説明します</p>
+        </div>
+        <button class="cta-btn" onclick="alert('お問い合わせありがとうございます。\\n担当者よりご連絡いたします。')">${s.cta}</button>
+      </div>
+    `;
+  }
+
+  // Open all sub-sections by default
+  document.querySelectorAll('.nav-sub-section').forEach(el => el.classList.add('open'));
+</script>
+</body>
+</html>

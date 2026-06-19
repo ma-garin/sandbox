@@ -1,0 +1,23 @@
+# Yuki AGENTS.md（Codex用）
+
+Claude Code向けCLAUDE.mdと同内容をCodex形式で。Codexはスラッシュコマンド/hooksをサポートしないため、ワークフローの強制力はプロンプト内指示に依存する。
+
+## 環境
+- メイン開発機: MacBook Air M1 / 常時稼働サーバー: NEC Mate SFF（Win11、Tailscale）
+- モバイル: Galaxy Z Fold5 / デプロイ: GitHub Pages（`ma-garin`）
+
+## 予算制約
+個人プロジェクトはゼロ予算。AI APIはGemini無料枠のみ。有料MCP・有料APIは個人では使わない。
+
+## 規約
+- コメント・エラーメッセージは日本語、Python型ヒント必須
+
+## ワークフロー（Codex使用時は明示的に毎回指示する）
+1. 単一HTMLデモ作成 → デザインは `#1976D2`系（個人）/ `#1a3a6b`系（業務）のMD3トークン使用
+2. 本実装が必要ならrequirements.md/design.md/tasks.mdを手動作成（SDD）
+3. ISTQB severity + ISO 25010観点でレビュー
+4. 大きいファイルは差分編集、全体再生成しない
+
+## 絶対にやらないこと
+- 公開リポジトリへのAPIキー直接コミット
+- 個人プロジェクトでの有料API/有料MCP導入

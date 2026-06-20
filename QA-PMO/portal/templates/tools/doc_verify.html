@@ -1,9 +1,11 @@
 {% extends "tools/_layout.html" %}
 {% block tool %}
-<p class="tool-desc">要件定義書・設計書などを貼り付けて検証します。曖昧語・冗長文・必須節欠落を行番号付きで指摘します（ルールベース／AIなし）。</p>
-<form method="post">
+<p class="tool-desc">要件定義書・設計書などを貼り付け、または<strong>PDFをアップロード</strong>して検証します。日本語の文章校正は実績OSS <code>textlint</code>（未導入時は内蔵ルール）、必須節欠落・種別固有ルールは内蔵判定で指摘します。</p>
+<form method="post" enctype="multipart/form-data"
+      hx-post="." hx-target="#tool-result" hx-swap="innerHTML"
+      hx-encoding="multipart/form-data" hx-indicator="#dv-spin">
   {% csrf_token %}
-  <div class="form-row" style="margin-bottom:10px">
+  <div class="form-row" style="margin-bottom:10px;gap:14px;flex-wrap:wrap">
     <label class="lbl" style="flex:0 0 auto">ドキュメント種別
       <select name="doc_type" class="inp">
         <option value="general" {% if doc_type == 'general' %}selected{% endif %}>汎用（共通ルール）</option>
@@ -12,29 +14,18 @@
         <option value="api-spec" {% if doc_type == 'api-spec' %}selected{% endif %}>API仕様書</option>
       </select>
     </label>
+    <label class="lbl" style="flex:0 0 auto">PDFから読み込む（任意）
+      <input type="file" name="pdf" accept="application/pdf" class="inp">
+    </label>
   </div>
   <textarea name="text" class="tool-ta" placeholder="ここにドキュメント本文を貼り付け…">{{ text }}</textarea>
-  <div class="tool-actions"><button class="btn-primary" type="submit">検証する</button></div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">検証する</button>
+    <span id="dv-spin" class="htmx-indicator spin">検証中…</span>
+  </div>
 </form>
 
-<div class="result-head">
-  <div class="score-chip">品質スコア <strong>{{ result.score }}</strong>/100</div>
-  <div class="sev-summary">
-    <span class="sev sev-Critical">Critical {{ result.counts.Critical|default:0 }}</span>
-    <span class="sev sev-Major">Major {{ result.counts.Major|default:0 }}</span>
-    <span class="sev sev-Minor">Minor {{ result.counts.Minor|default:0 }}</span>
-    <span class="sev sev-Cosmetic">Cosmetic {{ result.counts.Cosmetic|default:0 }}</span>
-  </div>
+<div id="tool-result">
+  {% include "tools/_partials/doc_verify_result.html" %}
 </div>
-<table class="tool-table">
-  <thead><tr><th>Severity</th><th>行</th><th>該当</th><th>指摘</th><th>本文</th></tr></thead>
-  <tbody>
-    {% for f in result.findings %}
-    <tr><td><span class="sev sev-{{ f.sev }}">{{ f.sev }}</span></td><td>{{ f.line }}</td>
-      <td><code>{{ f.term }}</code></td><td>{{ f.msg }}</td><td class="muted">{{ f.text }}</td></tr>
-    {% empty %}
-    <tr><td colspan="5" class="muted">指摘はありません。</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
 {% endblock %}

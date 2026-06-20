@@ -1,0 +1,25 @@
+<div class="result-head">
+  <div class="score-chip">要件カバレッジ <strong>{{ result.coverage }}</strong>%</div>
+  <div class="muted">要件 {{ result.n_req }} / テスト {{ result.n_test }} / 未カバー {{ result.n_uncovered }} / 孤立テスト {{ result.n_orphan }}</div>
+</div>
+<h4>トレーサビリティマトリクス</h4>
+<table class="tool-table">
+  <thead><tr><th>要件ID</th><th>要件名</th><th>ひもづくテスト</th></tr></thead>
+  <tbody>
+    {% for m in result.matrix %}
+    <tr><td><code>{{ m.req }}</code></td><td>{{ m.name }}</td>
+      <td>{% if m.tests %}{% for t in m.tests %}<code>{{ t }}</code> {% endfor %}{% else %}<span class="sev sev-Major">未カバー</span>{% endif %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h4>ギャップ一覧</h4>
+<table class="tool-table">
+  <thead><tr><th>Severity</th><th>内容</th></tr></thead>
+  <tbody>
+    {% for g in result.gaps %}
+    <tr><td><span class="sev sev-{{ g.sev }}">{{ g.sev }}</span></td><td>{{ g.msg }}</td></tr>
+    {% empty %}
+    <tr><td colspan="2" class="muted">ギャップはありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

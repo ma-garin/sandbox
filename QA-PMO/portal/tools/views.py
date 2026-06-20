@@ -4,6 +4,7 @@
 計算は logic.py / engine.py の純粋関数に委譲し、ビューは入出力に専念する。
 """
 import csv
+import json
 
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -11,7 +12,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic
+from . import logic, engines
 from .models import Defect
 
 
@@ -35,11 +36,25 @@ _DOC_SAMPLE = """1. 目的
 
 
 def _doc_verify(request, service):
-    text = request.POST.get("text") or _DOC_SAMPLE
+    text = request.POST.get("text") or ""
     doc_type = request.POST.get("doc_type") or "general"
+    pdf_note = ""
+    # 提案A: PDFアップロード時は pdfplumber でテキスト抽出して検証
+    upload = request.FILES.get("pdf")
+    if upload is not None:
+        extracted = engines.pdf_to_text(upload)
+        if extracted:
+            text = extracted
+            pdf_note = f"PDF「{upload.name}」から {len(text)} 文字を抽出して検証しました。"
+        else:
+            pdf_note = f"PDF「{upload.name}」からテキストを抽出できませんでした（画像PDFの可能性）。"
+    if not text:
+        text = _DOC_SAMPLE
     result = logic.document_verify(text, doc_type)
     ctx = _base_ctx(service)
-    ctx.update({"text": text, "doc_type": doc_type, "result": result})
+    ctx.update({"text": text, "doc_type": doc_type, "result": result, "pdf_note": pdf_note})
+    if request.htmx:
+        return render(request, "tools/_partials/doc_verify_result.html", ctx)
     return render(request, "tools/doc_verify.html", ctx)
 
 
@@ -54,6 +69,8 @@ def _traceability(request, service):
     result = logic.traceability(req_text, test_text)
     ctx = _base_ctx(service)
     ctx.update({"req_text": req_text, "test_text": test_text, "result": result})
+    if request.htmx:
+        return render(request, "tools/_partials/traceability_result.html", ctx)
     return render(request, "tools/traceability.html", ctx)
 
 
@@ -68,7 +85,18 @@ def _test_plan(request, service):
                     exit="Critical/Major欠陥0件、テスト消化率100%",
                     risk="決済外部連携の遅延")
     markdown = logic.test_plan(data)
-    if request.POST.get("download") == "1":
+    dl = request.POST.get("download")
+    if dl == "1":
+        resp = HttpResponse(markdown, content_type="text/markdown; charset=utf-8")
+        resp["Content-Disposition"] = "attachment; filename=test_plan.md"
+        return resp
+    if dl == "pdf":
+        # 提案A: WeasyPrint で整形PDFを生成（不可なら Markdown にフォールバック）
+        pdf = engines.markdown_to_pdf(markdown)
+        if pdf is not None:
+            resp = HttpResponse(pdf, content_type="application/pdf")
+            resp["Content-Disposition"] = "attachment; filename=test_plan.pdf"
+            return resp
         resp = HttpResponse(markdown, content_type="text/markdown; charset=utf-8")
         resp["Content-Disposition"] = "attachment; filename=test_plan.md"
         return resp
@@ -123,6 +151,8 @@ def _test_design(request, service):
         ctx.update({"feature": feature, "industry": industry,
                     "fields": fields, "flags": flags,
                     "vp": engine.generate(feature, fields, flags, industry)})
+    if request.htmx:
+        return render(request, "tools/_partials/test_design_result.html", ctx)
     return render(request, "tools/test_design.html", ctx)
 
 
@@ -183,8 +213,46 @@ def _roi_calc(request, service):
     ctx = _base_ctx(service)
     ctx.update({"industry": industry, "incidents": int(incidents), "cost": int(cost),
                 "method": method, "result": result,
-                "industries": logic.ROI_INDUSTRY, "methods": logic.ROI_METHODS})
+                "industries": logic.ROI_INDUSTRY, "methods": logic.ROI_METHODS,
+                "chart_capture": _roi_chart_capture(result),
+                "chart_leak": _roi_chart_leak(result)})
+    if request.htmx:
+        return render(request, "tools/_partials/roi_calc_result.html", ctx)
     return render(request, "tools/roi_calc.html", ctx)
+
+
+def _roi_chart_capture(r):
+    """バグ捕捉率の比較（Chart.js 棒グラフ設定）。"""
+    cfg = {
+        "type": "bar",
+        "data": {"labels": ["現在の手法", "観点ライブラリ"],
+                 "datasets": [{"label": "バグ捕捉率(%)",
+                               "data": [r["current_pct"], r["vp_pct"]],
+                               "backgroundColor": ["#9aa7b8", "#1a3a6b"]}]},
+        "options": {"responsive": True, "maintainAspectRatio": False,
+                    "scales": {"y": {"beginAtZero": True, "max": 100,
+                                     "title": {"display": True, "text": "捕捉率 (%)"}}},
+                    "plugins": {"legend": {"display": False},
+                                "title": {"display": True, "text": "バグ捕捉率の比較"}}},
+    }
+    return json.dumps(cfg, ensure_ascii=False)
+
+
+def _roi_chart_leak(r):
+    """年間の漏れコスト比較（Chart.js 棒グラフ設定）。"""
+    cfg = {
+        "type": "bar",
+        "data": {"labels": ["現在の手法", "観点ライブラリ"],
+                 "datasets": [{"label": "年間漏れコスト(万円)",
+                               "data": [r["leak_current"], r["leak_vp"]],
+                               "backgroundColor": ["#c0392b", "#1f9d63"]}]},
+        "options": {"responsive": True, "maintainAspectRatio": False,
+                    "scales": {"y": {"beginAtZero": True,
+                                     "title": {"display": True, "text": "万円 / 年"}}},
+                    "plugins": {"legend": {"display": False},
+                                "title": {"display": True, "text": "障害見逃しコストの比較"}}},
+    }
+    return json.dumps(cfg, ensure_ascii=False)
 
 
 # ── 7. テスト自動化 scaffold ──

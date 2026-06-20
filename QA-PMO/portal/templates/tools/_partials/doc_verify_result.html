@@ -1,0 +1,26 @@
+<div class="result-head">
+  <div class="score-chip">品質スコア <strong>{{ result.score }}</strong>/100</div>
+  <div class="sev-summary">
+    <span class="sev sev-Critical">Critical {{ result.counts.Critical|default:0 }}</span>
+    <span class="sev sev-Major">Major {{ result.counts.Major|default:0 }}</span>
+    <span class="sev sev-Minor">Minor {{ result.counts.Minor|default:0 }}</span>
+    <span class="sev sev-Cosmetic">Cosmetic {{ result.counts.Cosmetic|default:0 }}</span>
+  </div>
+  {% if result.engine == 'textlint' %}
+    <span class="engine-badge ok">校正エンジン: textlint（ja-technical-writing）</span>
+  {% else %}
+    <span class="engine-badge">校正エンジン: 内蔵ルール（textlint未導入）</span>
+  {% endif %}
+</div>
+{% if pdf_note %}<div class="roi-disclaimer">📄 {{ pdf_note }}</div>{% endif %}
+<table class="tool-table">
+  <thead><tr><th>Severity</th><th>行</th><th>該当</th><th>指摘</th><th>本文</th></tr></thead>
+  <tbody>
+    {% for f in result.findings %}
+    <tr><td><span class="sev sev-{{ f.sev }}">{{ f.sev }}</span></td><td>{{ f.line }}</td>
+      <td><code>{{ f.term }}</code></td><td>{{ f.msg }}</td><td class="muted">{{ f.text }}</td></tr>
+    {% empty %}
+    <tr><td colspan="5" class="muted">指摘はありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

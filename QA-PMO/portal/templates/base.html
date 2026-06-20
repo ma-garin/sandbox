@@ -6,7 +6,7 @@
   <title>{% block title %}ベリサーブ 品質ポータル{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/portal.css' %}">
 </head>
-<body>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
 <header id="topbar">
   <a class="logo" href="{% url 'home' %}">
@@ -66,6 +66,10 @@
   </main>
 </div>
 
+<!-- 提案B：UX刷新（自己完結ベンダリング・実行時CDN依存なし） -->
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script src="{% static 'vendor/htmx.min.js' %}"></script>
+<script src="{% static 'vendor/alpine.min.js' %}" defer></script>
 <script src="{% static 'js/portal.js' %}"></script>
 </body>
 </html>

@@ -204,3 +204,19 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
   .kb-stats,.roi-cards{grid-template-columns:repeat(2,1fr)}
   .two-col,.form-grid{grid-template-columns:1fr}
 }
+
+/* ── 提案A/B：エンジンバッジ・部分更新インジケータ・グラフ ── */
+.engine-badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:11px;
+  background:var(--dv);color:var(--tx2);margin-left:auto;white-space:nowrap}
+.engine-badge.ok{background:#e6f4ea;color:#1f7a3d}
+.result-head{flex-wrap:wrap}
+
+/* HTMX 部分更新中インジケータ（hx-indicator） */
+.htmx-indicator{opacity:0;transition:opacity .2s;margin-left:10px;color:var(--p);font-size:13px;font-weight:600}
+.htmx-request .htmx-indicator,.htmx-request.htmx-indicator{opacity:1}
+.spin::before{content:"⏳ "}
+
+/* Chart.js 描画領域 */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.chart-box{background:#fff;border:1px solid var(--dv);border-radius:var(--r);padding:14px;height:240px;position:relative}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}

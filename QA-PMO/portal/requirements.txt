@@ -1,0 +1,3 @@
+# ベリサーブ 品質ポータル — Python依存
+# すべて無料のOSS。localhost起動: python manage.py runserver
+Django>=5.0,<5.2

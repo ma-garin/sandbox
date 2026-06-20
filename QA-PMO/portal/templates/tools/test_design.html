@@ -1,0 +1,105 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">観点ライブラリとISTQB技法でテスト条件を自動生成します（決定的アルゴリズム／AIなし）。観点ベース設計は観点カバレッジと監査証跡を出力します。</p>
+<div class="subtabs">
+  <a class="subtab {% if mode == 'vp' %}active{% endif %}" href="?mode=vp">★ 観点ベース設計</a>
+  <a class="subtab {% if mode == 'bva' %}active{% endif %}" href="?mode=bva">境界値分析</a>
+  <a class="subtab {% if mode == 'ep' %}active{% endif %}" href="?mode=ep">同値分割</a>
+  <a class="subtab {% if mode == 'pw' %}active{% endif %}" href="?mode=pw">ペアワイズ</a>
+</div>
+
+{% if mode == 'bva' %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="bva">
+  <div class="form-row">
+    <label class="lbl">項目名<input name="name" class="inp" value="{{ name }}"></label>
+    <label class="lbl">最小<input name="min" class="inp" type="number" value="{{ min }}"></label>
+    <label class="lbl">最大<input name="max" class="inp" type="number" value="{{ max }}"></label>
+    <button class="btn-primary" type="submit">生成</button>
+  </div>
+</form>
+<table class="tool-table"><thead><tr><th>ID</th><th>入力</th><th>期待区分</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.input }}</td><td>{{ r.expected }}</td></tr>{% endfor %}</tbody></table>
+
+{% elif mode == 'ep' %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="ep">
+  <div class="form-row">
+    <label class="lbl">項目名<input name="name" class="inp" value="{{ name }}"></label>
+    <label class="lbl">最小<input name="min" class="inp" type="number" value="{{ min }}"></label>
+    <label class="lbl">最大<input name="max" class="inp" type="number" value="{{ max }}"></label>
+    <button class="btn-primary" type="submit">生成</button>
+  </div>
+</form>
+<table class="tool-table"><thead><tr><th>ID</th><th>入力</th><th>クラス</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.input }}</td><td>{{ r.klass }}</td></tr>{% endfor %}</tbody></table>
+
+{% elif mode == 'pw' %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="pw">
+  <p class="muted">各パラメータの値をカンマ区切りで入力（行ごとに1パラメータ）。全ペアを網羅する最小ケースを貪欲法で生成します。</p>
+  <textarea name="pw_text" class="tool-ta sm">{{ pw_text }}</textarea>
+  <div class="tool-actions"><button class="btn-primary" type="submit">ペアワイズ生成</button></div>
+</form>
+{% if pw.error %}<p class="vp-warn">{{ pw.error }}</p>{% else %}
+<p class="muted">{{ pw.count }}ケースで全ペアを網羅（総組合せは {{ pw.total }} 通り）</p>
+<table class="tool-table"><thead><tr>{% for h in pw.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in pw.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+{% endif %}
+
+{% else %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="vp">
+  <label class="lbl">機能名<input name="feature" class="inp" value="{{ feature }}"></label>
+  <div style="margin:12px 0">
+    <div class="lbl" style="margin-bottom:6px">入力項目（名称と型）</div>
+    {% for f in fields %}
+    <div class="vp-field-row">
+      <input class="inp vp-fn" name="field_name" placeholder="項目名" value="{{ f.name }}">
+      <select class="inp vp-ft" name="field_type">
+        {% for t in field_types %}
+        <option value="{{ t }}" {% if t == f.type %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+    <div class="vp-field-row">
+      <input class="inp vp-fn" name="field_name" placeholder="項目を追加…">
+      <select class="inp vp-ft" name="field_type">
+        {% for t in field_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="lbl" style="margin-bottom:6px">機能特性（該当するものを選択）</div>
+  <div class="vp-flags">
+    {% for pair in flag_choices %}
+    <label class="chk"><input type="checkbox" name="flags" value="{{ pair.0 }}" {% if pair.0 in flags %}checked{% endif %}>{{ pair.1 }}</label>
+    {% endfor %}
+  </div>
+  <div class="lbl" style="margin:14px 0 6px">業種別観点（オプション）</div>
+  <div class="vp-industry">
+    <label class="chk"><input type="radio" name="industry" value="" {% if not industry %}checked{% endif %}>なし</label>
+    <label class="chk"><input type="radio" name="industry" value="finance" {% if industry == 'finance' %}checked{% endif %}>🏦 金融</label>
+    <label class="chk"><input type="radio" name="industry" value="ecommerce" {% if industry == 'ecommerce' %}checked{% endif %}>🛒 EC/小売</label>
+    <label class="chk"><input type="radio" name="industry" value="healthcare" {% if industry == 'healthcare' %}checked{% endif %}>🏥 医療</label>
+    <label class="chk"><input type="radio" name="industry" value="saas" {% if industry == 'saas' %}checked{% endif %}>☁️ SaaS/B2B</label>
+  </div>
+  <div class="tool-actions"><button class="btn-primary" type="submit">観点ベースで生成</button></div>
+</form>
+
+<div class="result-head">
+  <div class="score-chip">観点カバレッジ <strong>{{ vp.coverage }}</strong>% ({{ vp.n_covered }}/{{ vp.total }})</div>
+  <div class="muted">テスト条件 {{ vp.rows|length }}件 ｜ 監査証跡: 各条件が 観点→技法→カテゴリ に紐づく</div>
+</div>
+{% if vp.missing %}
+<div class="vp-warn">⚠ 未カバー観点（要確認）: {% for c in vp.missing %}{{ c.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
+{% else %}<div class="vp-ok">✓ 全観点カテゴリをカバー</div>{% endif %}
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>対象</th><th>テスト観点</th><th>技法</th><th>カテゴリ</th></tr></thead>
+  <tbody>{% for r in vp.rows %}
+  <tr><td>{{ r.id }}</td><td>{{ r.target }}</td><td>{{ r.viewpoint }}</td>
+    <td><span class="tech-badge">{{ r.technique }}</span></td><td><code>{{ r.cat }}</code> {{ r.cat_name }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}
+{% endblock %}

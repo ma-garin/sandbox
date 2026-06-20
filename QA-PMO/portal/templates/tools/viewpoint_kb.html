@@ -1,0 +1,67 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">テスト観点ナレッジベースを閲覧・検索します。業種別・カテゴリ別フィルタ、欠陥パターンDB、カバレッジマップを内包します。</p>
+<div class="kb-stats">
+  <div class="kb-stat"><div class="kb-stat-n">{{ stats.viewpoints }}</div><div class="kb-stat-l">観点総数</div></div>
+  <div class="kb-stat"><div class="kb-stat-n">{{ stats.categories }}</div><div class="kb-stat-l">カテゴリ</div></div>
+  <div class="kb-stat"><div class="kb-stat-n">{{ stats.industries }}</div><div class="kb-stat-l">対応業種</div></div>
+  <div class="kb-stat"><div class="kb-stat-n">{{ stats.defects }}</div><div class="kb-stat-l">欠陥パターン</div></div>
+</div>
+<div class="subtabs">
+  <a class="subtab {% if tab == 'browse' %}active{% endif %}" href="?tab=browse">観点ブラウザ</a>
+  <a class="subtab {% if tab == 'defects' %}active{% endif %}" href="?tab=defects">欠陥パターンDB</a>
+  <a class="subtab {% if tab == 'coverage' %}active{% endif %}" href="?tab=coverage">カバレッジマップ</a>
+</div>
+
+{% if tab == 'defects' %}
+<p class="muted" style="margin-bottom:12px">業界で繰り返し発生する既知の欠陥パターン。テスト設計時にこれらを観点として追加することを推奨します。</p>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>カテゴリ</th><th>欠陥パターン</th><th>典型例</th><th>予防策</th></tr></thead>
+  <tbody>{% for dp in defect_patterns %}
+  <tr><td><code>{{ dp.pattern_id }}</code></td>
+    <td><code>{{ dp.category.code }}</code> <span class="muted">{{ dp.category.name }}</span></td>
+    <td><strong>{{ dp.pattern }}</strong></td><td class="muted">{{ dp.example }}</td>
+    <td style="color:var(--cos);font-size:12px">{{ dp.prevention }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+
+{% elif tab == 'coverage' %}
+<p class="muted" style="margin-bottom:16px">カテゴリ別の観点数分布。観点数が少ないカテゴリは知識資産の拡充余地です。</p>
+<div class="cov-chart">
+  {% for c in coverage %}
+  <div class="cov-row">
+    <div class="cov-label">{{ c.name }}</div>
+    <div class="cov-bar-wrap"><div class="cov-bar" style="width:{{ c.pct }}%"></div></div>
+    <div class="cov-count">{{ c.count }}</div>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted" style="margin-top:14px">総観点数: <strong>{{ total_vp }}</strong> ／ カテゴリ数: {{ stats.categories }}</p>
+
+{% else %}
+<form method="get" class="kb-filter">
+  <input type="hidden" name="tab" value="browse">
+  <input name="q" class="inp" placeholder="キーワードで絞り込み…" value="{{ q }}" style="flex:1;min-width:160px;max-width:240px">
+  <select name="cat" class="inp" style="min-width:160px" onchange="this.form.submit()">
+    <option value="">すべてのカテゴリ</option>
+    {% for c in categories %}<option value="{{ c.code }}" {% if c.code == cat %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+  <select name="src" class="inp" style="min-width:160px" onchange="this.form.submit()">
+    <option value="">すべての観点種別</option>
+    {% for v, l in sources %}<option value="{{ v }}" {% if v == src %}selected{% endif %}>{{ l }}</option>{% endfor %}
+  </select>
+  <button class="btn-ghost" type="submit">検索</button>
+  <span class="muted" style="white-space:nowrap">{{ items|length }}件</span>
+</form>
+<table class="tool-table">
+  <thead><tr><th>Cat</th><th>カテゴリ</th><th>テスト観点</th><th>技法</th><th>適用対象</th></tr></thead>
+  <tbody>{% for it in items %}
+  <tr><td><code>{{ it.vp.category.code }}</code></td><td class="muted">{{ it.vp.category.name }}</td>
+    <td>{{ it.vp.viewpoint }}</td><td><span class="tech-badge">{{ it.vp.technique }}</span></td>
+    <td class="muted">{{ it.label }}</td></tr>
+  {% empty %}
+  <tr><td colspan="5" class="muted">該当する観点がありません。</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}
+{% endblock %}

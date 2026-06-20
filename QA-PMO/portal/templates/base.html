@@ -1,0 +1,71 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ベリサーブ 品質ポータル{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/portal.css' %}">
+</head>
+<body>
+
+<header id="topbar">
+  <a class="logo" href="{% url 'home' %}">
+    <div class="logo-ico">🏛️</div>
+    <div class="logo-txt">
+      <span class="logo-t">品質ポータル</span>
+      <span class="logo-s">VeriServe Quality Internal Portal</span>
+    </div>
+  </a>
+  <form class="search-wrap" action="{% url 'search' %}" method="get">
+    <span class="s-ico">🔍</span>
+    <input id="search" name="q" type="search" placeholder="サービス・ツールを検索…"
+           value="{{ q|default:'' }}" autocomplete="off" aria-label="検索">
+  </form>
+  <div class="top-right">
+    <span class="env-badge">社内利用</span>
+  </div>
+</header>
+
+<div id="layout">
+  <nav id="sidenav" aria-label="サービスナビ">
+    <a class="nav-home {% if is_home %}active{% endif %}" href="{% url 'home' %}">🏠 ホーム</a>
+    {% for sec in nav %}
+    <div class="nav-section open">
+      <button class="nav-sec-head" type="button" aria-expanded="true">
+        <span class="sec-ico">{{ sec.category.icon }}</span>
+        <span class="sec-label">{{ sec.category.name }}</span>
+        <span class="chev">▶</span>
+      </button>
+      <div class="nav-sec-body">
+        {% for grp in sec.groups %}
+        <div class="nav-sub open">
+          <button class="nav-sub-head" type="button"><span class="nm">{{ grp.name }}</span><span class="chev sm">▶</span></button>
+          <div class="nav-sub-body">
+            {% for s in grp.services %}
+            <a class="nav-item {% if s.slug == active_slug %}active{% endif %}" href="{% url 'service_detail' s.slug %}">
+              <span class="dot"></span><span class="nm">{{ s.title }}</span>
+              {% if s.is_tool %}<span class="tool-tag">実行</span>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        {% for s in sec.loose %}
+        <a class="nav-item {% if s.slug == active_slug %}active{% endif %}" href="{% url 'service_detail' s.slug %}">
+          <span class="dot"></span><span class="nm">{{ s.title }}</span>
+          {% if s.is_tool %}<span class="tool-tag">実行</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </nav>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script src="{% static 'js/portal.js' %}"></script>
+</body>
+</html>

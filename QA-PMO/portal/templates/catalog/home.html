@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}ホーム — ベリサーブ 品質ポータル{% endblock %}
+{% block content %}
+<div class="home-head">
+  <h1>品質ポータル</h1>
+  <p>ベリサーブ社内の品質PMO・第三者検証・AI・セキュリティの提供メニューと、<strong>実際に動く実務ツール</strong>を一元化した社内ポータルです。</p>
+  <div class="stat-bar">
+    <div class="stat"><div class="stat-n">{{ stats.services }}</div><div class="stat-l">サービス</div></div>
+    <div class="stat"><div class="stat-n">{{ stats.tools }}</div><div class="stat-l">実務ツール</div></div>
+    <div class="stat"><div class="stat-n">{{ stats.categories }}</div><div class="stat-l">区分</div></div>
+  </div>
+</div>
+
+{% for cat in categories %}
+<section class="home-cat">
+  <div class="home-cat-t">{{ cat.obj.icon }} {{ cat.obj.name }}<span class="home-cat-s">{{ cat.obj.tagline }}</span></div>
+  <div class="h-cards">
+    {% for s in cat.services %}
+    <a class="h-card" href="{% url 'service_detail' s.slug %}">
+      <div class="h-ico">{{ s.icon }}</div>
+      <div class="h-t">{{ s.title }}
+        {% if s.is_tool %}<span class="tool-tag">実行</span>{% endif %}
+        {% if s.product %}<span class="prod-chip">{{ s.product }}</span>{% endif %}
+      </div>
+      <div class="h-c">{{ s.summary }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

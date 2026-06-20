@@ -1,0 +1,26 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">ランタイムとオプションを選ぶと、GitHub Actionsのパイプライン（build→test→品質ゲート→deploy）を生成します（テンプレート／AIなし）。</p>
+<form method="post">
+  {% csrf_token %}
+  <div class="form-row">
+    <label class="lbl">ランタイム
+      <select name="runtime" class="inp">
+        <option value="node" {% if runtime == 'node' %}selected{% endif %}>Node.js</option>
+        <option value="python" {% if runtime == 'python' %}selected{% endif %}>Python</option>
+        <option value="java" {% if runtime == 'java' %}selected{% endif %}>Java (Maven)</option>
+      </select>
+    </label>
+    <label class="lbl">テストコマンド<input name="test_cmd" class="inp" value="{{ test_cmd }}"></label>
+    <label class="lbl">デプロイ
+      <select name="deploy" class="inp">
+        <option value="none" {% if deploy == 'none' %}selected{% endif %}>なし</option>
+        <option value="pages" {% if deploy == 'pages' %}selected{% endif %}>GitHub Pages</option>
+      </select>
+    </label>
+    <button class="btn-primary" type="submit">生成</button>
+  </div>
+  <div class="tool-actions"><button class="btn-ghost" type="submit" name="download" value="1">ci.yml をダウンロード</button></div>
+</form>
+<pre class="codeblock">{{ yml }}</pre>
+{% endblock %}

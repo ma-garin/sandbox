@@ -361,6 +361,14 @@ const SERVICES = {
     cta: '生成AIアプリ品質保証について相談する',
   },
 
+  'roi-calc': {
+    icon: '💹', iconBg: '#e8f5e9', group: 'ai', kind: 'tool', tool: 'roiCalc',
+    title: 'ROI計算機', category: 'AIサービス › AIツール',
+    breadcrumb: ['AIサービス', 'AIツール', 'ROI計算機'],
+    desc: 'バリデーション研究結果（全バグ捕捉率85% vs ベースライン5〜10%）に基づき、観点ライブラリ導入の年間コスト削減効果とROIを試算します。',
+    tags: ['ROI', 'コスト削減', '投資対効果', 'バリデーション', '観点ライブラリ'],
+  },
+
   /* ── セキュリティ（脆弱性診断・トレーニング。カタログ） ── */
   'vuln-web': {
     icon: '🛡️', iconBg: '#ffebee', group: 'security', kind: 'catalog',
@@ -452,7 +460,7 @@ const NAV_TREE = [
         label: 'AIツール',
         children: [
           { id: 'doc-verify' }, { id: 'trace' }, { id: 'plan-ai' },
-          { id: 'test-design' }, { id: 'uiux' }, { id: 'defect-mgr' },
+          { id: 'test-design' }, { id: 'uiux' }, { id: 'defect-mgr' }, { id: 'roi-calc' },
         ],
       },
       {

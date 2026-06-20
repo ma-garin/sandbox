@@ -1134,3 +1134,130 @@ Tools.defectMgr = {
     download('defects.csv', csv, 'text/csv');
   },
 };
+
+/* ═══════════════════════════════════════════════════════
+ * 10. ROI計算機（バリデーション研究結果 → 年間コスト削減試算）
+ * ═══════════════════════════════════════════════════════ */
+Tools.roiCalc = {
+  title: 'ROI計算機',
+
+  INDUSTRY: {
+    finance:       { label: '金融・保険',       defaultIncidents: 10, defaultCost: 1000 },
+    ecommerce:     { label: 'EC・小売',         defaultIncidents: 20, defaultCost: 200  },
+    healthcare:    { label: '医療・ヘルスケア', defaultIncidents: 8,  defaultCost: 800  },
+    saas:          { label: 'SaaS・B2B',        defaultIncidents: 15, defaultCost: 300  },
+    manufacturing: { label: '製造・組込み',     defaultIncidents: 6,  defaultCost: 600  },
+    other:         { label: 'その他',           defaultIncidents: 12, defaultCost: 200  },
+  },
+
+  METHODS: [
+    { value: '5',  label: 'ISTQB/一般チェックリスト' },
+    { value: '10', label: 'GPT-4o等AI活用' },
+    { value: '0',  label: '経験則・アドホック' },
+    { value: '50', label: '独自観点を整備済み' },
+  ],
+
+  VP_CAPTURE: 85,
+  VP_DOMAIN_CAPTURE: 88,
+  SETUP_COST: 240,
+
+  render(c) {
+    const indOpts = Object.entries(this.INDUSTRY).map(([k, v]) =>
+      `<option value="${k}">${v.label}</option>`).join('');
+    const methodOpts = this.METHODS.map(m =>
+      `<option value="${m.value}">${m.label}</option>`).join('');
+
+    c.innerHTML = `
+      <p class="tool-desc">バリデーション研究（事前登録 commit <code>1024e21</code>、対象: Saleor Commerce本番障害20件）の捕捉率データを使い、観点ライブラリ導入効果を試算します。</p>
+      <div class="roi-disclaimer">⚑ 本試算はシミュレーションです。実際の効果は開発規模・障害特性によって異なります。</div>
+      <div class="form-grid">
+        <label class="lbl">業種
+          <select id="roi-industry" class="inp">${indOpts}</select>
+        </label>
+        <label class="lbl">年間本番障害件数（推定）
+          <input id="roi-incidents" class="inp" type="number" min="1" max="9999" value="15">
+        </label>
+        <label class="lbl">障害1件あたりコスト（万円）
+          <input id="roi-cost" class="inp" type="number" min="1" max="99999" value="300">
+        </label>
+        <label class="lbl">現在のテスト設計アプローチ
+          <select id="roi-method" class="inp">${methodOpts}</select>
+        </label>
+      </div>
+      <div class="tool-actions">
+        <button class="btn-primary" id="roi-run">ROIを試算する</button>
+      </div>
+      <div id="roi-result"></div>`;
+
+    c.querySelector('#roi-industry').onchange = () => {
+      const ind = this.INDUSTRY[c.querySelector('#roi-industry').value];
+      c.querySelector('#roi-incidents').value = ind.defaultIncidents;
+      c.querySelector('#roi-cost').value = ind.defaultCost;
+      this.run(c);
+    };
+    c.querySelector('#roi-run').onclick = () => this.run(c);
+    c.querySelector('#roi-run').click();
+  },
+
+  run(c) {
+    const incidents    = Math.max(1, parseInt(c.querySelector('#roi-incidents').value) || 15);
+    const costPer      = Math.max(1, parseInt(c.querySelector('#roi-cost').value) || 300);
+    const currentPct   = parseInt(c.querySelector('#roi-method').value) || 5;
+    const vpPct        = this.VP_CAPTURE;
+    const delta        = (vpPct - currentPct) / 100;
+    const prevented    = Math.max(0, Math.round(incidents * delta));
+    const annualSaving = prevented * costPer;
+    const totalCost    = incidents * costPer;
+    const monthlySave  = annualSaving / 12;
+    const payback      = monthlySave > 0 ? (this.SETUP_COST / monthlySave).toFixed(1) : '—';
+    const roi3y        = monthlySave > 0 ? Math.round((annualSaving * 3 - this.SETUP_COST) / this.SETUP_COST * 100) : 0;
+    const fmt          = n => n.toLocaleString('ja-JP');
+
+    const barW = w => `style="width:${Math.max(w, 2)}%;background:${w >= 80 ? '#66bb6a' : w >= 40 ? '#ffa726' : '#ef5350'}"`;
+
+    c.querySelector('#roi-result').innerHTML = `
+      <div class="roi-cards">
+        <div class="roi-kpi">
+          <div class="roi-kpi-v">¥${fmt(annualSaving)}<span class="roi-kpi-unit">万円</span></div>
+          <div class="roi-kpi-l">年間コスト削減額（推定）</div>
+        </div>
+        <div class="roi-kpi">
+          <div class="roi-kpi-v">${prevented}<span class="roi-kpi-unit">件</span></div>
+          <div class="roi-kpi-l">年間予防可能障害数</div>
+        </div>
+        <div class="roi-kpi">
+          <div class="roi-kpi-v">${payback}<span class="roi-kpi-unit">ヶ月</span></div>
+          <div class="roi-kpi-l">投資回収期間（初期¥${this.SETUP_COST}万円想定）</div>
+        </div>
+        <div class="roi-kpi ${roi3y > 0 ? 'roi-kpi-pos' : ''}">
+          <div class="roi-kpi-v">${fmt(roi3y)}<span class="roi-kpi-unit">%</span></div>
+          <div class="roi-kpi-l">3年ROI</div>
+        </div>
+      </div>
+
+      <h4>バグ捕捉率の比較（バリデーション研究結果）</h4>
+      <div class="roi-compare">
+        <div class="roi-bar-row">
+          <div class="roi-bar-label">現在の手法</div>
+          <div class="roi-bar-wrap"><div class="roi-bar" ${barW(currentPct)}><span>${currentPct}%</span></div></div>
+          <div class="roi-bar-cost muted">漏れコスト ¥${fmt(Math.round(totalCost * (1 - currentPct / 100)))}万円/年</div>
+        </div>
+        <div class="roi-bar-row">
+          <div class="roi-bar-label"><strong>観点ライブラリ</strong></div>
+          <div class="roi-bar-wrap"><div class="roi-bar" ${barW(vpPct)}><span>${vpPct}%</span></div></div>
+          <div class="roi-bar-cost muted">漏れコスト ¥${fmt(Math.round(totalCost * (1 - vpPct / 100)))}万円/年</div>
+        </div>
+      </div>
+
+      <h4>根拠データ（事前登録バリデーション研究 — commit 1024e21）</h4>
+      <table class="tool-table">
+        <thead><tr><th>手法</th><th>全バグ捕捉率（N=20）</th><th>ドメイン特有バグ捕捉率（N=16）</th><th>評価</th></tr></thead>
+        <tbody>
+          <tr><td>ISTQB/一般チェックリスト</td><td>5%（1/20）</td><td>0%（0/16）</td><td><span class="sev sev-Major">△</span></td></tr>
+          <tr><td>GPT-4o（標準プロンプト）</td><td>10%（2/20）</td><td>0%（0/16）</td><td><span class="sev sev-Minor">△</span></td></tr>
+          <tr style="background:var(--acc-l)"><td><strong>観点ライブラリ（VeriServe）</strong></td><td><strong>85%（17/20）</strong></td><td><strong>88%（14/16）</strong></td><td><span class="sev sev-Cosmetic">◎</span></td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:11.5px;margin-top:6px">対象: Saleor Commerce 本番クローズ障害20件（2022〜2024年）。疑わしい場合は「捕捉なし」と判定する自己採点不利方向原則を適用。初期設定コストは3人月×80万円=240万円で試算。</p>`;
+  },
+};

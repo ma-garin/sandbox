@@ -14,7 +14,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from catalog.models import Service
-from tools import engines, logic
+from tools import engines, logic, maturity
 from tools.models import Defect
 
 HX = {"HTTP_HX_REQUEST": "true"}  # HTMX リクエストを模す
@@ -338,3 +338,94 @@ class UxHtmxTest(TestCase):
                              {"doc_type": "general", "pdf": up})
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "抽出")
+
+
+class MaturityTest(TestCase):
+    """品質プロセス成熟度アセスメント（TMMi準拠）の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    def _all(self, val):
+        """全設問を val で埋めた回答辞書。"""
+        return {qk["name"]: val for qk in maturity.question_keys()}
+
+    # ── ロジック ──
+    def test_all_zero_is_level1(self):
+        res = maturity.assess(self._all(0))
+        self.assertEqual(res["overall_level"], 1)
+        self.assertEqual(res["overall_score"], 0)
+        # 全領域が未達 → ギャップは領域数ぶん
+        self.assertEqual(res["n_gaps"], len(maturity.MODEL))
+
+    def test_all_max_is_level5(self):
+        res = maturity.assess(self._all(maturity.MAX_PER_Q))
+        self.assertEqual(res["overall_level"], 5)
+        self.assertEqual(res["overall_score"], 100)
+        self.assertEqual(res["n_gaps"], 0)
+        self.assertEqual(res["roadmap"], [])
+
+    def test_level_is_capped_by_lowest_unsatisfied(self):
+        # L2領域だけ満点、それ以外0 → L2は達成だが累積でL2止まり
+        resp = {}
+        for area in maturity.MODEL:
+            v = maturity.MAX_PER_Q if area["level"] == 2 else 0
+            for i in range(len(area["questions"])):
+                resp[f"q_{area['code']}_{i}"] = v
+        res = maturity.assess(resp)
+        self.assertEqual(res["overall_level"], 2)
+        # L3以降は未達
+        chips = {c["lv"]: c["achieved"] for c in res["level_chips"]}
+        self.assertTrue(chips[2])
+        self.assertFalse(chips[3])
+
+    def test_roadmap_ordered_by_level_then_score(self):
+        res = maturity.assess(self._all(0))
+        levels = [r["level"] for r in res["roadmap"]]
+        self.assertEqual(levels, sorted(levels))  # レベル昇順＝着手順
+        # 最優先は最も低い未達レベル
+        self.assertEqual(res["roadmap"][0]["priority"], "最優先")
+
+    def test_invalid_input_is_clamped(self):
+        # 範囲外・非数値が混じっても落ちず 0..3 に丸める
+        resp = self._all(0)
+        first = maturity.question_keys()[0]["name"]
+        resp[first] = "99"
+        res = maturity.assess(resp)
+        self.assertLessEqual(res["areas"][0]["values"][0], maturity.MAX_PER_Q)
+
+    # ── ビュー ──
+    def test_tool_is_wired_as_tool(self):
+        svc = Service.objects.get(slug="process-diag")
+        self.assertEqual(svc.kind, "tool")
+        self.assertEqual(svc.tool_key, "maturity")
+
+    def test_get_renders_form(self):
+        r = self.client.get(reverse("service_detail", args=["process-diag"]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "成熟度")
+        self.assertContains(r, "テスト方針・戦略")
+        self.assertContains(r, "data-chart")  # レーダーチャート
+
+    def test_post_computes_assessment(self):
+        payload = {qk["name"]: 3 for qk in maturity.question_keys()}
+        r = self.client.post(reverse("service_detail", args=["process-diag"]), payload)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Level 5")
+
+    def test_post_htmx_returns_partial(self):
+        payload = {qk["name"]: 1 for qk in maturity.question_keys()}
+        r = self.client.post(reverse("service_detail", args=["process-diag"]),
+                             payload, **HX)
+        self.assertContains(r, "改善ロードマップ")
+        self.assertNotContains(r, "id=\"topbar\"")
+
+    def test_csv_export(self):
+        payload = {qk["name"]: 1 for qk in maturity.question_keys()}
+        payload["export"] = "csv"
+        r = self.client.post(reverse("service_detail", args=["process-diag"]), payload)
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+        self.assertIn("改善ロードマップ".encode(), r.content)
+        self.assertIn("総合成熟度レベル".encode(), r.content)

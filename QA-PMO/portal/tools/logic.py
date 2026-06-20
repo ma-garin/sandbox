@@ -6,6 +6,8 @@
 """
 import re
 
+from . import engines
+
 
 # ─────────────────────────────────────────────
 # 1. 境界値分析（Boundary Value Analysis）
@@ -103,14 +105,20 @@ def pairwise(raw_text):
     if len(params) < 2:
         return {"error": "2つ以上のパラメータが必要です。", "headers": [], "rows": [], "params": params}
 
-    cases = _all_pairs(params)
+    # 提案A: まず実績OSS allpairspy（PICT系）を試し、無ければ純Python貪欲法へ
+    cases = engines.pairwise_cases(params)
+    engine_name = "allpairspy"
+    if cases is None:
+        cases = _all_pairs(params)
+        engine_name = "builtin"
     total = 1
     for p in params:
         total *= len(p["values"])
     headers = ["ID"] + [p["name"] for p in params]
     rows = [[f"PW-{i + 1}"] + case for i, case in enumerate(cases)]
     return {"error": "", "headers": headers, "rows": rows,
-            "count": len(cases), "total": total, "params": params}
+            "count": len(cases), "total": total, "params": params,
+            "engine": engine_name}
 
 
 # ─────────────────────────────────────────────
@@ -198,35 +206,69 @@ _DOC_TYPE_RULES = {
 }
 
 
-def document_verify(text, doc_type="general"):
+def _builtin_prose_findings(text, doc_type):
+    """純Python版の文章校正（曖昧語・冗長文）。textlint不在時のフォールバック。"""
     cfg = _DOC_TYPE_RULES.get(doc_type, _DOC_TYPE_RULES["general"])
     findings = []
-    rules = _AMBIGUOUS + [(r[0], r[1], r[2]) for r in cfg["extra"]]
     for ln, line in enumerate(text.splitlines(), start=1):
-        for pattern, sev, msg in rules:
+        for pattern, sev, msg in _AMBIGUOUS:
             for m in re.finditer(pattern, line):
                 term = m.group(0)
                 if term == "":
                     continue
                 findings.append({"sev": sev, "line": ln, "term": term,
-                                 "msg": msg, "text": line.strip()})
+                                 "msg": msg, "text": line.strip(), "engine": "builtin"})
         for s in line.split("。"):
             if len(s) > 100:
                 findings.append({"sev": "Minor", "line": ln, "term": f"{len(s)}字",
                                  "msg": "一文が長く可読性が低い（100字超）",
-                                 "text": s.strip()[:40] + "…"})
+                                 "text": s.strip()[:40] + "…", "engine": "builtin"})
+    return findings
 
+
+def _domain_findings(text, doc_type):
+    """ドキュメント種別固有のルール＋必須セクション欠落（textlintでは検出不可の領域）。"""
+    cfg = _DOC_TYPE_RULES.get(doc_type, _DOC_TYPE_RULES["general"])
+    findings = []
+    for ln, line in enumerate(text.splitlines(), start=1):
+        for pattern, sev, msg in cfg["extra"]:
+            for m in re.finditer(pattern, line):
+                term = m.group(0)
+                if term == "":
+                    continue
+                findings.append({"sev": sev, "line": ln, "term": term,
+                                 "msg": msg, "text": line.strip(), "engine": "rule"})
     for h in cfg["required"]:
         if h not in text:
             findings.append({"sev": "Major", "line": "-", "term": h,
-                             "msg": f"必須セクションが見当たらない（{cfg['label']}）", "text": ""})
+                             "msg": f"必須セクションが見当たらない（{cfg['label']}）",
+                             "text": "", "engine": "rule"})
+    return findings
+
+
+def document_verify(text, doc_type="general"):
+    cfg = _DOC_TYPE_RULES.get(doc_type, _DOC_TYPE_RULES["general"])
+
+    # 提案A: 文章校正は textlint（日本語技術文書の60+ルール）を優先。
+    #         無ければ純Python版（曖昧語・冗長文）へフォールバック。
+    prose = engines.textlint_findings(text)
+    if prose is None:
+        prose = _builtin_prose_findings(text, doc_type)
+        prose_engine = "builtin"
+    else:
+        prose_engine = "textlint"
+
+    # ドメイン固有ルール＋必須節は常に純Pythonで判定（textlintの守備範囲外）
+    findings = prose + _domain_findings(text, doc_type)
 
     counts = {}
     for f in findings:
         counts[f["sev"]] = counts.get(f["sev"], 0) + 1
     score = max(0, 100 - counts.get("Major", 0) * 10
-                - counts.get("Minor", 0) * 3 - counts.get("Critical", 0) * 25)
-    return {"findings": findings, "counts": counts, "score": score, "label": cfg["label"]}
+                - counts.get("Minor", 0) * 3 - counts.get("Critical", 0) * 25
+                - counts.get("Cosmetic", 0) * 1)
+    return {"findings": findings, "counts": counts, "score": score,
+            "label": cfg["label"], "engine": prose_engine}
 
 
 # ─────────────────────────────────────────────

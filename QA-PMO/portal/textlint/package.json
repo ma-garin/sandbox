@@ -1,0 +1,10 @@
+{
+  "name": "qa-portal-textlint",
+  "version": "1.0.0",
+  "private": true,
+  "description": "日本語技術文書の校正エンジン（ドキュメント検証ツールが subprocess で利用）",
+  "dependencies": {
+    "textlint": "^14.0.0",
+    "textlint-rule-preset-ja-technical-writing": "^10.0.0"
+  }
+}

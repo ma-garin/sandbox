@@ -1,0 +1,38 @@
+{% if mode == 'bva' %}
+<table class="tool-table"><thead><tr><th>ID</th><th>入力</th><th>期待区分</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.input }}</td><td>{{ r.expected }}</td></tr>{% endfor %}</tbody></table>
+
+{% elif mode == 'ep' %}
+<table class="tool-table"><thead><tr><th>ID</th><th>入力</th><th>クラス</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.input }}</td><td>{{ r.klass }}</td></tr>{% endfor %}</tbody></table>
+
+{% elif mode == 'pw' %}
+{% if pw.error %}<p class="vp-warn">{{ pw.error }}</p>{% else %}
+<div class="result-head">
+  <div class="muted">{{ pw.count }}ケースで全ペアを網羅（総組合せは {{ pw.total }} 通り）</div>
+  {% if pw.engine == 'allpairspy' %}
+    <span class="engine-badge ok">エンジン: allpairspy（PICT系）</span>
+  {% else %}
+    <span class="engine-badge">エンジン: 内蔵貪欲法</span>
+  {% endif %}
+</div>
+<table class="tool-table"><thead><tr>{% for h in pw.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in pw.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+{% endif %}
+
+{% else %}
+<div class="result-head">
+  <div class="score-chip">観点カバレッジ <strong>{{ vp.coverage }}</strong>% ({{ vp.n_covered }}/{{ vp.total }})</div>
+  <div class="muted">テスト条件 {{ vp.rows|length }}件 ｜ 監査証跡: 各条件が 観点→技法→カテゴリ に紐づく</div>
+</div>
+{% if vp.missing %}
+<div class="vp-warn">⚠ 未カバー観点（要確認）: {% for c in vp.missing %}{{ c.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
+{% else %}<div class="vp-ok">✓ 全観点カテゴリをカバー</div>{% endif %}
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>対象</th><th>テスト観点</th><th>技法</th><th>カテゴリ</th></tr></thead>
+  <tbody>{% for r in vp.rows %}
+  <tr><td>{{ r.id }}</td><td>{{ r.target }}</td><td>{{ r.viewpoint }}</td>
+    <td><span class="tech-badge">{{ r.technique }}</span></td><td><code>{{ r.cat }}</code> {{ r.cat_name }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}

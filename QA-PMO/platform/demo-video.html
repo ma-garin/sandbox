@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMOプラットフォーム — 製品紹介ムービー</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap">
+<style>
+:root{
+  --p:#1a3a6b; --p-l:#2e5aa8; --p-d:#0d2240;
+  --bg:#f0f2f7; --sf:#fff; --sf-v:#f7f8fc;
+  --bd:#dde2ee; --dv:#eaedf5;
+  --tx:#1a1f2e; --tx2:#4a5568; --tx3:#a0aec0;
+  --acc:#2e5aa8; --acc-l:#e8edf8;
+  --crit:#c62828; --maj:#f57c00; --min:#fbc02d; --cos:#689f38;
+  --el1:0 1px 3px rgba(26,58,107,.08),0 1px 2px rgba(26,58,107,.12);
+  --el2:0 3px 8px rgba(26,58,107,.10),0 2px 4px rgba(26,58,107,.08);
+  --el3:0 8px 24px rgba(26,58,107,.12),0 4px 8px rgba(26,58,107,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:#0a1424;color:var(--tx);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:12px}
+
+/* ── player frame ── */
+#player{width:100%;max-width:1000px;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative}
+#stage-wrap{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:var(--bg)}
+#stage{position:absolute;top:0;left:0;width:1280px;height:720px;transform-origin:top left}
+
+/* ── scenes ── */
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .5s ease}
+.scene.active{opacity:1;visibility:visible}
+.item{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.scene.go .item{opacity:1;transform:none}
+.scene.go .d1{transition-delay:.10s}.scene.go .d2{transition-delay:.25s}
+.scene.go .d3{transition-delay:.40s}.scene.go .d4{transition-delay:.55s}
+.scene.go .d5{transition-delay:.70s}.scene.go .d6{transition-delay:.85s}
+.scene.go .d7{transition-delay:1.0s}.scene.go .d8{transition-delay:1.15s}
+
+/* mock chrome */
+.mock{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.m-top{height:56px;background:var(--p);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0;box-shadow:var(--el2)}
+.m-logo-ico{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.m-logo-t{color:#fff;font-size:16px;font-weight:700}
+.m-logo-s{color:rgba(255,255,255,.55);font-size:11px}
+.m-search{margin-left:auto;width:280px;height:32px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;padding:0 14px;color:rgba(255,255,255,.5);font-size:12px;gap:8px}
+.m-body{flex:1;display:flex;overflow:hidden}
+.m-nav{width:248px;background:var(--sf);border-right:1px solid var(--bd);padding:14px 10px;flex-shrink:0;overflow:hidden}
+.m-main{flex:1;padding:26px 30px;overflow:hidden}
+
+/* nav items */
+.nav-home{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:6px;background:var(--acc-l);color:var(--p);font-size:13px;font-weight:600;margin-bottom:10px}
+.nv-sec{display:flex;align-items:center;gap:9px;padding:9px 11px;font-size:13px;font-weight:600;color:var(--tx);border-radius:6px}
+.nv-sec .ic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.nv-item{display:flex;align-items:center;gap:8px;padding:7px 11px 7px 30px;font-size:12.5px;color:var(--tx2)}
+.nv-item .dot{width:5px;height:5px;border-radius:50%;background:var(--tx3)}
+.nv-item.hot{background:var(--acc-l);color:var(--p);font-weight:600}
+.nv-item.hot .dot{background:var(--p)}
+.nv-tag{font-size:9px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:auto}
+
+/* home */
+.home-head h1{font-size:26px;color:var(--p-d);margin-bottom:6px}
+.home-head p{font-size:13px;color:var(--tx2);line-height:1.7}
+.home-cat-t{font-size:14px;font-weight:700;color:var(--p);margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:15px 14px;box-shadow:var(--el1)}
+.card .c-ico{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:9px}
+.card .c-t{font-size:13px;font-weight:600;color:var(--tx);line-height:1.4;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.card .c-c{font-size:10.5px;color:var(--tx3);margin-top:5px}
+.r-tag{font-size:9px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:8px;font-weight:700}
+.p-chip{font-size:9px;background:#1a2a4a;color:#fff;padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.3px}
+
+/* generic panel */
+.bc{font-size:11px;color:var(--tx3);margin-bottom:14px}
+.d-head{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.d-ico{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px}
+.d-head h1{font-size:24px;color:var(--p-d)}
+.cat-badge{display:inline-block;background:var(--acc-l);color:var(--p);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px}
+.prod-badge{display:inline-block;background:#1a2a4a;color:#fff;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:700;margin-top:6px;margin-left:8px;letter-spacing:.5px}
+.lead{font-size:13px;line-height:1.8;color:var(--tx2);background:var(--sf);border-left:4px solid var(--p);border-radius:10px;padding:16px 20px;box-shadow:var(--el1);margin-bottom:18px}
+.panel{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;box-shadow:var(--el1);margin-bottom:14px}
+.panel h3{font-size:15px;color:var(--p);margin-bottom:12px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.tbl th{background:var(--sf-v);color:var(--tx2);text-align:left;padding:8px 10px;border-bottom:2px solid var(--bd);font-weight:600;font-size:11px}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--dv);color:var(--tx);vertical-align:top}
+.tbl tr{opacity:0;transform:translateX(-10px);transition:opacity .45s,transform .45s}
+.scene.go .tbl tr{opacity:1;transform:none}
+.scene.go .tbl tr:nth-child(2){transition-delay:.3s}
+.scene.go .tbl tr:nth-child(3){transition-delay:.5s}
+.scene.go .tbl tr:nth-child(4){transition-delay:.7s}
+.scene.go .tbl tr:nth-child(5){transition-delay:.9s}
+.scene.go .tbl tr:nth-child(6){transition-delay:1.1s}
+.tech{display:inline-block;font-size:9.5px;background:var(--acc-l);color:var(--p);padding:1px 7px;border-radius:8px;font-weight:600}
+.sev{display:inline-block;font-size:10px;padding:2px 9px;border-radius:10px;color:#fff;font-weight:700}
+.sev.c{background:var(--crit)}.sev.m{background:var(--maj)}.sev.n{background:var(--min);color:#5b4a00}
+
+/* KB stats */
+.kb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kb-stat{background:linear-gradient(135deg,var(--p),var(--p-l));border-radius:12px;padding:18px;color:#fff;box-shadow:var(--el2)}
+.kb-stat .n{font-size:34px;font-weight:700;line-height:1}
+.kb-stat .l{font-size:11px;opacity:.85;margin-top:6px}
+
+/* coverage bars */
+.cov{display:flex;flex-direction:column;gap:11px}
+.cov-row{display:grid;grid-template-columns:120px 1fr 46px;align-items:center;gap:12px;font-size:12px}
+.cov-track{height:16px;background:var(--dv);border-radius:8px;overflow:hidden}
+.cov-fill{height:100%;width:0;background:linear-gradient(90deg,var(--p),var(--p-l));border-radius:8px;transition:width 1.3s cubic-bezier(.4,0,.2,1)}
+
+/* validation bars (big) */
+.vbars{display:flex;flex-direction:column;gap:20px;margin-top:8px}
+.vbar-row{display:grid;grid-template-columns:230px 1fr 70px;align-items:center;gap:16px}
+.vbar-lab{font-size:14px;font-weight:600;color:var(--tx)}
+.vbar-lab small{display:block;font-size:11px;color:var(--tx3);font-weight:400}
+.vbar-track{height:34px;background:var(--dv);border-radius:9px;overflow:hidden}
+.vbar-fill{height:100%;width:0;border-radius:9px;transition:width 1.6s cubic-bezier(.34,1.2,.5,1)}
+.vbar-fill.lose{background:linear-gradient(90deg,#b0bac9,#cfd6e2)}
+.vbar-fill.win{background:linear-gradient(90deg,#1a3a6b,#2e5aa8,#3f7fd6)}
+.vbar-pct{font-size:22px;font-weight:700;color:var(--p-d);text-align:right}
+
+/* defect form mock */
+.form-row{display:flex;gap:12px;margin-bottom:12px}
+.fld{flex:1}
+.fld label{font-size:11px;color:var(--tx2);font-weight:600;display:block;margin-bottom:5px}
+.fld .inp{height:34px;border:1px solid var(--bd);border-radius:7px;background:var(--sf);display:flex;align-items:center;padding:0 11px;font-size:12px;color:var(--tx)}
+.fld .inp.typed{border-color:var(--p-l);box-shadow:0 0 0 3px rgba(46,90,168,.12)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;font-size:13px;font-weight:600;padding:9px 18px;border-radius:8px}
+
+/* title scene */
+.title-s{position:absolute;inset:0;background:linear-gradient(135deg,#0d2240,#1a3a6b 55%,#2e5aa8);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:18px}
+.title-logo{width:92px;height:92px;border-radius:22px;background:rgba(255,255,255,.13);display:flex;align-items:center;justify-content:center;font-size:48px}
+.title-s h1{font-size:46px;color:#fff;letter-spacing:1px}
+.title-s .sub{font-size:18px;color:rgba(255,255,255,.7);letter-spacing:3px}
+.title-s .pill{margin-top:10px;font-size:13px;background:rgba(255,255,255,.12);padding:8px 18px;border-radius:20px;color:rgba(255,255,255,.9)}
+
+/* closing */
+.close-s{position:absolute;inset:0;background:linear-gradient(135deg,#0d2240,#1a3a6b);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;text-align:center;padding:40px}
+.close-s h1{font-size:34px;color:#fff}
+.close-grid{display:flex;gap:40px;margin-top:14px}
+.close-grid .n{font-size:40px;font-weight:700}
+.close-grid .l{font-size:12px;opacity:.75;margin-top:4px}
+
+/* cursor */
+#cursor{position:absolute;width:22px;height:22px;z-index:50;pointer-events:none;transition:left .8s cubic-bezier(.3,.6,.3,1),top .8s cubic-bezier(.3,.6,.3,1);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));opacity:0}
+#cursor svg{width:100%;height:100%}
+#cursor.click::after{content:"";position:absolute;inset:-8px;border:2px solid var(--p-l);border-radius:50%;animation:ring .5s ease-out}
+@keyframes ring{from{transform:scale(.3);opacity:.9}to{transform:scale(1.6);opacity:0}}
+
+/* caption */
+#caption{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(7,15,30,.92) 40%);padding:42px 40px 24px;color:#fff;z-index:60}
+#cap-step{font-size:12px;color:#7fb0ff;font-weight:700;letter-spacing:2px;margin-bottom:5px}
+#cap-text{font-size:18px;font-weight:500;line-height:1.5;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+
+/* controls */
+#controls{width:100%;max-width:1000px;display:flex;align-items:center;gap:14px;color:#cdd6e6;font-size:13px}
+#playbtn{width:46px;height:46px;border-radius:50%;background:var(--p-l);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(46,90,168,.5)}
+#playbtn:hover{background:#3f7fd6}
+#timeline{flex:1;height:8px;background:rgba(255,255,255,.12);border-radius:4px;position:relative;cursor:pointer}
+#progress{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#2e5aa8,#3f7fd6);border-radius:4px}
+.chap{position:absolute;top:50%;transform:translate(-50%,-50%);width:3px;height:14px;background:rgba(255,255,255,.35);border-radius:2px}
+#tlabel{font-variant-numeric:tabular-nums;flex-shrink:0;min-width:92px;text-align:right;color:#8da3c4}
+#scene-name{position:absolute;left:0;bottom:100%;margin-bottom:7px;font-size:11px;color:#8da3c4;white-space:nowrap;transform:translateX(-50%)}
+#restart{background:none;border:1px solid rgba(255,255,255,.25);color:#cdd6e6;border-radius:7px;padding:8px 12px;cursor:pointer;font-size:12px;font-family:inherit;flex-shrink:0}
+#restart:hover{background:rgba(255,255,255,.08)}
+.hint{color:#5e7197;font-size:12px;text-align:center;max-width:1000px}
+.badge-live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff5252;margin-right:5px;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<div id="player">
+  <div id="stage-wrap">
+    <div id="stage">
+
+      <!-- SCENE 0: TITLE -->
+      <section class="scene" data-dur="4">
+        <div class="title-s">
+          <div class="title-logo item d1">🏛️</div>
+          <h1 class="item d2">PMOプラットフォーム</h1>
+          <div class="sub item d3">QUALITY PMO &amp; AI TOOLS</div>
+          <div class="pill item d4">提供メニュー31サービス ／ 実機能MVP9種 ／ 観点ライブラリ駆動</div>
+        </div>
+      </section>
+
+      <!-- SCENE 1: HOME -->
+      <section class="scene" data-dur="9">
+        <div class="mock">
+          <div class="m-top">
+            <div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">PMOプラットフォーム</div><div class="m-logo-s">Quality PMO &amp; AI Tools</div></div>
+            <div class="m-search">🔍 サービスを検索…</div>
+          </div>
+          <div class="m-main" style="overflow:hidden">
+            <div class="home-head item d1">
+              <h1>PMOサービスプラットフォーム</h1>
+              <p>品質PMOの提供メニューと、各AIツールの実working MVPを1つに統合</p>
+            </div>
+            <div class="home-cat-t item d2">🛡️ 品質PMO</div>
+            <div class="cards item d2">
+              <div class="card"><div class="c-ico" style="background:#e8edf8">👔</div><div class="c-t">コンサルタント派遣</div><div class="c-c">品質PMO</div></div>
+              <div class="card"><div class="c-ico" style="background:#e8edf8">🩺</div><div class="c-t">プロセス診断</div><div class="c-c">品質評価支援軸</div></div>
+              <div class="card"><div class="c-ico" style="background:#e8f5e9">🧪</div><div class="c-t">テスト推進</div><div class="c-c">品質PMO</div></div>
+              <div class="card"><div class="c-ico" style="background:#fff3e0">🎓</div><div class="c-t">教育・示唆</div><div class="c-c">品質評価支援軸</div></div>
+            </div>
+            <div class="home-cat-t item d3">🔍 第三者検証</div>
+            <div class="cards item d3">
+              <div class="card"><div class="c-ico" style="background:#ede7f6">🧾</div><div class="c-t">ソフトウェアテスト受託</div><div class="c-c">テスト実行</div></div>
+              <div class="card"><div class="c-ico" style="background:#ede7f6">🔧</div><div class="c-t">組込み・IoT検証</div><div class="c-c">テスト実行</div></div>
+              <div class="card"><div class="c-ico" style="background:#ede7f6">🏢</div><div class="c-t">SAP・業務システム検証</div><div class="c-c">テスト実行</div></div>
+              <div class="card"><div class="c-ico" style="background:#ede7f6">⚡</div><div class="c-t">負荷・非機能テスト</div><div class="c-c">第三者検証</div></div>
+            </div>
+            <div class="home-cat-t item d4">🤖 AIサービス（一部 実機能MVP）</div>
+            <div class="cards item d4">
+              <div class="card"><div class="c-ico" style="background:#e8f5e9">✏️</div><div class="c-t">テスト設計 <span class="r-tag">実機能</span><span class="p-chip">GIHOZ</span></div><div class="c-c">AIツール</div></div>
+              <div class="card"><div class="c-ico" style="background:#e8f5e9">🔗</div><div class="c-t">トレーサビリティ <span class="r-tag">実機能</span><span class="p-chip">ConTrack</span></div><div class="c-c">AIツール</div></div>
+              <div class="card"><div class="c-ico" style="background:#e3f2fd">🦾</div><div class="c-t">テスト設計エージェント <span class="p-chip">TESTRA</span></div><div class="c-c">AI品質保証</div></div>
+              <div class="card"><div class="c-ico" style="background:#f3e5f5">🔬</div><div class="c-t">観点ライブラリ <span class="r-tag">実機能</span></div><div class="c-c">知識資産</div></div>
+            </div>
+            <div class="home-cat-t item d5">🔒 セキュリティ</div>
+            <div class="cards item d5">
+              <div class="card"><div class="c-ico" style="background:#ffebee">🛡️</div><div class="c-t">Webアプリ脆弱性診断 <span class="p-chip">Vex</span></div><div class="c-c">セキュリティ</div></div>
+              <div class="card"><div class="c-ico" style="background:#ffebee">📡</div><div class="c-t">組込み・IoT診断</div><div class="c-c">セキュリティ</div></div>
+              <div class="card"><div class="c-ico" style="background:#ffebee">🎓</div><div class="c-t">セキュリティトレーニング</div><div class="c-c">セキュリティ</div></div>
+              <div class="card" style="opacity:.4;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--tx3)">＋ 他16サービス</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 2: NAV TREE -->
+      <section class="scene" data-dur="6">
+        <div class="mock">
+          <div class="m-top">
+            <div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">PMOプラットフォーム</div><div class="m-logo-s">Quality PMO &amp; AI Tools</div></div>
+            <div class="m-search">🔍 サービスを検索…</div>
+          </div>
+          <div class="m-body">
+            <div class="m-nav">
+              <div class="nav-home item d1">🏠 すべてのサービス</div>
+              <div class="nv-sec item d1"><span class="ic" style="background:#e8edf8">🛡️</span>品質PMO</div>
+              <div class="nv-item item d2"><span class="dot"></span>コンサルタント派遣</div>
+              <div class="nv-item item d2"><span class="dot"></span>プロセス診断</div>
+              <div class="nv-sec item d3"><span class="ic" style="background:#ede7f6">🔍</span>第三者検証</div>
+              <div class="nv-item item d3"><span class="dot"></span>ソフトウェアテスト受託</div>
+              <div class="nv-item item d3"><span class="dot"></span>組込み・IoT検証</div>
+              <div class="nv-sec item d4"><span class="ic" style="background:#e8f5e9">🤖</span>AIサービス</div>
+              <div class="nv-item hot item d4"><span class="dot"></span>テスト設計<span class="nv-tag">実機能</span></div>
+              <div class="nv-item item d5"><span class="dot"></span>観点ライブラリ<span class="nv-tag">実機能</span></div>
+              <div class="nv-sec item d5"><span class="ic" style="background:#ffebee">🔒</span>セキュリティ</div>
+            </div>
+            <div class="m-main">
+              <div class="bc item d3">AIサービス › AIツール › テスト設計</div>
+              <div class="d-head item d3"><div class="d-ico" style="background:#e8f5e9">✏️</div>
+                <div><h1>テスト設計</h1><span class="cat-badge">AIサービス › AIツール</span><span class="prod-badge">提供製品: GIHOZ</span></div></div>
+              <div class="lead item d4">テスト技法ツール「GIHOZ」相当。観点ライブラリを軸に、境界値・同値分割・ペアワイズでテスト条件を自動生成します。</div>
+              <div class="panel item d5"><h3>4つのサブ機能</h3>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px">
+                  <span class="tech" style="padding:6px 12px">観点ベース設計</span>
+                  <span class="tech" style="padding:6px 12px">境界値分析</span>
+                  <span class="tech" style="padding:6px 12px">ペアワイズ</span>
+                  <span class="tech" style="padding:6px 12px">同値分割</span>
+                </div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 3: TEST DESIGN OUTPUT -->
+      <section class="scene" data-dur="8">
+        <div class="mock">
+          <div class="m-top"><div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">PMOプラットフォーム</div><div class="m-logo-s">テスト設計 — 観点ベース生成</div></div>
+            <div class="m-search">🔍 サービスを検索…</div></div>
+          <div class="m-main">
+            <div class="bc item d1">AIサービス › AIツール › テスト設計（GIHOZ）</div>
+            <div class="panel item d1"><h3>🔬 観点ベース設計：自動生成されたテスト条件</h3>
+              <table class="tbl">
+                <thead><tr><th>ID</th><th>テスト観点</th><th>技法</th><th>カテゴリ</th></tr></thead>
+                <tbody>
+                  <tr><td>TC-01</td><td>残高0境界での決済拒否とエラーメッセージ</td><td><span class="tech">境界値分析</span></td><td>C-BVA</td></tr>
+                  <tr><td>TC-02</td><td>振込・送金の二重処理防止（冪等性キー）</td><td><span class="tech">同時実行</span></td><td>C-CONC</td></tr>
+                  <tr><td>TC-03</td><td>為替レート変動時の金額再計算・通貨丸め</td><td><span class="tech">境界値分析</span></td><td>C-DATA</td></tr>
+                  <tr><td>TC-04</td><td>セッションタイムアウト後の状態復元</td><td><span class="tech">状態遷移</span></td><td>C-STATE</td></tr>
+                  <tr><td>TC-05</td><td>PCI-DSS準拠：カード番号のマスキング</td><td><span class="tech">攻撃パターン</span></td><td>C-SEC</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel item d6" style="display:flex;align-items:center;gap:18px">
+              <div style="font-size:13px;font-weight:600;color:var(--p)">観点カバレッジ</div>
+              <div class="cov-track" style="flex:1"><div class="cov-fill" data-w="92" style="height:18px"></div></div>
+              <div style="font-size:20px;font-weight:700;color:var(--p-d)" data-count="92" data-suffix="%">0%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 4: VIEWPOINT LIBRARY -->
+      <section class="scene" data-dur="9">
+        <div class="mock">
+          <div class="m-top"><div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">観点ライブラリ</div><div class="m-logo-s">知識資産 — Knowledge Base</div></div>
+            <div class="m-search">🔍 サービスを検索…</div></div>
+          <div class="m-main">
+            <div class="bc item d1">AIサービス › 知識資産 › 観点ライブラリ</div>
+            <div class="kb-stats item d1">
+              <div class="kb-stat"><div class="n" data-count="120" data-suffix="">0</div><div class="l">登録観点数</div></div>
+              <div class="kb-stat"><div class="n" data-count="12" data-suffix="">0</div><div class="l">カテゴリ</div></div>
+              <div class="kb-stat"><div class="n" data-count="4" data-suffix="">0</div><div class="l">業種別セット</div></div>
+              <div class="kb-stat"><div class="n" data-count="12" data-suffix="">0</div><div class="l">欠陥パターン</div></div>
+            </div>
+            <div class="panel item d4"><h3>🐛 欠陥パターンDB（既知の不具合の型）</h3>
+              <table class="tbl">
+                <thead><tr><th>ID</th><th>パターン</th><th>カテゴリ</th><th>予防策</th></tr></thead>
+                <tbody>
+                  <tr><td>DP-001</td><td>オフバイワンエラー</td><td>C-BVA</td><td>境界値±1を必ずテスト</td></tr>
+                  <tr><td>DP-004</td><td>競合状態（Race Condition）</td><td>C-CONC</td><td>冪等性キー・排他制御の検証</td></tr>
+                  <tr><td>DP-007</td><td>状態遷移の取りこぼし</td><td>C-STATE</td><td>状態遷移表で全遷移を網羅</td></tr>
+                  <tr><td>DP-009</td><td>丸め誤差の累積</td><td>C-DATA</td><td>合計後丸め・通貨精度の統一</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 5: DEFECT MANAGER -->
+      <section class="scene" data-dur="8">
+        <div class="mock">
+          <div class="m-top"><div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">欠陥管理</div><div class="m-logo-s">ISTQB severity ／ localStorage永続化</div></div>
+            <div class="m-search">🔍 サービスを検索…</div></div>
+          <div class="m-main">
+            <div class="bc item d1">AIサービス › AIツール › 欠陥管理</div>
+            <div class="panel item d1"><h3>🐛 欠陥を登録</h3>
+              <div class="form-row">
+                <div class="fld" style="flex:2"><label>タイトル</label><div class="inp" id="dm-title">　</div></div>
+                <div class="fld"><label>深刻度</label><div class="inp">Major</div></div>
+                <div class="fld"><label>フェーズ</label><div class="inp">結合テスト</div></div>
+              </div>
+              <div class="btn" id="dm-btn">＋ 欠陥を追加</div>
+            </div>
+            <div class="panel item d1"><h3>登録済み欠陥</h3>
+              <table class="tbl"><thead><tr><th>ID</th><th>タイトル</th><th>深刻度</th><th>状態</th></tr></thead>
+                <tbody id="dm-rows">
+                  <tr><td>BUG-001</td><td>決済二重処理が発生する</td><td><span class="sev c">Critical</span></td><td>Open</td></tr>
+                  <tr id="dm-new" style="opacity:0"><td>BUG-002</td><td>クーポン削除でエラー未返却</td><td><span class="sev m">Major</span></td><td>Open</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 6: SECURITY / VEX -->
+      <section class="scene" data-dur="6">
+        <div class="mock">
+          <div class="m-top"><div class="m-logo-ico">🏛️</div>
+            <div><div class="m-logo-t">セキュリティ</div><div class="m-logo-s">脆弱性診断</div></div>
+            <div class="m-search">🔍 サービスを検索…</div></div>
+          <div class="m-main">
+            <div class="bc item d1">セキュリティ › Webアプリケーション脆弱性診断</div>
+            <div class="d-head item d1"><div class="d-ico" style="background:#ffebee">🛡️</div>
+              <div><h1>Webアプリケーション脆弱性診断</h1><span class="cat-badge">セキュリティ</span><span class="prod-badge">提供製品: Vex</span></div></div>
+            <div class="lead item d2">脆弱性検査・診断ツール「Vex（Vulnerability Explorer）」相当。OWASP Top 10を含む観点でWebアプリの脆弱性を診断し、是正までを支援します。</div>
+            <div class="cards item d3" style="grid-template-columns:repeat(4,1fr)">
+              <div class="card"><div class="c-ico" style="background:#ffebee">🕷️</div><div class="c-t">脆弱性検出</div><div class="c-c">SQLi / XSS / 認可不備</div></div>
+              <div class="card"><div class="c-ico" style="background:#ffebee">📋</div><div class="c-t">OWASP準拠</div><div class="c-c">Top 10 / ASVS</div></div>
+              <div class="card"><div class="c-ico" style="background:#ffebee">🎯</div><div class="c-t">リスク評価</div><div class="c-c">CVSSで深刻度評価</div></div>
+              <div class="card"><div class="c-ico" style="background:#ffebee">🔧</div><div class="c-t">是正支援</div><div class="c-c">修正方針と再診断</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 7: VALIDATION SCORECARD -->
+      <section class="scene" data-dur="10">
+        <div class="mock">
+          <div class="m-top"><div class="m-logo-ico">📊</div>
+            <div><div class="m-logo-t">検証スタディ — スコアカード</div><div class="m-logo-s">実バグ20件での捕捉率比較</div></div></div>
+          <div class="m-main">
+            <div class="item d1" style="font-size:13px;color:var(--tx2);margin-bottom:6px">本番で実際に起きた<b>ドメイン固有バグ16件</b>を、各手法が事前に検出できたか？</div>
+            <div class="panel item d1">
+              <div class="vbars">
+                <div class="vbar-row">
+                  <div class="vbar-lab">ISTQB汎用チェックリスト<small>一般的なテスト観点</small></div>
+                  <div class="vbar-track"><div class="vbar-fill lose" data-w="3"></div></div>
+                  <div class="vbar-pct" data-count="0" data-suffix="%">0%</div>
+                </div>
+                <div class="vbar-row">
+                  <div class="vbar-lab">GPT-4o 汎用プロンプト<small>網羅的に設計して、と依頼</small></div>
+                  <div class="vbar-track"><div class="vbar-fill lose" data-w="3"></div></div>
+                  <div class="vbar-pct" data-count="0" data-suffix="%">0%</div>
+                </div>
+                <div class="vbar-row">
+                  <div class="vbar-lab" style="color:var(--p-d)">観点ライブラリ方式<small>本プラットフォームの中核資産</small></div>
+                  <div class="vbar-track"><div class="vbar-fill win" data-w="88"></div></div>
+                  <div class="vbar-pct" data-count="88" data-suffix="%">0%</div>
+                </div>
+              </div>
+            </div>
+            <div class="item d6" style="font-size:11.5px;color:var(--tx3);line-height:1.6">
+              ※ サンプル20件・採点はツール開発側主導という制約あり（事前登録で手順を固定し、正直に開示）。<br>
+              差の理由＝競合状態・状態管理・金銭計算精度・国際化は「知識があって初めて問える」問い。汎用手法は問い自体が生まれない。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 8: CLOSING -->
+      <section class="scene" data-dur="6">
+        <div class="close-s">
+          <h1 class="item d1">汎用ツールより、当たる。</h1>
+          <div style="font-size:15px;opacity:.8" class="item d2">観点という知識資産を、防御可能な堀に。</div>
+          <div class="close-grid">
+            <div class="item d3"><div class="n">31</div><div class="l">提供サービス</div></div>
+            <div class="item d4"><div class="n">9</div><div class="l">実機能MVP</div></div>
+            <div class="item d5"><div class="n">88%</div><div class="l">ドメイン固有バグ捕捉率</div></div>
+          </div>
+          <div class="item d6" style="margin-top:18px;font-size:13px;opacity:.6">PMOプラットフォーム ／ Quality PMO &amp; AI Tools</div>
+        </div>
+      </section>
+
+      <!-- cursor -->
+      <div id="cursor"><svg viewBox="0 0 24 24" fill="#1a3a6b" stroke="#fff" stroke-width="1.2"><path d="M4 2 L4 19 L9 14 L12.5 21 L15 20 L11.5 13 L18 13 Z"/></svg></div>
+    </div>
+
+    <!-- caption -->
+    <div id="caption">
+      <div id="cap-step">SCENE 1 / 9</div>
+      <div id="cap-text">読み込み中…</div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="playbtn" aria-label="再生/一時停止">▶</button>
+  <div id="timeline"><div id="progress"></div><div id="scene-name"></div></div>
+  <span id="tlabel">0:00 / 0:00</span>
+  <button id="restart">↺ 最初から</button>
+</div>
+<div class="hint"><span class="badge-live"></span>これは実システムの挙動を再現した自動再生デモです（実ファイルは index.html）。タイムラインをタップで頭出しできます。</div>
+
+<script>
+const scenes = [...document.querySelectorAll('.scene')];
+const captions = [
+  ['SCENE 1 / 9', '品質PMOとAIサービスを1つに統合した、提供メニュー・プラットフォーム。'],
+  ['SCENE 2 / 9', 'トップ画面。4カテゴリ・全31サービスを一覧。実機能には「実機能」バッジ、製品には製品名チップを表示。'],
+  ['SCENE 3 / 9', '左ナビから各サービスへ。テスト設計はGIHOZ相当。「提供製品」バッジで製品名を明示。'],
+  ['SCENE 4 / 9', 'テスト設計を実行。観点ライブラリから、競合・状態・金銭・セキュリティの観点が自動展開。カバレッジも可視化。'],
+  ['SCENE 5 / 9', '中核資産＝観点ライブラリ。120観点・12カテゴリ・業種別・欠陥パターンDBを内蔵。これが精度の堀。'],
+  ['SCENE 6 / 9', '欠陥管理。ISTQBの深刻度で登録・追跡。ブラウザ内に永続化し、CSV出力も可能。'],
+  ['SCENE 7 / 9', 'セキュリティ領域。Webアプリ脆弱性診断はVex相当。OWASP準拠で検出から是正までを支援。'],
+  ['SCENE 8 / 9', '検証スタディ：実バグでの捕捉率。汎用手法0%に対し、観点ライブラリ方式は88%。これが課金根拠。'],
+  ['SCENE 9 / 9', '観点という知識資産を、模倣されにくい堀に。汎用ツールより当たる品質保証を。'],
+];
+const durs = scenes.map(s => parseFloat(s.dataset.dur));
+const total = durs.reduce((a,b)=>a+b,0);
+const starts = []; let acc=0; durs.forEach(d=>{starts.push(acc);acc+=d;});
+
+const stage=document.getElementById('stage'), wrap=document.getElementById('stage-wrap');
+const cursor=document.getElementById('cursor');
+const capStep=document.getElementById('cap-step'), capText=document.getElementById('cap-text');
+const progress=document.getElementById('progress'), tlabel=document.getElementById('tlabel');
+const playbtn=document.getElementById('playbtn'), timeline=document.getElementById('timeline');
+const sceneName=document.getElementById('scene-name');
+
+function fit(){const s=wrap.clientWidth/1280;stage.style.transform='scale('+s+')';wrap.style.height=(720*s)+'px';}
+window.addEventListener('resize',fit); fit();
+
+// chapter ticks
+starts.forEach((st,i)=>{ if(i===0)return; const c=document.createElement('div'); c.className='chap'; c.style.left=(st/total*100)+'%'; timeline.appendChild(c);});
+
+let t=0, playing=false, last=0, cur=-1;
+const fmt=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+
+function activate(i){
+  if(i===cur) return;
+  scenes.forEach((s,j)=>{s.classList.toggle('active',j===i);});
+  cur=i;
+  capStep.textContent=captions[i][0]; capText.textContent=captions[i][1];
+  // reset + replay entrance
+  const sc=scenes[i];
+  sc.classList.remove('go'); void sc.offsetWidth; sc.classList.add('go');
+  runHooks(i, sc);
+}
+
+function runHooks(i, sc){
+  // animate counters
+  sc.querySelectorAll('[data-count]').forEach(el=>{
+    const to=parseFloat(el.dataset.count), suf=el.dataset.suffix||'';
+    const t0=performance.now(), D=1200, delay= (i===7?700:500);
+    el.textContent='0'+suf;
+    setTimeout(()=>{
+      const step=now=>{const k=Math.min(1,(now-performance.now()+D)/D);};
+      const s0=performance.now();
+      const tick=now=>{let k=Math.min(1,(now-s0)/D);k=1-Math.pow(1-k,3);
+        el.textContent=Math.round(to*k)+suf; if(k<1)requestAnimationFrame(tick);};
+      requestAnimationFrame(tick);
+    },delay);
+  });
+  // grow bars
+  sc.querySelectorAll('[data-w]').forEach(el=>{el.style.width='0';
+    setTimeout(()=>{el.style.width=el.dataset.w+'%';}, i===7?650:500);});
+  // cursor moves
+  cursor.style.opacity='0'; cursor.classList.remove('click');
+  if(i===5){ // defect manager: type + click + row
+    const title=sc.querySelector('#dm-title'), btn=sc.querySelector('#dm-btn'), row=sc.querySelector('#dm-new');
+    if(title){title.textContent='　';title.classList.remove('typed');}
+    if(row)row.style.opacity='0';
+    moveCursor(sc, '#dm-title', 1000);
+    setTimeout(()=>{ if(title){title.textContent='クーポン削除でエラーが返らない';title.classList.add('typed');}},1700);
+    moveCursor(sc, '#dm-btn', 2600);
+    setTimeout(()=>{clickFx();},3300);
+    setTimeout(()=>{ if(row)row.style.opacity='1';},3600);
+  } else if(i===1 || i===2){
+    moveCursor(sc, i===2?'.nv-item.hot':'.card', 1400);
+    setTimeout(()=>clickFx(),2100);
+  }
+}
+
+function moveCursor(sc, sel, delay){
+  const el=sc.querySelector(sel); if(!el)return;
+  setTimeout(()=>{
+    const r=el.getBoundingClientRect(), sr=stage.getBoundingClientRect(), sc2=wrap.clientWidth/1280;
+    const x=(r.left-sr.left)/sc2 + r.width/sc2/2, y=(r.top-sr.top)/sc2 + r.height/sc2/2;
+    cursor.style.opacity='1'; cursor.style.left=x+'px'; cursor.style.top=y+'px';
+  },delay);
+}
+function clickFx(){cursor.classList.remove('click');void cursor.offsetWidth;cursor.classList.add('click');}
+
+function sceneIndexAt(time){let i=0;for(let k=0;k<starts.length;k++){if(time>=starts[k])i=k;}return i;}
+
+function frame(now){
+  if(!playing){last=now;return;}
+  const dt=(now-last)/1000; last=now; t+=dt;
+  if(t>=total){t=total;playing=false;playbtn.textContent='↺';}
+  render(); if(playing)requestAnimationFrame(frame);
+}
+function render(){
+  const i=sceneIndexAt(t); activate(i);
+  progress.style.width=(t/total*100)+'%';
+  tlabel.textContent=fmt(t)+' / '+fmt(total);
+  sceneName.style.left=(t/total*100)+'%';
+  sceneName.textContent=captions[i][0];
+}
+function play(){ if(t>=total){t=0;} playing=true; playbtn.textContent='❚❚'; last=performance.now(); requestAnimationFrame(frame);}
+function pause(){playing=false; playbtn.textContent='▶';}
+playbtn.onclick=()=>{playing?pause():play();};
+document.getElementById('restart').onclick=()=>{t=0;render();play();};
+timeline.onclick=e=>{const r=timeline.getBoundingClientRect();t=Math.max(0,Math.min(total,(e.clientX-r.left)/r.width*total));cur=-1;render();};
+
+render();
+// autoplay (muted, user-initiated friendly): start after short delay
+setTimeout(()=>play(), 600);
+</script>
+</body>
+</html>

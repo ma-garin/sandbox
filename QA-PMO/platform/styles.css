@@ -78,6 +78,8 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
 .detail-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:18px}
 .d-icon{width:54px;height:54px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .cat-badge{display:inline-block;background:var(--acc-l);color:var(--p);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px}
+.prod-badge{display:inline-block;background:#1a2a4a;color:#fff;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:700;margin-top:6px;margin-left:8px;letter-spacing:.5px}
+.prod-chip{display:inline-block;background:#1a2a4a;color:#fff;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;margin-left:4px;letter-spacing:.3px;vertical-align:middle}
 .lead{font-size:14px;line-height:1.8;color:var(--tx2);background:var(--sf);border-left:4px solid var(--p);border-radius:var(--r);padding:18px 22px;box-shadow:var(--el1);margin-bottom:22px}
 
 /* catalog */
@@ -139,6 +141,35 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
 .chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer}
 .vp-warn{background:#fff8e1;border:1px solid #ffe082;color:#8a6d00;padding:10px 14px;border-radius:var(--r-s);font-size:12.5px;margin:10px 0}
 .vp-ok{background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:10px 14px;border-radius:var(--r-s);font-size:12.5px;margin:10px 0}
+
+/* 業種別観点セレクタ */
+.vp-industry{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:6px}
+
+/* 観点ライブラリ — stats */
+.kb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kb-stat{background:linear-gradient(135deg,var(--p),var(--p-l));border-radius:var(--r);padding:16px 20px;text-align:center}
+.kb-stat-n{font-size:30px;font-weight:700;color:#fff}
+.kb-stat-l{font-size:11px;color:rgba(255,255,255,.72);margin-top:4px}
+
+/* 観点ライブラリ — filter row */
+.kb-filter{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+
+/* テスト技法バッジ */
+.tech-badge{display:inline-block;font-size:10px;background:var(--dv);color:var(--p);padding:2px 7px;border-radius:8px;white-space:nowrap;font-weight:600}
+
+/* カバレッジマップ */
+.cov-chart{display:flex;flex-direction:column;gap:9px}
+.cov-row{display:flex;align-items:center;gap:10px}
+.cov-label{width:150px;font-size:12px;color:var(--tx2);flex-shrink:0;text-align:right}
+.cov-bar-wrap{flex:1;height:14px;background:var(--dv);border-radius:7px;overflow:hidden}
+.cov-bar{height:100%;background:linear-gradient(90deg,var(--p),var(--p-l));border-radius:7px;transition:width .4s}
+.cov-count{width:30px;font-size:12px;color:var(--tx2);text-align:right;font-weight:600}
+
+/* 欠陥管理 */
+.defect-form{margin-bottom:20px}
+.inp-sm{font-size:11px;padding:3px 7px;border:1px solid var(--bd);border-radius:var(--r-s);background:var(--sf);font-family:inherit;color:var(--tx)}
+.btn-icon{border:none;background:none;cursor:pointer;font-size:14px;opacity:.45;padding:2px}
+.btn-icon:hover{opacity:1}
 
 /* modal */
 #modal{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);backdrop-filter:blur(3px);z-index:500;align-items:center;justify-content:center}

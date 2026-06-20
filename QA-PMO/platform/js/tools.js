@@ -46,9 +46,51 @@ Tools.docVerifier = {
   ],
   REQUIRED_HEADINGS: ['目的', '範囲', '前提', '受入基準'],
 
+  // ドキュメント種別固有ルール（必須セクション＋追加チェック）
+  DOC_TYPE_RULES: {
+    general: {
+      label: '汎用', required: ['目的', '範囲', '前提', '受入基準'], extraAmbiguous: [],
+    },
+    requirements: {
+      label: '要件定義書',
+      required: ['目的', '範囲', '前提', '受入基準', 'ステークホルダー'],
+      extraAmbiguous: [
+        { re: /するものとする|することができる|してもよい/g, sev: 'Minor', msg: '要件の義務度が不明確（MUST/SHOULDで明示を推奨）' },
+        { re: /詳細は別途|詳細は後述|後で決定/g, sev: 'Major', msg: '要件の先送り（実装前に確定が必要）' },
+      ],
+    },
+    'test-design': {
+      label: 'テスト設計書',
+      required: ['テスト対象', '合否基準', 'テスト環境', 'テスト手順'],
+      extraAmbiguous: [
+        { re: /確認する|テストする/g, sev: 'Cosmetic', msg: '観点と期待値を具体的に記述（何をどう確認するか）' },
+        { re: /正しく動作|正常に動く/g, sev: 'Minor', msg: '「正しく」の基準を定量的に定義する' },
+      ],
+    },
+    'api-spec': {
+      label: 'API仕様書',
+      required: ['エンドポイント', 'リクエスト', 'レスポンス', 'エラー'],
+      extraAmbiguous: [
+        { re: /TBD|未定|後ほど/g, sev: 'Critical', msg: 'API仕様の未確定項目は実装ブロッカー（即座に解決が必要）' },
+        { re: /任意|optional/gi, sev: 'Minor', msg: 'オプションフィールドはデフォルト値・null許容を明記' },
+        { re: /エラーの場合|エラー時/g, sev: 'Minor', msg: 'エラーケースはHTTPステータスコードと本文スキーマを明記' },
+      ],
+    },
+  },
+
   render(c) {
     c.innerHTML = `
       <p class="tool-desc">要件定義書・設計書などを貼り付けて検証します。曖昧語・冗長文・必須節欠落を行番号付きで指摘します（ルールベース／AIなし）。</p>
+      <div class="form-row" style="margin-bottom:10px">
+        <label class="lbl" style="flex:0 0 auto">ドキュメント種別
+          <select id="dv-type" class="inp">
+            <option value="general">汎用（共通ルール）</option>
+            <option value="requirements">要件定義書</option>
+            <option value="test-design">テスト設計書</option>
+            <option value="api-spec">API仕様書</option>
+          </select>
+        </label>
+      </div>
       <textarea id="dv-input" class="tool-ta" placeholder="ここにドキュメント本文を貼り付け…">1. 目的&#10;本システムは業務効率を可能な限り向上させることを目的とする。&#10;2. 機能&#10;ユーザーは適宜データを登録できる等、必要に応じて操作する。詳細はTBD。</textarea>
       <div class="tool-actions">
         <button class="btn-primary" id="dv-run">検証する</button>
@@ -64,17 +106,28 @@ Tools.docVerifier = {
 
   run(c) {
     const text = c.querySelector('#dv-input').value;
+    const typeKey = (c.querySelector('#dv-type') || {}).value || 'general';
+    const typeConfig = this.DOC_TYPE_RULES[typeKey] || this.DOC_TYPE_RULES.general;
     const lines = text.split('\n');
     const findings = [];
 
     lines.forEach((line, i) => {
       const ln = i + 1;
-      // 曖昧語
+      // 共通曖昧語
       this.AMBIGUOUS.forEach(rule => {
         let m;
         const re = new RegExp(rule.re.source, 'g');
         while ((m = re.exec(line)) !== null) {
           if (m.index === re.lastIndex) re.lastIndex++; // ゼロ幅マッチ対策
+          findings.push({ sev: rule.sev, line: ln, term: m[0], msg: rule.msg, text: line.trim() });
+        }
+      });
+      // ドキュメント種別固有ルール
+      (typeConfig.extraAmbiguous || []).forEach(rule => {
+        let m;
+        const re = new RegExp(rule.re.source, rule.re.flags || 'g');
+        while ((m = re.exec(line)) !== null) {
+          if (m.index === re.lastIndex) re.lastIndex++;
           findings.push({ sev: rule.sev, line: ln, term: m[0], msg: rule.msg, text: line.trim() });
         }
       });
@@ -86,9 +139,10 @@ Tools.docVerifier = {
       });
     });
 
-    // 必須見出しの欠落
-    const missing = this.REQUIRED_HEADINGS.filter(h => !text.includes(h));
-    missing.forEach(h => findings.push({ sev: 'Major', line: '-', term: h, msg: '必須セクションが見当たらない', text: '' }));
+    // 必須見出しの欠落（ドキュメント種別に応じた必須セクション）
+    const requiredHeadings = typeConfig.required || this.REQUIRED_HEADINGS;
+    const missing = requiredHeadings.filter(h => !text.includes(h));
+    missing.forEach(h => findings.push({ sev: 'Major', line: '-', term: h, msg: `必須セクションが見当たらない（${typeConfig.label}）`, text: '' }));
 
     const counts = {};
     findings.forEach(f => counts[f.sev] = (counts[f.sev] || 0) + 1);
@@ -431,6 +485,14 @@ Tools.testDesign = {
         ${[['auth', '認証あり'], ['integration', '外部連携あり'], ['money', '金額を扱う'], ['pii', '個人情報を扱う'], ['state', '状態遷移あり'], ['concurrent', '同時実行あり'], ['perf', '性能要件あり']]
         .map(([k, l]) => `<label class="chk"><input type="checkbox" value="${k}">${l}</label>`).join('')}
       </div>
+      <div class="lbl" style="margin:14px 0 6px">業種別観点（オプション）</div>
+      <div class="vp-industry" id="vp-industry">
+        <label class="chk"><input type="radio" name="vp-ind" value="" checked>なし（業種共通のみ）</label>
+        <label class="chk"><input type="radio" name="vp-ind" value="finance">🏦 金融</label>
+        <label class="chk"><input type="radio" name="vp-ind" value="ecommerce">🛒 EC/小売</label>
+        <label class="chk"><input type="radio" name="vp-ind" value="healthcare">🏥 医療/ヘルスケア</label>
+        <label class="chk"><input type="radio" name="vp-ind" value="saas">☁️ SaaS/B2B</label>
+      </div>
       <div class="tool-actions">
         <button class="btn-primary" id="vp-run">観点ベースで生成</button>
         <button class="btn-ghost" id="vp-csv" disabled>CSV</button>
@@ -464,7 +526,8 @@ Tools.testDesign = {
         type: r.querySelector('.vp-ft').value,
       }));
       const flags = [...p.querySelectorAll('#vp-flags input:checked')].map(i => i.value);
-      lastResult = this.genViewpoints(feat, fields, flags);
+      const industry = (p.querySelector('input[name="vp-ind"]:checked') || {}).value || '';
+      lastResult = this.genViewpoints(feat, fields, flags, industry);
       this.renderVpResult(p, lastResult);
       p.querySelector('#vp-csv').disabled = false;
       p.querySelector('#vp-md').disabled = false;
@@ -475,7 +538,7 @@ Tools.testDesign = {
   },
 
   // 観点ライブラリを適用してテスト条件を生成（決定的）
-  genViewpoints(feature, fields, flags) {
+  genViewpoints(feature, fields, flags, industry) {
     const rows = [];
     let n = 0;
     const add = (target, item) => rows.push({
@@ -488,13 +551,18 @@ Tools.testDesign = {
     fields.forEach(f => (VIEWPOINTS.byFieldType[f.type] || []).forEach(v => add(`${f.name}（${f.type}）`, v)));
     // 特性別観点
     flags.forEach(fl => (VIEWPOINTS.byFlag[fl] || []).forEach(v => add(feature, v)));
+    // 業種別観点（選択された場合のみ）
+    if (industry && VIEWPOINTS.byIndustry[industry]) {
+      const indLabel = `${feature}（${VIEWPOINTS.industryName(industry)}）`;
+      VIEWPOINTS.byIndustry[industry].forEach(v => add(indLabel, v));
+    }
 
     // 観点カバレッジ
     const touched = new Set(rows.map(r => r.cat));
     const covered = VIEWPOINTS.categories.filter(c => touched.has(c.id));
     const missing = VIEWPOINTS.categories.filter(c => !touched.has(c.id));
     return {
-      feature, rows, total: VIEWPOINTS.categories.length,
+      feature, industry, rows, total: VIEWPOINTS.categories.length,
       coveredCats: covered, missingCats: missing,
       coverage: Math.round(covered.length / VIEWPOINTS.categories.length * 100),
     };
@@ -524,6 +592,7 @@ Tools.testDesign = {
   vpToMd(r) {
     const lines = [`# テスト設計（観点ベース） — ${r.feature}`, ''];
     lines.push(`- 観点ライブラリ: v${VIEWPOINTS.version}`);
+    if (r.industry) lines.push(`- 業種別観点: ${VIEWPOINTS.industryName(r.industry)}`);
     lines.push(`- 観点カバレッジ: ${r.coverage}% (${r.coveredCats.length}/${r.total}カテゴリ)`);
     lines.push(`- テスト条件数: ${r.rows.length}`);
     if (r.missingCats.length) lines.push(`- ⚠ 未カバー観点: ${r.missingCats.map(c => c.name).join(' / ')}`);
@@ -782,5 +851,286 @@ ${setup}
       - name: 品質ゲート（カバレッジ/静的解析はここに追加）
         run: echo "Critical/Major欠陥0件・カバレッジ閾値をここで検証"
 ${deployJob}`;
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+ * 8. 観点ライブラリブラウザ（知識資産の可視化・探索）
+ * ═══════════════════════════════════════════════════════ */
+Tools.viewpointBrowser = {
+  title: '観点ライブラリ',
+
+  countAll() {
+    return VIEWPOINTS.always.length
+      + Object.values(VIEWPOINTS.byFieldType).flat().length
+      + Object.values(VIEWPOINTS.byFlag).flat().length
+      + Object.values(VIEWPOINTS.byIndustry).flat().length;
+  },
+
+  getAllViewpoints() {
+    const result = [];
+    VIEWPOINTS.always.forEach(v => result.push({ ...v, _src: 'always', _label: '常時適用' }));
+    Object.entries(VIEWPOINTS.byFieldType).forEach(([k, vs]) =>
+      vs.forEach(v => result.push({ ...v, _src: 'field', _label: `項目型: ${k}` })));
+    Object.entries(VIEWPOINTS.byFlag).forEach(([k, vs]) =>
+      vs.forEach(v => result.push({ ...v, _src: 'flag', _label: `機能特性: ${k}` })));
+    Object.entries(VIEWPOINTS.byIndustry).forEach(([k, vs]) =>
+      vs.forEach(v => result.push({ ...v, _src: 'industry', _label: `業種: ${VIEWPOINTS.industryName(k)}` })));
+    return result;
+  },
+
+  render(c) {
+    const total = this.countAll();
+    c.innerHTML = `
+      <p class="tool-desc">テスト観点ナレッジベース（v${VIEWPOINTS.version}）を閲覧・検索します。業種別・カテゴリ別フィルタ、欠陥パターンDB、カバレッジマップを内包します。</p>
+      <div class="kb-stats">
+        <div class="kb-stat"><div class="kb-stat-n">${total}</div><div class="kb-stat-l">観点総数</div></div>
+        <div class="kb-stat"><div class="kb-stat-n">${VIEWPOINTS.categories.length}</div><div class="kb-stat-l">カテゴリ</div></div>
+        <div class="kb-stat"><div class="kb-stat-n">${Object.keys(VIEWPOINTS.byIndustry).length}</div><div class="kb-stat-l">対応業種</div></div>
+        <div class="kb-stat"><div class="kb-stat-n">${VIEWPOINTS.defectPatterns.length}</div><div class="kb-stat-l">欠陥パターン</div></div>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-t="browse">観点ブラウザ</button>
+        <button class="subtab" data-t="defects">欠陥パターンDB</button>
+        <button class="subtab" data-t="coverage">カバレッジマップ</button>
+      </div>
+      <div id="kb-panel"></div>`;
+    const panel = c.querySelector('#kb-panel');
+    const tabs = c.querySelectorAll('.subtab');
+    tabs.forEach(t => t.onclick = () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      this['render_' + t.dataset.t](panel);
+    });
+    this.render_browse(panel);
+  },
+
+  render_browse(p) {
+    const allVps = this.getAllViewpoints();
+    p.innerHTML = `
+      <div class="kb-filter">
+        <input id="kb-search" class="inp" placeholder="キーワードで絞り込み…" style="flex:1;min-width:160px;max-width:240px">
+        <select id="kb-cat" class="inp" style="min-width:160px">
+          <option value="">すべてのカテゴリ</option>
+          ${VIEWPOINTS.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+        <select id="kb-src" class="inp" style="min-width:160px">
+          <option value="">すべての観点種別</option>
+          <option value="always">常時観点</option>
+          <option value="field">入力項目別</option>
+          <option value="flag">機能特性別</option>
+          <option value="industry">業種別</option>
+        </select>
+        <span class="muted" id="kb-count" style="white-space:nowrap">${allVps.length}件</span>
+      </div>
+      <div id="kb-table"></div>`;
+    const render = () => {
+      const q = p.querySelector('#kb-search').value.toLowerCase();
+      const cat = p.querySelector('#kb-cat').value;
+      const src = p.querySelector('#kb-src').value;
+      const filtered = allVps.filter(v => {
+        if (cat && v.cat !== cat) return false;
+        if (src && v._src !== src) return false;
+        if (q && !v.vp.includes(q) && !v.tech.includes(q) && !v._label.includes(q)) return false;
+        return true;
+      });
+      p.querySelector('#kb-count').textContent = `${filtered.length}件`;
+      const rows = filtered.map(v => `
+        <tr>
+          <td><code>${esc(v.cat)}</code></td>
+          <td class="muted">${esc(VIEWPOINTS.catName(v.cat))}</td>
+          <td>${esc(v.vp)}</td>
+          <td><span class="tech-badge">${esc(v.tech)}</span></td>
+          <td class="muted">${esc(v._label)}</td>
+        </tr>`).join('') || `<tr><td colspan="5" class="muted">該当する観点がありません。</td></tr>`;
+      p.querySelector('#kb-table').innerHTML = `
+        <table class="tool-table">
+          <thead><tr><th>Cat</th><th>カテゴリ</th><th>テスト観点</th><th>技法</th><th>適用対象</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    };
+    p.querySelector('#kb-search').oninput = render;
+    p.querySelector('#kb-cat').onchange = render;
+    p.querySelector('#kb-src').onchange = render;
+    render();
+  },
+
+  render_defects(p) {
+    const rows = VIEWPOINTS.defectPatterns.map(dp => `
+      <tr>
+        <td><code>${esc(dp.id)}</code></td>
+        <td><code>${esc(dp.cat)}</code> <span class="muted">${esc(VIEWPOINTS.catName(dp.cat))}</span></td>
+        <td><strong>${esc(dp.pattern)}</strong></td>
+        <td class="muted">${esc(dp.example)}</td>
+        <td style="color:var(--cos);font-size:12px">${esc(dp.prevention)}</td>
+      </tr>`).join('');
+    p.innerHTML = `
+      <p class="muted" style="margin-bottom:12px">業界で繰り返し発生する既知の欠陥パターン。テスト設計時にこれらのパターンが発生しないか観点として追加することを推奨します。</p>
+      <table class="tool-table">
+        <thead><tr><th>ID</th><th>カテゴリ</th><th>欠陥パターン</th><th>典型例</th><th>予防策</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  },
+
+  render_coverage(p) {
+    const allVps = this.getAllViewpoints();
+    const catCounts = {};
+    VIEWPOINTS.categories.forEach(c => { catCounts[c.id] = 0; });
+    allVps.forEach(v => { if (catCounts[v.cat] !== undefined) catCounts[v.cat]++; });
+    const max = Math.max(...Object.values(catCounts), 1);
+    const bars = VIEWPOINTS.categories.map(c => {
+      const count = catCounts[c.id];
+      const pct = Math.round(count / max * 100);
+      return `
+        <div class="cov-row">
+          <div class="cov-label">${esc(c.name)}</div>
+          <div class="cov-bar-wrap"><div class="cov-bar" style="width:${pct}%"></div></div>
+          <div class="cov-count">${count}</div>
+        </div>`;
+    }).join('');
+    p.innerHTML = `
+      <p class="muted" style="margin-bottom:16px">カテゴリ別の観点数分布。観点数が少ないカテゴリは知識資産の拡充余地です。</p>
+      <div class="cov-chart">${bars}</div>
+      <p class="muted" style="margin-top:14px">総観点数: <strong>${allVps.length}</strong> ／ カテゴリ数: ${VIEWPOINTS.categories.length}</p>`;
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+ * 9. 欠陥管理（ISTQB severity・localStorage永続化）
+ * ═══════════════════════════════════════════════════════ */
+Tools.defectMgr = {
+  title: '欠陥管理',
+  STORE_KEY: 'pmo_defects',
+  _defects: null,
+
+  getDefects() {
+    if (this._defects !== null) return this._defects;
+    try { this._defects = JSON.parse(localStorage.getItem(this.STORE_KEY) || '[]'); }
+    catch { this._defects = []; }
+    return this._defects;
+  },
+
+  saveDefects(defects) {
+    this._defects = defects;
+    try { localStorage.setItem(this.STORE_KEY, JSON.stringify(defects)); } catch {}
+  },
+
+  nextId(defects) {
+    if (!defects.length) return 'D-001';
+    const nums = defects.map(d => parseInt(d.id.replace('D-', ''), 10)).filter(n => !isNaN(n));
+    return 'D-' + String(Math.max(...nums) + 1).padStart(3, '0');
+  },
+
+  render(c) {
+    c.innerHTML = `
+      <p class="tool-desc">欠陥（バグ）をISTQB severityで登録・追跡します。ブラウザのlocalStorageに保存されるため、ページ再読み込み後も保持されます。</p>
+      <div class="panel defect-form">
+        <h4>欠陥を登録</h4>
+        <div class="form-grid">
+          <label class="lbl">タイトル<input id="dm-title" class="inp" placeholder="例：ログインボタン押下でエラー500が発生"></label>
+          <label class="lbl">Severity
+            <select id="dm-sev" class="inp">
+              <option value="Critical">Critical（システム停止・データ破損）</option>
+              <option value="Major" selected>Major（主要機能が動作不可）</option>
+              <option value="Minor">Minor（機能は動くが一部不具合）</option>
+              <option value="Cosmetic">Cosmetic（見た目・微細な問題）</option>
+            </select>
+          </label>
+          <label class="lbl">検出フェーズ
+            <select id="dm-phase" class="inp">
+              <option>単体テスト</option><option>結合テスト</option>
+              <option>システムテスト</option><option>UAT</option><option>本番</option>
+            </select>
+          </label>
+          <label class="lbl">根本原因
+            <select id="dm-root" class="inp">
+              <option>仕様漏れ</option><option>実装誤り</option><option>設計誤り</option>
+              <option>テスト漏れ</option><option>環境問題</option><option>外部要因</option>
+            </select>
+          </label>
+        </div>
+        <label class="lbl" style="margin-top:10px">概要・再現手順
+          <textarea id="dm-desc" class="tool-ta sm" placeholder="再現手順: 1. ログインページを開く  2. 誤ったパスワードを入力して送信  3. エラーコード500が表示される"></textarea>
+        </label>
+        <div class="tool-actions">
+          <button class="btn-primary" id="dm-add">欠陥を登録</button>
+          <button class="btn-ghost" id="dm-csv" disabled>CSVエクスポート</button>
+        </div>
+      </div>
+      <div id="dm-list"></div>`;
+    c.querySelector('#dm-add').onclick = () => this.addDefect(c);
+    c.querySelector('#dm-csv').onclick = () => this.exportCsv();
+    this.renderList(c);
+  },
+
+  addDefect(c) {
+    const title = c.querySelector('#dm-title').value.trim();
+    if (!title) { alert('タイトルを入力してください。'); return; }
+    const defects = this.getDefects();
+    defects.unshift({
+      id: this.nextId(defects),
+      title,
+      sev: c.querySelector('#dm-sev').value,
+      phase: c.querySelector('#dm-phase').value,
+      root: c.querySelector('#dm-root').value,
+      desc: c.querySelector('#dm-desc').value.trim(),
+      status: 'Open',
+      created: new Date().toISOString().slice(0, 10),
+    });
+    this.saveDefects(defects);
+    c.querySelector('#dm-title').value = '';
+    c.querySelector('#dm-desc').value = '';
+    this.renderList(c);
+  },
+
+  renderList(c) {
+    const defects = this.getDefects();
+    const csvBtn = c.querySelector('#dm-csv');
+    if (csvBtn) csvBtn.disabled = !defects.length;
+    const counts = {};
+    defects.forEach(d => { counts[d.sev] = (counts[d.sev] || 0) + 1; });
+    const summary = defects.length
+      ? `<div class="result-head">${sevSummary(counts)}<div class="muted">合計 ${defects.length}件</div></div>` : '';
+    const rows = defects.length ? defects.map(d => `
+      <tr>
+        <td><code>${esc(d.id)}</code></td>
+        <td>${sevBadge(d.sev)}</td>
+        <td>${esc(d.title)}</td>
+        <td class="muted">${esc(d.phase)}</td>
+        <td class="muted">${esc(d.root)}</td>
+        <td>
+          <select class="inp-sm" data-id="${esc(d.id)}" onchange="window._dmStatusChange(this)">
+            ${['Open', 'In Progress', 'Fixed', 'Closed', 'Rejected'].map(s =>
+              `<option${s === d.status ? ' selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td class="muted">${esc(d.created)}</td>
+        <td><button class="btn-icon" onclick="window._dmDelete('${esc(d.id)}')" title="削除">🗑</button></td>
+      </tr>`).join('')
+      : `<tr><td colspan="8" class="muted">まだ欠陥が登録されていません。フォームから登録してください。</td></tr>`;
+    c.querySelector('#dm-list').innerHTML = `
+      ${summary}
+      <table class="tool-table">
+        <thead><tr><th>ID</th><th>Sev</th><th>タイトル</th><th>フェーズ</th><th>根本原因</th><th>ステータス</th><th>登録日</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    window._dmStatusChange = sel => {
+      const defs = this.getDefects();
+      const d = defs.find(x => x.id === sel.dataset.id);
+      if (d) { d.status = sel.value; this.saveDefects(defs); }
+    };
+    window._dmDelete = id => {
+      if (!confirm(`欠陥 ${id} を削除しますか？`)) return;
+      this.saveDefects(this.getDefects().filter(d => d.id !== id));
+      this.renderList(c);
+    };
+  },
+
+  exportCsv() {
+    const defects = this.getDefects();
+    const csv = ['ID,Severity,タイトル,検出フェーズ,根本原因,ステータス,登録日,概要']
+      .concat(defects.map(d => [d.id, d.sev, d.title, d.phase, d.root, d.status, d.created, d.desc]
+        .map(s => `"${String(s || '').replace(/"/g, '""')}"`).join(','))).join('\n');
+    download('defects.csv', csv, 'text/csv');
   },
 };

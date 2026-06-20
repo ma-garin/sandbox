@@ -1,0 +1,21 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">種別を選んでパラメータを入力すると、確立フレームワークのテストscaffoldを生成します（テンプレート／AIなし）。</p>
+<form method="post">
+  {% csrf_token %}
+  <div class="form-row">
+    <label class="lbl">種別
+      <select name="kind" class="inp">
+        <option value="ui" {% if kind == 'ui' %}selected{% endif %}>UI（Playwright）</option>
+        <option value="api" {% if kind == 'api' %}selected{% endif %}>API（pytest + requests）</option>
+        <option value="bat" {% if kind == 'bat' %}selected{% endif %}>BAT（bats-core）</option>
+      </select>
+    </label>
+    <label class="lbl">パラメータ1<input name="p1" class="inp" value="{{ p1 }}"></label>
+    <label class="lbl">パラメータ2<input name="p2" class="inp" value="{{ p2 }}"></label>
+    <button class="btn-primary" type="submit">生成</button>
+  </div>
+  <div class="tool-actions"><button class="btn-ghost" type="submit" name="download" value="1">{{ fname }} をダウンロード</button></div>
+</form>
+<pre class="codeblock">{{ code }}</pre>
+{% endblock %}

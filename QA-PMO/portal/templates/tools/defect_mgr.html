@@ -1,0 +1,76 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">欠陥（バグ）をISTQB severityで登録・追跡します。<strong>DBに永続化</strong>されるため、複数ユーザー・複数端末から同じ欠陥情報を共有できます（社内実務での運用）。</p>
+
+<div class="panel defect-form">
+  <h4>欠陥を登録</h4>
+  <form method="post">
+    {% csrf_token %}<input type="hidden" name="action" value="add">
+    <div class="form-grid">
+      <label class="lbl">タイトル<input name="title" class="inp" placeholder="例：ログインボタン押下でエラー500が発生" required></label>
+      <label class="lbl">Severity
+        <select name="severity" class="inp">
+          {% for v, l in severities %}<option value="{{ v }}" {% if v == 'Major' %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="lbl">検出フェーズ
+        <select name="phase" class="inp">{% for v, l in phases %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+      </label>
+      <label class="lbl">根本原因
+        <select name="root_cause" class="inp">{% for v, l in roots %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+      </label>
+    </div>
+    <label class="lbl" style="margin-top:10px">概要・再現手順
+      <textarea name="description" class="tool-ta sm" placeholder="再現手順: 1. ログインページを開く 2. 誤ったパスワードで送信 3. エラー500が表示"></textarea>
+    </label>
+    <div class="tool-actions"><button class="btn-primary" type="submit">欠陥を登録</button></div>
+  </form>
+</div>
+
+<div class="result-head">
+  <div class="sev-summary">
+    <span class="sev sev-Critical">Critical {{ counts.Critical|default:0 }}</span>
+    <span class="sev sev-Major">Major {{ counts.Major|default:0 }}</span>
+    <span class="sev sev-Minor">Minor {{ counts.Minor|default:0 }}</span>
+    <span class="sev sev-Cosmetic">Cosmetic {{ counts.Cosmetic|default:0 }}</span>
+  </div>
+  <div class="muted">合計 {{ defects|length }}件</div>
+  {% if defects %}
+  <form method="post" style="margin-left:auto">{% csrf_token %}
+    <button class="btn-ghost" type="submit" name="action" value="csv">CSVエクスポート</button>
+  </form>
+  {% endif %}
+</div>
+
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>Sev</th><th>タイトル</th><th>フェーズ</th><th>根本原因</th><th>ステータス</th><th>登録日</th><th></th></tr></thead>
+  <tbody>
+    {% for d in defects %}
+    <tr>
+      <td><code>{{ d.code }}</code></td>
+      <td><span class="sev sev-{{ d.severity }}">{{ d.severity }}</span></td>
+      <td>{{ d.title }}</td>
+      <td class="muted">{{ d.phase }}</td>
+      <td class="muted">{{ d.root_cause }}</td>
+      <td>
+        <form method="post" class="inline-form">{% csrf_token %}
+          <input type="hidden" name="action" value="status"><input type="hidden" name="id" value="{{ d.id }}">
+          <select class="inp-sm" name="status" onchange="this.form.submit()">
+            {% for v, l in statuses %}<option value="{{ v }}" {% if v == d.status %}selected{% endif %}>{{ l }}</option>{% endfor %}
+          </select>
+        </form>
+      </td>
+      <td class="muted">{{ d.created_at|date:"Y-m-d" }}</td>
+      <td>
+        <form method="post" class="inline-form" onsubmit="return confirm('欠陥 {{ d.code }} を削除しますか？')">{% csrf_token %}
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ d.id }}">
+          <button class="btn-icon" type="submit" title="削除">🗑</button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="muted">まだ欠陥が登録されていません。フォームから登録してください。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

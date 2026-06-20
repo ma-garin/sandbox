@@ -1,0 +1,22 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">フォームに入力すると、ISO/IEC 29119-3準拠のテスト計画書（Markdown）を生成します。</p>
+<form method="post">
+  {% csrf_token %}
+  <div class="form-grid">
+    <label class="lbl">プロジェクト名<input name="name" class="inp" value="{{ data.name }}"></label>
+    <label class="lbl">テスト対象・範囲<input name="scope" class="inp" value="{{ data.scope }}"></label>
+    <label class="lbl">テスト環境<input name="env" class="inp" value="{{ data.env }}"></label>
+    <label class="lbl">開始予定<input name="start" class="inp" type="date" value="{{ data.start }}"></label>
+    <label class="lbl">終了予定<input name="end" class="inp" type="date" value="{{ data.end }}"></label>
+    <label class="lbl">開始基準（entry）<input name="entry" class="inp" value="{{ data.entry }}"></label>
+    <label class="lbl">終了基準（exit）<input name="exit" class="inp" value="{{ data.exit }}"></label>
+    <label class="lbl">主要リスク<input name="risk" class="inp" value="{{ data.risk }}"></label>
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">計画書を生成</button>
+    <button class="btn-ghost" type="submit" name="download" value="1">Markdownをダウンロード</button>
+  </div>
+</form>
+<pre class="codeblock">{{ markdown }}</pre>
+{% endblock %}

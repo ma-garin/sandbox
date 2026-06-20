@@ -18,3 +18,10 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Python / Django
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+staticfiles/

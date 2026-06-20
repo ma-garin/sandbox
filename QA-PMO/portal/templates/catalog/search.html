@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}検索結果 — 品質ポータル{% endblock %}
+{% block content %}
+<p class="search-label">「<strong>{{ q }}</strong>」の検索結果：{{ results|length }}件</p>
+<div class="h-cards">
+  {% for s in results %}
+  <a class="h-card" href="{% url 'service_detail' s.slug %}">
+    <div class="h-ico">{{ s.icon }}</div>
+    <div class="h-t">{{ s.title }}
+      {% if s.is_tool %}<span class="tool-tag">実行</span>{% endif %}
+      {% if s.product %}<span class="prod-chip">{{ s.product }}</span>{% endif %}
+    </div>
+    <div class="h-c">{{ s.category.name }}</div>
+  </a>
+  {% empty %}
+  <p class="muted">該当するサービス・ツールが見つかりませんでした。</p>
+  {% endfor %}
+</div>
+{% endblock %}

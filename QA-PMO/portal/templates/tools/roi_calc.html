@@ -1,0 +1,55 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">バリデーション研究（事前登録 commit <code>1024e21</code>、対象: Saleor Commerce本番障害20件）の捕捉率データを使い、観点ライブラリ導入効果を試算します。</p>
+<div class="roi-disclaimer">⚑ 本試算はシミュレーションです。実際の効果は開発規模・障害特性によって異なります。</div>
+<form method="post">
+  {% csrf_token %}
+  <div class="form-grid">
+    <label class="lbl">業種
+      <select name="industry" class="inp">
+        {% for key, ind in industries.items %}<option value="{{ key }}" {% if key == industry %}selected{% endif %}>{{ ind.label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="lbl">年間本番障害件数（推定）<input name="incidents" class="inp" type="number" min="1" value="{{ incidents }}"></label>
+    <label class="lbl">障害1件あたりコスト（万円）<input name="cost" class="inp" type="number" min="1" value="{{ cost }}"></label>
+    <label class="lbl">現在のテスト設計アプローチ
+      <select name="method" class="inp">
+        {% for val, lbl in methods %}<option value="{{ val }}" {% if val == method %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <div class="tool-actions"><button class="btn-primary" type="submit">ROIを試算する</button></div>
+</form>
+
+<div class="roi-cards">
+  <div class="roi-kpi"><div class="roi-kpi-v">¥{{ result.annual_saving }}<span class="roi-kpi-unit">万円</span></div><div class="roi-kpi-l">年間コスト削減額（推定）</div></div>
+  <div class="roi-kpi"><div class="roi-kpi-v">{{ result.prevented }}<span class="roi-kpi-unit">件</span></div><div class="roi-kpi-l">年間予防可能障害数</div></div>
+  <div class="roi-kpi"><div class="roi-kpi-v">{{ result.payback|default:"—" }}<span class="roi-kpi-unit">ヶ月</span></div><div class="roi-kpi-l">投資回収期間（初期¥{{ result.setup_cost }}万円想定）</div></div>
+  <div class="roi-kpi roi-kpi-pos"><div class="roi-kpi-v">{{ result.roi3y }}<span class="roi-kpi-unit">%</span></div><div class="roi-kpi-l">3年ROI</div></div>
+</div>
+
+<h4>バグ捕捉率の比較（バリデーション研究結果）</h4>
+<div class="roi-compare">
+  <div class="roi-bar-row">
+    <div class="roi-bar-label">現在の手法</div>
+    <div class="roi-bar-wrap"><div class="roi-bar roi-bar-cur" style="width:{{ result.current_pct }}%"><span>{{ result.current_pct }}%</span></div></div>
+    <div class="roi-bar-cost muted">漏れコスト ¥{{ result.leak_current }}万円/年</div>
+  </div>
+  <div class="roi-bar-row">
+    <div class="roi-bar-label"><strong>観点ライブラリ</strong></div>
+    <div class="roi-bar-wrap"><div class="roi-bar roi-bar-vp" style="width:{{ result.vp_pct }}%"><span>{{ result.vp_pct }}%</span></div></div>
+    <div class="roi-bar-cost muted">漏れコスト ¥{{ result.leak_vp }}万円/年</div>
+  </div>
+</div>
+
+<h4>根拠データ（事前登録バリデーション研究 — commit 1024e21）</h4>
+<table class="tool-table">
+  <thead><tr><th>手法</th><th>全バグ捕捉率（N=20）</th><th>ドメイン特有バグ捕捉率（N=16）</th><th>評価</th></tr></thead>
+  <tbody>
+    <tr><td>ISTQB/一般チェックリスト</td><td>5%（1/20）</td><td>0%（0/16）</td><td><span class="sev sev-Major">△</span></td></tr>
+    <tr><td>GPT-4o（標準プロンプト）</td><td>10%（2/20）</td><td>0%（0/16）</td><td><span class="sev sev-Minor">△</span></td></tr>
+    <tr class="roi-hl"><td><strong>観点ライブラリ（VeriServe）</strong></td><td><strong>85%（17/20）</strong></td><td><strong>88%（14/16）</strong></td><td><span class="sev sev-Cosmetic">◎</span></td></tr>
+  </tbody>
+</table>
+<p class="muted" style="font-size:11.5px;margin-top:6px">対象: Saleor Commerce 本番クローズ障害20件（2022〜2024年）。疑わしい場合は「捕捉なし」と判定する自己採点不利方向原則を適用。初期設定コストは3人月×80万円=240万円で試算。</p>
+{% endblock %}

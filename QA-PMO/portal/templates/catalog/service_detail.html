@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ service.title }} — 品質ポータル{% endblock %}
+{% block content %}
+<nav class="breadcrumb">
+  {% for b in service.breadcrumb %}
+    {% if forloop.last %}<span class="bc cur">{{ b }}</span>
+    {% else %}<span class="bc">{{ b }}</span><span class="bc-sep">›</span>{% endif %}
+  {% endfor %}
+</nav>
+
+<div class="detail-head">
+  <div class="d-icon">{{ service.icon }}</div>
+  <div>
+    <h1>{{ service.title }}</h1>
+    <span class="cat-badge">{{ service.category.name }}</span>
+    {% if service.product %}<span class="prod-badge">提供製品: {{ service.product }}</span>{% endif %}
+  </div>
+</div>
+
+<p class="lead">{{ service.description }}</p>
+
+{% if service.features %}
+<div class="f-grid">
+  {% for f in service.features %}
+  <div class="f-card"><div class="f-ico">{{ f.icon }}</div><div class="f-t">{{ f.title }}</div><div class="f-d">{{ f.desc }}</div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if service.steps %}
+<div class="panel">
+  <h3>⚡ 支援フロー</h3>
+  <div class="steps">
+    {% for st in service.steps %}
+    <div class="step"><div class="step-n">{{ forloop.counter }}</div><div>{{ st }}</div></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if service.tags %}
+<div class="tags">
+  {% for t in service.tags %}<span class="tag">{{ t }}</span>{% endfor %}
+</div>
+{% endif %}
+
+<div class="info-note">
+  📌 このサービスは社内の品質支援メニューです。実際の案件への適用は担当部門・PMOにご相談ください。
+</div>
+{% endblock %}

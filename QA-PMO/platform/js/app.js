@@ -88,7 +88,7 @@ function route(id) {
       <div class="d-icon" style="background:${s.iconBg}">${s.icon}</div>
       <div>
         <h1>${s.title} ${s.kind === 'tool' ? '<span class="tool-tag lg">実機能 MVP</span>' : ''}</h1>
-        <span class="cat-badge">${s.category}</span>
+        <span class="cat-badge">${s.category}</span>${s.product ? `<span class="prod-badge">提供製品: ${s.product}</span>` : ''}
       </div>
     </div>
     <p class="lead">${s.desc}</p>
@@ -134,7 +134,8 @@ function renderHome() {
     const card = document.createElement('button');
     card.className = 'h-card';
     const badge = s.kind === 'tool' ? '<span class="tool-tag">実機能</span>' : '';
-    card.innerHTML = `<div class="h-ico">${s.icon}</div><div class="h-t">${s.title} ${badge}</div><div class="h-c">${s.category}</div>`;
+    const prod = s.product ? `<span class="prod-chip">${s.product}</span>` : '';
+    card.innerHTML = `<div class="h-ico">${s.icon}</div><div class="h-t">${s.title} ${badge}${prod}</div><div class="h-c">${s.category}</div>`;
     card.onclick = () => route(id);
     (buckets[s.group] || buckets.ai).appendChild(card);
   });
@@ -148,6 +149,7 @@ function onSearch(e) {
   document.getElementById('view-search').style.display = 'block';
   const results = Object.entries(SERVICES).filter(([, s]) =>
     s.title.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) ||
+    (s.product || '').toLowerCase().includes(q) ||
     (s.tags || []).some(t => t.toLowerCase().includes(q)));
   document.getElementById('search-label').innerHTML = `「<strong>${e.target.value}</strong>」の検索結果：${results.length}件`;
   const box = document.getElementById('search-cards');
@@ -156,7 +158,8 @@ function onSearch(e) {
     const card = document.createElement('button');
     card.className = 'h-card';
     const badge = s.kind === 'tool' ? '<span class="tool-tag">実機能</span>' : '';
-    card.innerHTML = `<div class="h-ico">${s.icon}</div><div class="h-t">${s.title} ${badge}</div><div class="h-c">${s.category}</div>`;
+    const prod = s.product ? `<span class="prod-chip">${s.product}</span>` : '';
+    card.innerHTML = `<div class="h-ico">${s.icon}</div><div class="h-t">${s.title} ${badge}${prod}</div><div class="h-c">${s.category}</div>`;
     card.onclick = () => route(id);
     box.appendChild(card);
   });

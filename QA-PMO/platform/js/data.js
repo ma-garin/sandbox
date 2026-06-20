@@ -212,10 +212,11 @@ const SERVICES = {
   },
   trace: {
     icon: '🔗', iconBg: '#e8f5e9', group: 'ai', kind: 'tool', tool: 'traceability',
+    product: 'ConTrack',
     title: 'トレーサビリティ', category: 'AIサービス › AIツール',
     breadcrumb: ['AIサービス', 'AIツール', 'トレーサビリティ'],
-    desc: '要件↔テストのRTMを生成し、カバレッジ・未カバー要件・孤立テストを算出します。',
-    tags: ['RTM', 'カバレッジ', '影響分析'],
+    desc: 'トレーサビリティ管理ツール「ConTrack」相当。要件↔テストのRTMを生成し、カバレッジ・未カバー要件・孤立テストを算出します。',
+    tags: ['ConTrack', 'RTM', 'カバレッジ', '影響分析'],
   },
   'plan-ai': {
     icon: '🗓️', iconBg: '#e8f5e9', group: 'ai', kind: 'tool', tool: 'testPlan',
@@ -226,10 +227,11 @@ const SERVICES = {
   },
   'test-design': {
     icon: '✏️', iconBg: '#e8f5e9', group: 'ai', kind: 'tool', tool: 'testDesign',
+    product: 'GIHOZ',
     title: 'テスト設計', category: 'AIサービス › AIツール',
     breadcrumb: ['AIサービス', 'AIツール', 'テスト設計'],
-    desc: 'ISTQB技法（境界値・同値分割・ペアワイズ）でテストケースを自動生成します。',
-    tags: ['境界値', '同値分割', 'ペアワイズ', 'ISTQB'],
+    desc: 'テスト技法ツール「GIHOZ」相当。ISTQB技法（境界値・同値分割・ペアワイズ）でテストケースを自動生成します。',
+    tags: ['GIHOZ', '境界値', '同値分割', 'ペアワイズ', 'ISTQB'],
   },
   uiux: {
     icon: '🖥️', iconBg: '#e8f5e9', group: 'ai', kind: 'tool', tool: 'uiuxChecker',
@@ -266,6 +268,22 @@ const SERVICES = {
     desc: 'ISTQBのseverityで欠陥を登録・追跡します。localStorageで永続化、CSVエクスポート対応。',
     tags: ['欠陥管理', 'ISTQB severity', 'バグトラッキング', 'CSV'],
   },
+  'testra': {
+    icon: '🦾', iconBg: '#e3f2fd', group: 'ai', kind: 'catalog',
+    product: 'TESTRA',
+    title: 'テスト設計エージェント', category: 'AIサービス › AI品質保証',
+    breadcrumb: ['AIサービス', 'AI品質保証', 'テスト設計エージェント'],
+    desc: '人×AIで品質保証するテスト設計エージェント「TESTRA」相当。仕様から観点を適用し、テスト設計をAIが支援します。',
+    features: [
+      { icon: '🤝', title: '人×AI協調', desc: '人の観点とAIの網羅性を組み合わせます' },
+      { icon: '🧩', title: '観点適用', desc: '観点ライブラリを仕様に適用します' },
+      { icon: '⚡', title: '設計自動化', desc: 'テスト条件・ケースを高速に生成します' },
+      { icon: '👁️', title: 'レビュー支援', desc: '抜け漏れをAIが指摘します' },
+    ],
+    steps: ['仕様入力', '観点適用', '設計生成', '人によるレビュー', '確定'],
+    tags: ['TESTRA', 'AIテスト設計', '人×AI', '観点適用'],
+    cta: 'テスト設計エージェントについて相談する',
+  },
   'static-analysis': {
     icon: '🔍', iconBg: '#e8f5e9', group: 'ai', kind: 'catalog',
     title: 'ソースコード静的解析', category: 'AIサービス › 品質分析',
@@ -298,9 +316,10 @@ const SERVICES = {
   },
   'exploratory': {
     icon: '🧭', iconBg: '#e3f2fd', group: 'ai', kind: 'catalog',
+    product: 'InsighTest',
     title: '探索的テスト支援', category: 'AIサービス › 効率化',
     breadcrumb: ['AIサービス', '効率化', '探索的テスト支援'],
-    desc: 'チャーター駆動の探索的テストで、スクリプト化しにくい不具合や気付きを発見します。',
+    desc: '協調・探索型クラウドテストツール「InsighTest」相当。チャーター駆動の探索的テストで、スクリプト化しにくい不具合や気付きを発見します。',
     features: [
       { icon: '🗺️', title: 'チャーター設計', desc: '探索の狙いを明文化します' },
       { icon: '👥', title: '協調セッション', desc: 'チームで気付きを共有します' },
@@ -308,7 +327,7 @@ const SERVICES = {
       { icon: '📝', title: 'セッション記録', desc: '探索過程を証跡化します' },
     ],
     steps: ['チャーター作成', 'セッション実施', '記録', 'デブリーフ', '報告'],
-    tags: ['探索的テスト', 'チャーター', 'セッションベース'],
+    tags: ['InsighTest', '探索的テスト', 'チャーター', 'セッションベース'],
     cta: '探索的テスト支援について相談する',
   },
   'qa4ai': {
@@ -345,9 +364,10 @@ const SERVICES = {
   /* ── セキュリティ（脆弱性診断・トレーニング。カタログ） ── */
   'vuln-web': {
     icon: '🛡️', iconBg: '#ffebee', group: 'security', kind: 'catalog',
+    product: 'Vex',
     title: 'Webアプリケーション脆弱性診断', category: 'セキュリティ',
     breadcrumb: ['セキュリティ', 'Webアプリケーション脆弱性診断'],
-    desc: 'OWASP Top 10を含む観点でWebアプリの脆弱性を診断し、是正までを支援します。',
+    desc: '脆弱性検査・診断ツール「Vex（Vulnerability Explorer）」相当。OWASP Top 10を含む観点でWebアプリの脆弱性を診断し、是正までを支援します。',
     features: [
       { icon: '🕷️', title: '脆弱性検出', desc: 'SQLi/XSS/認可不備等を検出します' },
       { icon: '📋', title: 'OWASP準拠', desc: 'OWASP Top 10/ASVSに沿って診断します' },
@@ -355,7 +375,7 @@ const SERVICES = {
       { icon: '🔧', title: '是正支援', desc: '修正方針と再診断を支援します' },
     ],
     steps: ['対象定義', '診断実施', 'リスク評価', '報告', '再診断'],
-    tags: ['脆弱性診断', 'OWASP', 'CVSS', 'Webセキュリティ'],
+    tags: ['Vex', '脆弱性診断', 'OWASP', 'CVSS', 'Webセキュリティ'],
     cta: 'Web脆弱性診断について相談する',
   },
   'vuln-embedded': {
@@ -445,7 +465,7 @@ const NAV_TREE = [
       },
       {
         label: 'AI品質保証',
-        children: [{ id: 'qa4ai' }, { id: 'genai-qa' }],
+        children: [{ id: 'testra' }, { id: 'qa4ai' }, { id: 'genai-qa' }],
       },
       {
         label: '知識資産',

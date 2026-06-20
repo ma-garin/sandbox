@@ -25,13 +25,14 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
   const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}: ${name}${extra ? ' — ' + extra : ''}`);
   const openTool = async id => { await page.locator(`.nav-item[data-id="${id}"]`).click(); await page.waitForTimeout(150); };
 
-  ok('ホームに全30サービスカード', await page.locator('#view-home .h-card').count() === 30);
+  ok('ホームに全31サービスカード', await page.locator('#view-home .h-card').count() === 31);
   ok('ナビに実機能バッジ9件', await page.locator('#sidenav .tool-tag').count() === 9);
   ok('ホーム4カテゴリ（品質/検証/AI/セキュリティ）',
     (await page.locator('#home-q .h-card').count()) > 0 &&
     (await page.locator('#home-v .h-card').count()) > 0 &&
     (await page.locator('#home-a .h-card').count()) > 0 &&
     (await page.locator('#home-s .h-card').count()) > 0);
+  ok('製品名チップ表示（GIHOZ/Vex等）', await page.locator('#view-home .prod-chip').count() >= 5);
 
   await openTool('doc-verify'); await page.locator('#dv-run').click(); await page.waitForTimeout(100);
   ok('ドキュメント検証: 結果テーブル', await page.locator('#dv-result .tool-table').count() > 0);
@@ -73,6 +74,9 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
 
   await page.locator('.nav-item[data-id="consultant"]').click(); await page.waitForTimeout(100);
   ok('カタログ: CTAボタン', await page.locator('#view-detail .cta button').count() > 0);
+
+  await page.locator('.nav-item[data-id="vuln-web"]').click(); await page.waitForTimeout(100);
+  ok('製品名バッジ（Vex）詳細表示', (await page.locator('#view-detail .prod-badge').innerText()).includes('Vex'));
 
   await page.locator('#search').fill('テスト'); await page.waitForTimeout(150);
   ok('検索: 結果表示', await page.locator('#search-cards .h-card').count() > 0);

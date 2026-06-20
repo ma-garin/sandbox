@@ -19,6 +19,21 @@
 
 ## localhost で起動する
 
+### いちばん簡単（ワンコマンド）
+
+仮想環境の作成・依存インストール・DB準備・初期データ投入・起動まで**自動**で行います。
+
+```bash
+cd QA-PMO/portal
+./run.sh                 # macOS / Linux
+run.bat                  # Windows（ダブルクリックでも可）
+```
+
+起動後、ブラウザで **http://127.0.0.1:8000/** を開く。停止は `Ctrl + C`。
+ポートを変えたい場合は `./run.sh 9000` のように引数で指定。
+
+### 手動で1ステップずつ行う場合
+
 ```bash
 cd QA-PMO/portal
 
@@ -26,7 +41,7 @@ cd QA-PMO/portal
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-# 2. 依存をインストール（Django のみ）
+# 2. 依存をインストール
 pip install -r requirements.txt
 
 # 3. DBを作成して初期データを投入

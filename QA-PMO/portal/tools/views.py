@@ -4,6 +4,7 @@
 計算は logic.py / engine.py の純粋関数に委譲し、ビューは入出力に専念する。
 """
 import csv
+import io
 import json
 
 from django.http import HttpResponse
@@ -151,9 +152,45 @@ def _test_design(request, service):
         ctx.update({"feature": feature, "industry": industry,
                     "fields": fields, "flags": flags,
                     "vp": engine.generate(feature, fields, flags, industry)})
+    # 田中さん（QAエンジニア）の動線: 生成した条件をチームのExcel/テスト管理へ移す
+    if request.POST.get("export") == "csv":
+        return _test_design_csv(mode, ctx)
     if request.htmx:
         return render(request, "tools/_partials/test_design_result.html", ctx)
     return render(request, "tools/test_design.html", ctx)
+
+
+def _csv_response(filename, rows):
+    """行リストをExcel互換CSV（UTF-8・BOMは先頭に1回だけ）で返す。"""
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    for row in rows:
+        w.writerow(row)
+    resp = HttpResponse("﻿" + buf.getvalue(),
+                        content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f"attachment; filename={filename}"
+    return resp
+
+
+def _test_design_csv(mode, ctx):
+    """テスト設計の生成結果をCSVで書き出す。"""
+    if mode == "bva":
+        rows = [["ID", "入力", "期待区分"]]
+        rows += [[r["id"], r["input"], r["expected"]] for r in ctx["rows"]]
+    elif mode == "ep":
+        rows = [["ID", "入力", "クラス"]]
+        rows += [[r["id"], r["input"], r["klass"]] for r in ctx["rows"]]
+    elif mode == "pw":
+        pw = ctx["pw"]
+        if pw.get("error"):
+            rows = [["エラー", pw["error"]]]
+        else:
+            rows = [pw["headers"]] + pw["rows"]
+    else:  # vp
+        rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名"]]
+        rows += [[r["id"], r["target"], r["viewpoint"], r["technique"],
+                  r["cat"], r["cat_name"]] for r in ctx["vp"]["rows"]]
+    return _csv_response(f"test_design_{mode}.csv", rows)
 
 
 # ── 5. 欠陥管理（DB永続化） ──
@@ -192,14 +229,11 @@ def _defect_mgr(request, service):
 
 
 def _defect_csv():
-    resp = HttpResponse(content_type="text/csv; charset=utf-8-sig")
-    resp["Content-Disposition"] = "attachment; filename=defects.csv"
-    w = csv.writer(resp)
-    w.writerow(["ID", "Severity", "タイトル", "検出フェーズ", "根本原因", "ステータス", "登録日", "概要"])
+    rows = [["ID", "Severity", "タイトル", "検出フェーズ", "根本原因", "ステータス", "登録日", "概要"]]
     for d in Defect.objects.all():
-        w.writerow([d.code, d.severity, d.title, d.phase, d.root_cause,
-                    d.status, d.created_at.strftime("%Y-%m-%d"), d.description])
-    return resp
+        rows.append([d.code, d.severity, d.title, d.phase, d.root_cause,
+                     d.status, d.created_at.strftime("%Y-%m-%d"), d.description])
+    return _csv_response("defects.csv", rows)
 
 
 # ── 6. ROI計算機 ──

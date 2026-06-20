@@ -25,8 +25,13 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
   const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}: ${name}${extra ? ' — ' + extra : ''}`);
   const openTool = async id => { await page.locator(`.nav-item[data-id="${id}"]`).click(); await page.waitForTimeout(150); };
 
-  ok('ホームに全16サービスカード', await page.locator('#view-home .h-card').count() === 16);
+  ok('ホームに全30サービスカード', await page.locator('#view-home .h-card').count() === 30);
   ok('ナビに実機能バッジ9件', await page.locator('#sidenav .tool-tag').count() === 9);
+  ok('ホーム4カテゴリ（品質/検証/AI/セキュリティ）',
+    (await page.locator('#home-q .h-card').count()) > 0 &&
+    (await page.locator('#home-v .h-card').count()) > 0 &&
+    (await page.locator('#home-a .h-card').count()) > 0 &&
+    (await page.locator('#home-s .h-card').count()) > 0);
 
   await openTool('doc-verify'); await page.locator('#dv-run').click(); await page.waitForTimeout(100);
   ok('ドキュメント検証: 結果テーブル', await page.locator('#dv-result .tool-table').count() > 0);

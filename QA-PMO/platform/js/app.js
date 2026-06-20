@@ -124,14 +124,19 @@ function showHome() {
 }
 
 function renderHome() {
-  const q = document.getElementById('home-q'), a = document.getElementById('home-a');
+  const buckets = {
+    quality: document.getElementById('home-q'),
+    verify: document.getElementById('home-v'),
+    ai: document.getElementById('home-a'),
+    security: document.getElementById('home-s'),
+  };
   Object.entries(SERVICES).forEach(([id, s]) => {
     const card = document.createElement('button');
     card.className = 'h-card';
     const badge = s.kind === 'tool' ? '<span class="tool-tag">実機能</span>' : '';
     card.innerHTML = `<div class="h-ico">${s.icon}</div><div class="h-t">${s.title} ${badge}</div><div class="h-c">${s.category}</div>`;
     card.onclick = () => route(id);
-    (s.group === 'quality' ? q : a).appendChild(card);
+    (buckets[s.group] || buckets.ai).appendChild(card);
   });
 }
 

@@ -1,0 +1,12 @@
+{
+  "name": "qa-pmo-platform-smoke",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PMOプラットフォームのE2Eスモークテスト（Playwright/Chromium）",
+  "scripts": {
+    "test": "node smoke.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

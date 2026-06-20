@@ -25,8 +25,8 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
   const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}: ${name}${extra ? ' — ' + extra : ''}`);
   const openTool = async id => { await page.locator(`.nav-item[data-id="${id}"]`).click(); await page.waitForTimeout(150); };
 
-  ok('ホームに全31サービスカード', await page.locator('#view-home .h-card').count() === 31);
-  ok('ナビに実機能バッジ9件', await page.locator('#sidenav .tool-tag').count() === 9);
+  ok('ホームに全32サービスカード', await page.locator('#view-home .h-card').count() === 32);
+  ok('ナビに実機能バッジ10件', await page.locator('#sidenav .tool-tag').count() === 10);
   ok('ホーム4カテゴリ（品質/検証/AI/セキュリティ）',
     (await page.locator('#home-q .h-card').count()) > 0 &&
     (await page.locator('#home-v .h-card').count()) > 0 &&
@@ -77,6 +77,11 @@ const INDEX = 'file://' + path.resolve(__dirname, '..', 'index.html');
 
   await page.locator('.nav-item[data-id="vuln-web"]').click(); await page.waitForTimeout(100);
   ok('製品名バッジ（Vex）詳細表示', (await page.locator('#view-detail .prod-badge').innerText()).includes('Vex'));
+
+  await openTool('roi-calc'); await page.waitForTimeout(200);
+  ok('ROI計算機: KPIカード4枚表示', await page.locator('#roi-result .roi-kpi').count() === 4);
+  ok('ROI計算機: 捕捉率バー2本表示', await page.locator('#roi-result .roi-bar').count() === 2);
+  ok('ROI計算機: 根拠テーブル', await page.locator('#roi-result .tool-table tbody tr').count() >= 3);
 
   await page.locator('#search').fill('テスト'); await page.waitForTimeout(150);
   ok('検索: 結果表示', await page.locator('#search-cards .h-card').count() > 0);

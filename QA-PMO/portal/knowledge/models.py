@@ -47,6 +47,10 @@ class Viewpoint(models.Model):
         "適用キー", max_length=40, blank=True,
         help_text="項目型(email等) / 特性(money等) / 業種(finance等)",
     )
+    authority = models.CharField(
+        "根拠標準", max_length=120, blank=True,
+        help_text="この観点の裏付けとなる標準・ガイドライン（ISO/ISTQB/NIST/IPA等）",
+    )
 
     class Meta:
         verbose_name = "テスト観点"

@@ -24,6 +24,15 @@ _CAT_EXPECTED = {
     "C-I18N":  "ロケール・文字コードが正しく処理されること",
     "C-DATA":  "データが正確に保存・記録されること",
     "C-CONC":  "データの整合性が維持されること",
+    # AI/生成AI観点
+    "C-AI-CORR": "規定のML性能基準（正解率等）を満たすこと",
+    "C-AI-HALL": "事実と異なる出力が許容閾値以下であること",
+    "C-AI-NDET": "出力の一貫性が許容範囲内であること",
+    "C-AI-BIAS": "属性間で許容を超える偏りがないこと",
+    "C-AI-ROB":  "敵対的入力でも安全に動作すること",
+    "C-AI-PRIV": "個人情報・機密が漏洩しないこと",
+    "C-AI-SEC":  "プロンプト注入が防御・拒否されること",
+    "C-AI-EXPL": "出力の根拠が説明できること",
 }
 
 # 技法が攻撃系・負荷系の場合はカテゴリに優先して上書き
@@ -56,6 +65,7 @@ def generate(feature, fields, flags, industry):
             "viewpoint": vp.viewpoint, "technique": vp.technique,
             "cat": vp.category.code, "cat_name": vp.category.name,
             "expected": _expected_for(vp.category.code, vp.technique),
+            "authority": vp.authority,
         })
 
     # 常時観点
@@ -88,8 +98,12 @@ def generate(feature, fields, flags, industry):
         for vp in qs:
             add(label, vp)
 
-    # カバレッジ算出
+    # カバレッジ算出。
+    # AIカテゴリ(C-AI-*)は「AI機能」選択時のみ母数に含める
+    # （非AI機能をAI観点の未カバーで不当に減点しないため）。
     all_cats = list(ViewpointCategory.objects.all())
+    if "ai" not in flags:
+        all_cats = [c for c in all_cats if not c.code.startswith("C-AI")]
     touched = {r["cat"] for r in rows}
     covered = [c for c in all_cats if c.code in touched]
     missing = [c for c in all_cats if c.code not in touched]

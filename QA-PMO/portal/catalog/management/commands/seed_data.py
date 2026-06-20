@@ -242,6 +242,11 @@ VP_CATEGORIES = [
     ("C-EXC", "例外/異常系"), ("C-STATE", "状態遷移"), ("C-SEC", "セキュリティ"),
     ("C-PERF", "性能/負荷"), ("C-COMPAT", "互換性"), ("C-USAB", "ユーザビリティ"),
     ("C-I18N", "国際化/ロケール"), ("C-DATA", "データ整合/監査"), ("C-CONC", "同時実行/競合"),
+    # AI/生成AI観点（ISTQB CT-AI / NIST AI 600-1 / IPA機械学習品質GL / QA4AI 準拠）
+    ("C-AI-CORR", "AI:正解性/ML性能"), ("C-AI-HALL", "AI:ハルシネーション"),
+    ("C-AI-NDET", "AI:非決定性/再現性"), ("C-AI-BIAS", "AI:バイアス/公平性"),
+    ("C-AI-ROB", "AI:頑健性/敵対的"), ("C-AI-PRIV", "AI:プライバシ/漏洩"),
+    ("C-AI-SEC", "AI:プロンプト注入"), ("C-AI-EXPL", "AI:説明性/透明性"),
 ]
 
 # ── 観点（always / field / flag / industry） ──
@@ -290,6 +295,31 @@ VP_FLAG = {
     "perf": [("想定最大データ量での応答時間", "性能", "C-PERF"),
              ("同時接続数・スパイク負荷", "負荷", "C-PERF")],
 }
+# ── AI/生成AI観点（機能特性 "ai" に紐づく。各観点に根拠標準を付す＝監査証跡） ──
+# (観点, 技法, カテゴリ, 根拠標準)
+VP_AI = [
+    ("学習/評価データの分離・データ品質（データリーケージ防止）", "AIデータテスト", "C-AI-CORR",
+     "ISTQB CT-AI v2.0 / IPA機械学習品質GL"),
+    ("ML性能指標（正解率・適合率・再現率・F1）の合否基準を定義し測定", "ML性能評価", "C-AI-CORR",
+     "ISTQB CT-AI v2.0 / ISO/IEC 25059"),
+    ("ハルシネーション（事実誤り・捏造）の発生率を測定し閾値で評価", "事実性検証", "C-AI-HALL",
+     "NIST AI 600-1 / QA4AIガイドライン"),
+    ("同一入力の繰り返しで出力の一貫性（非決定性）を評価", "再現性テスト", "C-AI-NDET",
+     "ISTQB CT-AI v2.0"),
+    ("属性（性別・年齢・国籍等）間での出力バイアス・公平性を検査", "公平性テスト", "C-AI-BIAS",
+     "NIST AI 600-1 / IPA機械学習品質GL"),
+    ("敵対的入力・外れ値・摂動に対する頑健性を検証", "敵対的テスト", "C-AI-ROB",
+     "ISTQB CT-AI v2.0 / IPA機械学習品質GL"),
+    ("学習データ・出力からの個人情報/機密の漏洩を検査", "プライバシテスト", "C-AI-PRIV",
+     "NIST AI 600-1"),
+    ("プロンプト注入・ジェイルブレイクへの耐性を検証", "攻撃パターン", "C-AI-SEC",
+     "NIST AI 600-1 / OWASP LLM Top10"),
+    ("出力の根拠提示・説明可能性・透明性を確認", "説明性評価", "C-AI-EXPL",
+     "IPA機械学習品質GL / NIST AI RMF"),
+    ("データ/コンセプトのドリフト監視と再学習トリガを確認", "運用監視", "C-AI-CORR",
+     "IPA機械学習品質GL / QA4AIガイドライン"),
+]
+
 VP_INDUSTRY = {
     "finance": [
         ("PCI-DSS準拠: カード番号の暗号化・マスキング（PAN非保持）", "攻撃パターン", "C-SEC"),
@@ -402,18 +432,22 @@ class Command(BaseCommand):
         for i, (code, name) in enumerate(VP_CATEGORIES, start=1):
             vpcat_map[code] = ViewpointCategory.objects.create(code=code, name=name, order=i)
 
-        # 観点
+        # 観点（タプルは3要素 or 4要素目=根拠標準 を許容）
         def add_vps(items, source_type, source_key=""):
-            for vp, tech, cat_code in items:
+            for item in items:
+                vp, tech, cat_code = item[0], item[1], item[2]
+                authority = item[3] if len(item) > 3 else ""
                 Viewpoint.objects.create(
                     category=vpcat_map[cat_code], viewpoint=vp, technique=tech,
-                    source_type=source_type, source_key=source_key)
+                    source_type=source_type, source_key=source_key,
+                    authority=authority)
 
         add_vps(VP_ALWAYS, Viewpoint.SOURCE_ALWAYS)
         for k, items in VP_FIELD.items():
             add_vps(items, Viewpoint.SOURCE_FIELD, k)
         for k, items in VP_FLAG.items():
             add_vps(items, Viewpoint.SOURCE_FLAG, k)
+        add_vps(VP_AI, Viewpoint.SOURCE_FLAG, "ai")
         for k, items in VP_INDUSTRY.items():
             add_vps(items, Viewpoint.SOURCE_INDUSTRY, k)
 

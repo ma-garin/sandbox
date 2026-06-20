@@ -54,13 +54,14 @@
   <span class="muted" style="white-space:nowrap">{{ items|length }}件</span>
 </form>
 <table class="tool-table">
-  <thead><tr><th>Cat</th><th>カテゴリ</th><th>テスト観点</th><th>技法</th><th>適用対象</th></tr></thead>
+  <thead><tr><th>Cat</th><th>カテゴリ</th><th>テスト観点</th><th>技法</th><th>適用対象</th><th>根拠標準</th></tr></thead>
   <tbody>{% for it in items %}
   <tr><td><code>{{ it.vp.category.code }}</code></td><td class="muted">{{ it.vp.category.name }}</td>
     <td>{{ it.vp.viewpoint }}</td><td><span class="tech-badge">{{ it.vp.technique }}</span></td>
-    <td class="muted">{{ it.label }}</td></tr>
+    <td class="muted">{{ it.label }}</td>
+    <td>{% if it.vp.authority %}<span class="auth-badge">{{ it.vp.authority }}</span>{% else %}<span class="muted">—</span>{% endif %}</td></tr>
   {% empty %}
-  <tr><td colspan="5" class="muted">該当する観点がありません。</td></tr>
+  <tr><td colspan="6" class="muted">該当する観点がありません。</td></tr>
   {% endfor %}</tbody>
 </table>
 {% endif %}

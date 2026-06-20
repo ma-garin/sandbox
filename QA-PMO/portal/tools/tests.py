@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from catalog.models import Service
+from knowledge.models import Viewpoint
 from tools import engines, logic, maturity
 from tools.models import Defect
 
@@ -321,6 +322,37 @@ class UxHtmxTest(TestCase):
         self.assertIn("text/csv", r["Content-Type"])
         self.assertIn("期待結果".encode(), r.content)
         self.assertIn("正常に動作すること".encode(), r.content)
+
+    # ── AI/生成AIテスト観点パック（P0・ペルソナ#6） ──
+    def test_ai_flag_emits_ai_viewpoints_with_authority(self):
+        # HTMX部分応答で検証（ナビ等を含まず観点表のみ）
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "問い合わせ要約", "flags": "ai"}, **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "ハルシネーション")        # AI観点が出る
+        self.assertContains(r, "根拠標準")                # 出典列
+        self.assertContains(r, "NIST AI 600-1")           # 監査証跡＝堀
+        self.assertContains(r, "ISTQB CT-AI")
+
+    def test_ai_viewpoints_have_authority_in_db(self):
+        # AI観点はすべて根拠標準が紐づく（監査要件）
+        ai = Viewpoint.objects.filter(source_type=Viewpoint.SOURCE_FLAG, source_key="ai")
+        self.assertGreaterEqual(ai.count(), 8)
+        self.assertTrue(all(v.authority for v in ai))
+
+    def test_ai_csv_includes_authority(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "要約", "flags": "ai",
+                              "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertIn("根拠標準".encode(), r.content)
+        self.assertIn("NIST AI 600-1".encode(), r.content)
+
+    def test_non_ai_feature_has_no_ai_viewpoints(self):
+        # AIフラグなしならAI観点は出ない（誤適用しない）。部分応答で観点表のみ検証
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "ログイン", "flags": "auth"}, **HX)
+        self.assertNotContains(r, "ハルシネーション")
 
     def test_defect_csv_single_bom(self):
         url = reverse("service_detail", args=["defect-mgr"])

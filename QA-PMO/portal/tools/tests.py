@@ -15,7 +15,7 @@ from django.urls import reverse
 
 from catalog.models import Service
 from knowledge.models import Viewpoint
-from tools import engines, logic, maturity
+from tools import engines, logic, maturity, nonfunc as nf
 from tools.models import Defect
 
 HX = {"HTTP_HX_REQUEST": "true"}  # HTMX リクエストを模す
@@ -461,3 +461,100 @@ class MaturityTest(TestCase):
         self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
         self.assertIn("改善ロードマップ".encode(), r.content)
         self.assertIn("総合成熟度レベル".encode(), r.content)
+
+
+class NonfuncTest(TestCase):
+    """非機能テスト観点ジェネレータ（ISO/IEC 25010:2023）の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    # ── エンジンロジック ──
+    def test_all_chars_defined(self):
+        self.assertEqual(len(nf.CHARS), 9)
+        codes = {c["code"] for c in nf.CHARS}
+        self.assertIn("SAFETY", codes)       # 2023年新設
+        self.assertIn("SEC", codes)
+        self.assertIn("PERF", codes)
+
+    def test_generate_empty_selection(self):
+        result = nf.generate([])
+        self.assertEqual(result["total"], 0)
+        self.assertEqual(result["rows"], [])
+
+    def test_generate_single_char(self):
+        result = nf.generate(["PERF"])
+        self.assertGreater(result["total"], 0)
+        for r in result["rows"]:
+            self.assertEqual(r["char_code"], "PERF")
+            self.assertIn("authority", r)
+            self.assertIn("ISO/IEC 25010:2023", r["authority"])
+
+    def test_generate_all_chars(self):
+        all_codes = [c["code"] for c in nf.CHARS]
+        result = nf.generate(all_codes)
+        self.assertGreater(result["total"], 30)
+        self.assertEqual(len(result["by_char"]), 9)
+
+    def test_safety_char_has_failsafe_viewpoints(self):
+        result = nf.generate(["SAFETY"])
+        viewpoints = [r["viewpoint"] for r in result["rows"]]
+        joined = " ".join(viewpoints)
+        self.assertIn("フェイルセーフ", joined + " ".join(r["sub_name"] for r in result["rows"]))
+
+    def test_sla_params_substituted(self):
+        result = nf.generate(["REL"], sla_uptime="99.99", sla_resp_ms=1000)
+        # 稼働率が差し込まれる
+        all_expected = " ".join(r["expected"] for r in result["rows"])
+        self.assertIn("99.99", all_expected)
+
+    def test_ids_are_sequential(self):
+        result = nf.generate(["PERF", "REL"])
+        ids = [r["id"] for r in result["rows"]]
+        expected = [f"NF-{i+1:03d}" for i in range(len(ids))]
+        self.assertEqual(ids, expected)
+
+    def test_each_row_has_all_fields(self):
+        result = nf.generate(["SEC"])
+        required = {"id", "char_code", "char_name", "sub_code", "sub_name",
+                    "viewpoint", "technique", "expected", "authority"}
+        for r in result["rows"]:
+            self.assertEqual(required, required & r.keys())
+
+    # ── ビュー ──
+    def test_tool_is_wired(self):
+        svc = Service.objects.get(slug="nonfunc-gen")
+        self.assertEqual(svc.kind, "tool")
+        self.assertEqual(svc.tool_key, "nonfunc")
+
+    def test_get_renders_form(self):
+        r = self.client.get(reverse("service_detail", args=["nonfunc-gen"]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "ISO/IEC 25010:2023")
+        self.assertContains(r, "Safety")         # 新設特性が表示される
+        self.assertContains(r, "SLAパラメータ")
+
+    def test_post_generates_viewpoints(self):
+        r = self.client.post(reverse("service_detail", args=["nonfunc-gen"]),
+                             {"chars": ["PERF", "REL"], "sla_uptime": "99.9", "sla_resp_ms": "3000"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "NF-001")
+        self.assertContains(r, "ISO/IEC 25010:2023")
+
+    def test_htmx_returns_partial(self):
+        r = self.client.post(reverse("service_detail", args=["nonfunc-gen"]),
+                             {"chars": ["SEC"], "sla_uptime": "99.9", "sla_resp_ms": "3000"}, **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "セキュリティ")
+        self.assertNotContains(r, "id=\"topbar\"")
+
+    def test_csv_export(self):
+        r = self.client.post(reverse("service_detail", args=["nonfunc-gen"]),
+                             {"chars": ["PERF", "SAFETY"], "sla_uptime": "99.9",
+                              "sla_resp_ms": "3000", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+        self.assertIn("非機能テスト観点".encode(), r.content)
+        self.assertIn("根拠標準".encode(), r.content)
+        self.assertIn("ISO/IEC 25010:2023".encode(), r.content)

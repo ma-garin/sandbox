@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity
+from . import logic, engines, maturity, nonfunc as nf
 from .models import Defect
 
 
@@ -452,6 +452,53 @@ def _maturity_csv(result):
     return _csv_response("maturity_assessment.csv", rows)
 
 
+# ── 11. 非機能テスト観点ジェネレータ（ISO/IEC 25010:2023） ──
+def _nonfunc(request, service):
+    """ISO/IEC 25010:2023 の9特性に準拠した非機能テスト観点を生成する。
+
+    選択した品質特性・SLAパラメータから観点・技法・合否基準・根拠標準を生成。
+    ペルソナ: ISTQB AL Technical Test Analyst（非機能テスト設計担当）。
+    """
+    all_codes = [c["code"] for c in nf.CHARS]
+    selected = request.POST.getlist("chars") or all_codes[:3]
+    sla_uptime = request.POST.get("sla_uptime") or "99.9"
+    try:
+        sla_resp_ms = int(request.POST.get("sla_resp_ms") or 3000)
+    except ValueError:
+        sla_resp_ms = 3000
+
+    result = nf.generate(selected, sla_uptime, sla_resp_ms)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "chars": nf.CHARS,
+        "system_types": nf.SYSTEM_TYPES,
+        "selected": selected,
+        "sla_uptime": sla_uptime,
+        "sla_resp_ms": sla_resp_ms,
+        "result": result,
+    })
+
+    if request.POST.get("export") == "csv":
+        return _nonfunc_csv(result)
+    if request.htmx:
+        return render(request, "tools/_partials/nonfunc_result.html", ctx)
+    return render(request, "tools/nonfunc.html", ctx)
+
+
+def _nonfunc_csv(result):
+    rows = [["非機能テスト観点リスト（ISO/IEC 25010:2023）"]]
+    rows.append([f"生成件数: {result['total']}件"])
+    rows.append([])
+    rows.append(["ID", "品質特性", "サブ特性", "テスト観点", "技法", "合否基準（期待結果）", "根拠標準"])
+    for r in result["rows"]:
+        rows.append([
+            r["id"], r["char_name"], r["sub_name"],
+            r["viewpoint"], r["technique"], r["expected"], r["authority"],
+        ])
+    return _csv_response("nonfunc_viewpoints.csv", rows)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -463,4 +510,5 @@ HANDLERS = {
     "cicd": _cicd,
     "viewpoint_kb": _viewpoint_kb,
     "maturity": _maturity,
+    "nonfunc": _nonfunc,
 }

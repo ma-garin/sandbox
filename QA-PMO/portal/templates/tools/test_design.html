@@ -5,6 +5,8 @@
   <a class="subtab {% if mode == 'vp' %}active{% endif %}" href="?mode=vp">★ 観点ベース設計</a>
   <a class="subtab {% if mode == 'bva' %}active{% endif %}" href="?mode=bva">境界値分析</a>
   <a class="subtab {% if mode == 'ep' %}active{% endif %}" href="?mode=ep">同値分割</a>
+  <a class="subtab {% if mode == 'st' %}active{% endif %}" href="?mode=st">状態遷移</a>
+  <a class="subtab {% if mode == 'dt' %}active{% endif %}" href="?mode=dt">デシジョンテーブル</a>
   <a class="subtab {% if mode == 'pw' %}active{% endif %}" href="?mode=pw">ペアワイズ</a>
 </div>
 
@@ -28,6 +30,28 @@
     <label class="lbl">最小<input name="min" class="inp" type="number" value="{{ min }}"></label>
     <label class="lbl">最大<input name="max" class="inp" type="number" value="{{ max }}"></label>
     <button class="btn-primary" type="submit" hx-post="?mode=ep" hx-target="#tool-result" hx-swap="innerHTML">生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+  </div>
+</form>
+
+{% elif mode == 'st' %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="st">
+  <p class="muted">1行に「<code>現状態, イベント, 次状態</code>」。状態遷移表・0スイッチ網羅（有効系）・無効遷移（異常系）を生成します（ISTQB-FL 状態遷移テスト）。</p>
+  <textarea name="st_text" class="tool-ta sm">{{ st_text }}</textarea>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit" hx-post="?mode=st" hx-target="#tool-result" hx-swap="innerHTML">状態遷移を生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+  </div>
+</form>
+
+{% elif mode == 'dt' %}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="mode" value="dt">
+  <p class="muted">条件を1行ずつ入力。全条件のY/N組合せ（2ⁿ規則）を展開します。アクション列は記入用に空欄（ISTQB-FL デシジョンテーブル）。条件は最大6件。</p>
+  <textarea name="dt_text" class="tool-ta sm">{{ dt_text }}</textarea>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit" hx-post="?mode=dt" hx-target="#tool-result" hx-swap="innerHTML">デシジョンテーブルを生成</button>
     <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
   </div>
 </form>

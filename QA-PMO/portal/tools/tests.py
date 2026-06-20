@@ -237,6 +237,51 @@ class UxHtmxTest(TestCase):
         ctype = r["Content-Type"]
         self.assertTrue("application/pdf" in ctype or "text/markdown" in ctype)
 
+    # ── ISTQB-FL 追加技法（状態遷移・デシジョンテーブル） ──
+    def test_state_transition_post(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "st", "st_text": "A, go, B\nB, back, A"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "状態遷移表")
+        self.assertContains(r, "ST-V1")   # 有効系
+        self.assertContains(r, "ST-N1")   # 無効遷移（A,back / B,go が未定義）
+
+    def test_state_transition_logic_coverage(self):
+        res = logic.state_transition("未, 成功, 済\n済, 出, 未")
+        self.assertEqual(res["error"], "")
+        self.assertEqual(res["n_valid"], 2)
+        self.assertEqual(res["n_invalid"], 2)        # 2状態×2イベント=4 − 定義2
+
+    def test_decision_table_post(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "dt", "dt_text": "条件A\n条件B\n条件C"})
+        self.assertContains(r, "規則")
+        self.assertContains(r, "R8")                 # 2^3 = 8 規則
+
+    def test_decision_table_rule_count(self):
+        res = logic.decision_table("c1\nc2\nc3\nc4")
+        self.assertEqual(res["count"], 16)           # 2^4
+        self.assertEqual(len(res["rules"][0]["values"]), 4)
+
+    def test_decision_table_caps_conditions(self):
+        res = logic.decision_table("\n".join(f"c{i}" for i in range(10)))
+        self.assertTrue(res["capped"])
+        self.assertEqual(res["count"], 2 ** res["max_conditions"])
+
+    def test_state_transition_csv_export(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "st", "st_text": "A, go, B\nB, back, A",
+                              "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+        self.assertIn("開始状態".encode(), r.content)
+
+    def test_decision_table_csv_export(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "dt", "dt_text": "A\nB", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertIn("アクション".encode(), r.content)
+
     def test_test_design_csv_export(self):
         # 田中さん動線: 観点設計の結果をExcelへ持ち出す
         r = self.client.post(reverse("service_detail", args=["test-design"]),

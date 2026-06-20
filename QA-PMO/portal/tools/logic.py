@@ -446,3 +446,70 @@ def test_endpoint_returns_expected_status():
 }}
 """
     return code, "test.bats"
+
+
+# ─────────────────────────────────────────────
+# 10. 状態遷移テスト（ISTQB-FL：State Transition Testing）
+# ─────────────────────────────────────────────
+def state_transition(raw_text):
+    """1行に「現状態, イベント, 次状態」。状態遷移表＋0スイッチ網羅＋無効遷移を生成。"""
+    transitions = []
+    for line in raw_text.splitlines():
+        p = [s.strip() for s in line.split(",")]
+        if len(p) >= 3 and p[0] and p[1] and p[2]:
+            transitions.append({"frm": p[0], "event": p[1], "to": p[2]})
+    if not transitions:
+        return {"error": "「現状態, イベント, 次状態」を1行以上入力してください。",
+                "states": [], "events": [], "table": [], "valid": [], "invalid": []}
+
+    states, events = [], []
+    for t in transitions:
+        for s in (t["frm"], t["to"]):
+            if s not in states:
+                states.append(s)
+        if t["event"] not in events:
+            events.append(t["event"])
+
+    # 状態遷移表（行=状態 × 列=イベント）
+    defined = {(t["frm"], t["event"]): t["to"] for t in transitions}
+    table = []
+    for s in states:
+        cells = [{"to": defined.get((s, e), "—"),
+                  "defined": (s, e) in defined} for e in events]
+        table.append({"state": s, "cells": cells})
+
+    # 0スイッチ網羅：定義済み遷移を各1ケース（有効系）
+    valid = [{"id": f"ST-V{i + 1}", "frm": t["frm"], "event": t["event"],
+              "expected": f"→ {t['to']}"} for i, t in enumerate(transitions)]
+    # 無効遷移：未定義の状態×イベント（異常系）
+    invalid = []
+    k = 1
+    for s in states:
+        for e in events:
+            if (s, e) not in defined:
+                invalid.append({"id": f"ST-N{k}", "frm": s, "event": e,
+                                "expected": "遷移しない／エラー処理"})
+                k += 1
+    return {"error": "", "states": states, "events": events, "table": table,
+            "valid": valid, "invalid": invalid,
+            "n_state": len(states), "n_event": len(events),
+            "n_valid": len(valid), "n_invalid": len(invalid)}
+
+
+# ─────────────────────────────────────────────
+# 11. デシジョンテーブル（ISTQB-FL：Decision Table Testing）
+# ─────────────────────────────────────────────
+def decision_table(raw_text, max_conditions=6):
+    """条件を1行ずつ。全条件のY/N組合せ（2^n規則）を生成し、アクション列は記入用に空欄。"""
+    conditions = [s.strip() for s in raw_text.splitlines() if s.strip()]
+    if not conditions:
+        return {"error": "条件を1行以上入力してください。", "conditions": [], "rules": []}
+    capped = len(conditions) > max_conditions
+    conditions = conditions[:max_conditions]
+    n = len(conditions)
+    rules = []
+    for r in range(2 ** n):
+        values = ["Y" if (r >> (n - 1 - k)) & 1 else "N" for k in range(n)]
+        rules.append({"no": f"R{r + 1}", "values": values, "action": ""})
+    return {"error": "", "conditions": conditions, "rules": rules,
+            "count": len(rules), "capped": capped, "max_conditions": max_conditions}

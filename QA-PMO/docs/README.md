@@ -9,6 +9,7 @@
 | [QA_FRAMEWORK.md](QA_FRAMEWORK.md) | ISO 29119 / ISO 25010 / 狩野モデルでのQA評価 | 8 |
 | [WBS.md](WBS.md) | 開発WBS・フェーズ計画・11指摘の対応表 | 11 |
 | [USER_GUIDE.md](USER_GUIDE.md) | 利用手引き（画面の見方・各ツールの使い方） | 9 |
+| [PERSONAS.md](PERSONAS.md) | 12ペルソナ対応マトリクス（実機検証・残課題） | — |
 
 起動手順は [`../portal/README.md`](../portal/README.md) を参照。
 

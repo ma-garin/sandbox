@@ -133,6 +133,14 @@ def _test_design(request, service):
     elif mode == "pw":
         raw = request.POST.get("pw_text") or "OS, Windows, macOS, Linux\nブラウザ, Chrome, Firefox, Safari\n権限, 管理者, 一般"
         ctx.update({"pw_text": raw, "pw": logic.pairwise(raw)})
+    elif mode == "st":
+        raw = request.POST.get("st_text") or (
+            "未ログイン, ログイン成功, ログイン済\nログイン済, ログアウト, 未ログイン\n"
+            "ログイン済, タイムアウト, 未ログイン\n未ログイン, ログイン失敗3回, ロック")
+        ctx.update({"st_text": raw, "st": logic.state_transition(raw)})
+    elif mode == "dt":
+        raw = request.POST.get("dt_text") or "会員である\n在庫がある\nクーポンを利用する"
+        ctx.update({"dt_text": raw, "dt": logic.decision_table(raw)})
     else:  # vp 観点ベース
         feature = request.POST.get("feature") or "ユーザー登録フォーム"
         industry = request.POST.get("industry") or ""
@@ -186,6 +194,23 @@ def _test_design_csv(mode, ctx):
             rows = [["エラー", pw["error"]]]
         else:
             rows = [pw["headers"]] + pw["rows"]
+    elif mode == "st":
+        st = ctx["st"]
+        if st.get("error"):
+            rows = [["エラー", st["error"]]]
+        else:
+            rows = [["種別", "ID", "開始状態", "イベント", "期待結果"]]
+            rows += [["有効(0スイッチ)", v["id"], v["frm"], v["event"], v["expected"]]
+                     for v in st["valid"]]
+            rows += [["無効(異常系)", n["id"], n["frm"], n["event"], n["expected"]]
+                     for n in st["invalid"]]
+    elif mode == "dt":
+        dt = ctx["dt"]
+        if dt.get("error"):
+            rows = [["エラー", dt["error"]]]
+        else:
+            rows = [["規則"] + dt["conditions"] + ["アクション(記入)"]]
+            rows += [[r["no"]] + r["values"] + [r["action"]] for r in dt["rules"]]
     else:  # vp
         rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名"]]
         rows += [[r["id"], r["target"], r["viewpoint"], r["technique"],

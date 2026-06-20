@@ -6,6 +6,46 @@
 <table class="tool-table"><thead><tr><th>ID</th><th>入力</th><th>クラス</th></tr></thead>
 <tbody>{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.input }}</td><td>{{ r.klass }}</td></tr>{% endfor %}</tbody></table>
 
+{% elif mode == 'st' %}
+{% if st.error %}<p class="vp-warn">{{ st.error }}</p>{% else %}
+<div class="result-head">
+  <div class="muted">状態 {{ st.n_state }} / イベント {{ st.n_event }} ｜ 有効遷移(0スイッチ) {{ st.n_valid }} / 無効遷移(異常系) {{ st.n_invalid }}</div>
+</div>
+<h4>状態遷移表</h4>
+<table class="tool-table">
+  <thead><tr><th>状態＼イベント</th>{% for e in st.events %}<th>{{ e }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for row in st.table %}
+    <tr><td><strong>{{ row.state }}</strong></td>
+      {% for c in row.cells %}<td {% if not c.defined %}class="muted"{% endif %}>{{ c.to }}</td>{% endfor %}</tr>
+  {% endfor %}</tbody>
+</table>
+<h4>有効系テスト（0スイッチ網羅）</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>開始状態</th><th>イベント</th><th>期待結果</th></tr></thead>
+  <tbody>{% for v in st.valid %}<tr><td>{{ v.id }}</td><td>{{ v.frm }}</td><td>{{ v.event }}</td><td>{{ v.expected }}</td></tr>{% endfor %}</tbody>
+</table>
+<h4>異常系テスト（無効遷移）</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>開始状態</th><th>イベント</th><th>期待結果</th></tr></thead>
+  <tbody>{% for n in st.invalid %}<tr><td>{{ n.id }}</td><td>{{ n.frm }}</td><td>{{ n.event }}</td><td><span class="sev sev-Minor">{{ n.expected }}</span></td></tr>
+  {% empty %}<tr><td colspan="4" class="muted">未定義の遷移はありません。</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+{% elif mode == 'dt' %}
+{% if dt.error %}<p class="vp-warn">{{ dt.error }}</p>{% else %}
+<div class="result-head">
+  <div class="muted">条件 {{ dt.conditions|length }} ｜ 規則 {{ dt.count }} 通り（2ⁿ全網羅）</div>
+  {% if dt.capped %}<span class="engine-badge">条件は最大{{ dt.max_conditions }}件まで（超過分は省略）</span>{% endif %}
+</div>
+<table class="tool-table">
+  <thead><tr><th>規則</th>{% for c in dt.conditions %}<th>{{ c }}</th>{% endfor %}<th>アクション（記入）</th></tr></thead>
+  <tbody>{% for r in dt.rules %}
+    <tr><td>{{ r.no }}</td>{% for v in r.values %}<td>{{ v }}</td>{% endfor %}<td class="muted">—</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}
+
 {% elif mode == 'pw' %}
 {% if pw.error %}<p class="vp-warn">{{ pw.error }}</p>{% else %}
 <div class="result-head">

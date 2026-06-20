@@ -10,6 +10,22 @@
 
 ## クイックスタート（localhost）
 
+**ワンコマンド起動**（初回は仮想環境作成〜依存導入〜DB準備まで全自動）:
+
+```bash
+cd QA-PMO
+./run.sh            # macOS / Linux   （ポート変更は ./run.sh 9000）
+```
+
+```bat
+cd QA-PMO
+run.bat            :: Windows（ダブルクリックでも可）
+```
+
+→ 起動後 http://127.0.0.1:8000/ をブラウザで開く。停止は Ctrl + C。
+
+<details><summary>手動で起動する場合</summary>
+
 ```bash
 cd QA-PMO/portal
 python3 -m venv .venv && source .venv/bin/activate
@@ -18,6 +34,7 @@ python manage.py migrate && python manage.py seed_data
 python manage.py runserver
 # → http://127.0.0.1:8000/
 ```
+</details>
 
 詳細は [`portal/README.md`](portal/README.md)。
 
@@ -27,6 +44,7 @@ python manage.py runserver
 
 ```
 QA-PMO/
+├── run.sh / run.bat   ★ ワンコマンド起動（中身は portal/ の同名スクリプトへ委譲）
 ├── portal/            ★ 現行システム（Django）— 社内品質ポータル
 │   ├── catalog/       サービスカタログ（区分・サービス）
 │   ├── knowledge/     観点ライブラリ・欠陥パターン・観点エンジン
@@ -55,7 +73,7 @@ QA-PMO/
 | 計算エンジン | 実績OSSへ換装（textlint／allpairspy／pdfplumber／WeasyPrint）＋純Pythonフォールバック |
 | 知識資産 | 観点ライブラリ 63観点・12カテゴリ・12欠陥パターン（DB管理） |
 | 製品連携 | GIHOZ / ConTrack / InsighTest / TESTRA / Vex |
-| テスト | Django スモークテスト 35件 全PASS |
+| テスト | Django スモークテスト 47件 全PASS |
 | コスト | 0円（全てローカル・無料OSS・外部登録なし） |
 
 ---

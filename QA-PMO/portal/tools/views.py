@@ -116,6 +116,7 @@ def _test_design(request, service):
         ("auth", "認証あり"), ("integration", "外部連携あり"), ("money", "金額を扱う"),
         ("pii", "個人情報を扱う"), ("state", "状態遷移あり"),
         ("concurrent", "同時実行あり"), ("perf", "性能要件あり"),
+        ("ai", "AI/生成AI機能"),
     ]
 
     if mode == "bva":
@@ -212,9 +213,10 @@ def _test_design_csv(mode, ctx):
             rows = [["規則"] + dt["conditions"] + ["アクション(記入)"]]
             rows += [[r["no"]] + r["values"] + [r["action"]] for r in dt["rules"]]
     else:  # vp
-        rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名", "期待結果"]]
+        rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名", "期待結果", "根拠標準"]]
         rows += [[r["id"], r["target"], r["viewpoint"], r["technique"],
-                  r["cat"], r["cat_name"], r["expected"]] for r in ctx["vp"]["rows"]]
+                  r["cat"], r["cat_name"], r["expected"], r.get("authority", "")]
+                 for r in ctx["vp"]["rows"]]
     return _csv_response(f"test_design_{mode}.csv", rows)
 
 

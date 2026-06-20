@@ -69,11 +69,12 @@
 <div class="vp-warn">⚠ 未カバー観点（要確認）: {% for c in vp.missing %}{{ c.name }}{% if not forloop.last %} / {% endif %}{% endfor %}</div>
 {% else %}<div class="vp-ok">✓ 全観点カテゴリをカバー</div>{% endif %}
 <table class="tool-table">
-  <thead><tr><th>ID</th><th>対象</th><th>テスト観点</th><th>技法</th><th>カテゴリ</th><th>期待結果</th></tr></thead>
+  <thead><tr><th>ID</th><th>対象</th><th>テスト観点</th><th>技法</th><th>カテゴリ</th><th>期待結果</th><th>根拠標準</th></tr></thead>
   <tbody>{% for r in vp.rows %}
   <tr><td>{{ r.id }}</td><td>{{ r.target }}</td><td>{{ r.viewpoint }}</td>
     <td><span class="tech-badge">{{ r.technique }}</span></td><td><code>{{ r.cat }}</code> {{ r.cat_name }}</td>
-    <td class="muted">{{ r.expected }}</td></tr>
+    <td class="muted">{{ r.expected }}</td>
+    <td>{% if r.authority %}<span class="auth-badge">{{ r.authority }}</span>{% else %}<span class="muted">—</span>{% endif %}</td></tr>
   {% endfor %}</tbody>
 </table>
 {% endif %}

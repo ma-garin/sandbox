@@ -263,3 +263,4 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
 .mat-rm-pri{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--dv);color:var(--p)}
 .mat-rm-item.top .mat-rm-pri{background:var(--maj);color:#fff}
 .mat-rm-actions{margin:4px 0 0 18px;font-size:12.5px;line-height:1.7;color:var(--tx)}
+.auth-badge{display:inline-block;font-size:10px;background:#eef4ec;color:#2f6b3a;border:1px solid #cfe3d2;padding:2px 7px;border-radius:8px;white-space:nowrap}

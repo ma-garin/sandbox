@@ -1,0 +1,63 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">
+  <strong>ISO/IEC 25010:2023</strong> の9品質特性に準拠した非機能テスト観点を自動生成します。
+  2023年改定で新設された <strong>Safety（安全性）特性</strong>、強化されたSecurity 6サブ特性を完全収録。
+  各観点に<em>技法・合否基準・根拠標準</em>が付き、監査証跡として活用できます。
+  対象ペルソナ: <span class="tech-badge">ISTQB AL Technical Test Analyst</span>
+</p>
+
+<div class="nf-char-grid">
+  {% for c in chars %}
+  <div class="nf-char-card {% if c.code in selected %}selected{% endif %}">
+    <span class="nf-char-icon">{{ c.icon }}</span>
+    <span class="nf-char-name">{{ c.name }}</span>
+    <span class="nf-char-en muted">{{ c.name_en }}</span>
+    <span class="nf-char-cnt muted">{{ c.sub|length }} sub-char</span>
+  </div>
+  {% endfor %}
+</div>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#nf-spin">
+  {% csrf_token %}
+
+  <div class="nf-section">
+    <div class="nf-section-head">品質特性を選択（複数可）</div>
+    <div class="nf-checks">
+      {% for c in chars %}
+      <label class="nf-chk-label">
+        <input type="checkbox" name="chars" value="{{ c.code }}"
+               {% if c.code in selected %}checked{% endif %}
+               onchange="this.form.requestSubmit()">
+        <span class="nf-chk-icon">{{ c.icon }}</span> {{ c.name }}
+        {% if c.code == "SAFETY" %}<span class="badge-new">2023新設</span>{% endif %}
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="nf-section">
+    <div class="nf-section-head">SLAパラメータ（任意）</div>
+    <div class="nf-params">
+      <label class="nf-param">
+        <span>稼働率SLA (%)</span>
+        <input type="text" name="sla_uptime" class="inp nf-inp-sm" value="{{ sla_uptime }}" placeholder="99.9">
+      </label>
+      <label class="nf-param">
+        <span>応答時間目標 (ms)</span>
+        <input type="number" name="sla_resp_ms" class="inp nf-inp-sm" value="{{ sla_resp_ms }}" min="100" max="30000" step="100" placeholder="3000">
+      </label>
+    </div>
+  </div>
+
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">観点を生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSV出力（Excel互換）</button>
+    <span id="nf-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% include "tools/_partials/nonfunc_result.html" %}
+</div>
+{% endblock %}

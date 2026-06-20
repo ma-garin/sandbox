@@ -1,0 +1,54 @@
+{% if result.total == 0 %}
+<div class="vp-warn">品質特性を1つ以上選択してください。</div>
+
+{% else %}
+<div class="result-head">
+  <div class="score-chip">
+    ISO/IEC 25010:2023 非機能テスト観点 <strong>{{ result.total }}</strong> 件
+  </div>
+  <div class="muted">
+    対象特性 {{ result.selected_chars|length }}個 ／ 各観点に技法・合否基準・根拠標準付き
+    <span class="auth-badge">ISO/IEC 25010:2023</span>
+  </div>
+</div>
+
+{% for bc in result.by_char %}
+<div class="nf-char-section">
+  <div class="nf-char-head">
+    <span class="nf-char-icon-lg">{{ bc.icon }}</span>
+    <strong>{{ bc.name }}</strong>
+    <span class="muted nf-char-en-sm">{{ bc.code }}</span>
+    <span class="nf-cnt-badge">{{ bc.rows|length }}件</span>
+  </div>
+
+  <table class="tool-table nf-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>サブ特性</th>
+        <th>テスト観点</th>
+        <th>技法</th>
+        <th>合否基準（期待結果）</th>
+        <th>根拠標準</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in bc.rows %}
+      <tr>
+        <td><code>{{ r.id }}</code></td>
+        <td><span class="tech-badge">{{ r.sub_name }}</span></td>
+        <td>{{ r.viewpoint }}</td>
+        <td class="muted">{{ r.technique }}</td>
+        <td class="nf-expected">{{ r.expected }}</td>
+        <td><span class="auth-badge">{{ r.authority }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+<div class="nf-footer-note muted">
+  ※ 合否基準はシステム特性に応じて調整してください。安全性（Safety）特性は IEC 61508 / IEC 62443 のSILレベルに応じた追加要件が生じる場合があります。
+</div>
+{% endif %}

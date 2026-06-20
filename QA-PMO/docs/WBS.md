@@ -66,8 +66,20 @@ gantt
 | 1.8 | 9ツールの画面 | templates/tools/*.html | ✅ |
 | 1.9 | 欠陥管理のDB永続化 | Defect model・CRUD | ✅ |
 | 1.10 | 管理画面 | admin.py × 3 | ✅ |
-| 1.11 | スモークテスト | tools/tests.py（23件PASS） | ✅ |
+| 1.11 | スモークテスト | tools/tests.py（35件PASS） | ✅ |
 | 1.12 | 設計ドキュメント | docs/（CONCEPT/ARCH/QA/WBS/GUIDE） | ✅ |
+
+### Phase 1.5：実績OSS活用による強化 ✅完了（PR #13）
+
+「確立済み技術の組み合わせでより良くする」方針（提案A＋B）を実施。
+
+| WBS | 作業 | 成果物 | 状態 |
+|---|---|---|---|
+| 1.5a | 計算エンジン換装（提案A） | engines.py：textlint/allpairspy/pdfplumber/WeasyPrint＋フォールバック | ✅ |
+| 1.5b | ドキュメント検証強化 | textlint文章校正・PDFアップロード入力 | ✅ |
+| 1.5c | テスト計画PDF出力 | WeasyPrintでA4整形PDF | ✅ |
+| 1.5d | UX刷新（提案B） | HTMX部分更新・Alpine.js・Chart.js（ベンダリング） | ✅ |
+| 1.5e | テスト追加 | EngineTest 5件・UxHtmxTest 7件（計35件PASS） | ✅ |
 
 ### Phase 2：運用化（次フェーズ・未着手）
 

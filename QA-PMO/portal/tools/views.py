@@ -212,9 +212,9 @@ def _test_design_csv(mode, ctx):
             rows = [["規則"] + dt["conditions"] + ["アクション(記入)"]]
             rows += [[r["no"]] + r["values"] + [r["action"]] for r in dt["rules"]]
     else:  # vp
-        rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名"]]
+        rows = [["ID", "対象", "テスト観点", "技法", "カテゴリ", "カテゴリ名", "期待結果"]]
         rows += [[r["id"], r["target"], r["viewpoint"], r["technique"],
-                  r["cat"], r["cat_name"]] for r in ctx["vp"]["rows"]]
+                  r["cat"], r["cat_name"], r["expected"]] for r in ctx["vp"]["rows"]]
     return _csv_response(f"test_design_{mode}.csv", rows)
 
 

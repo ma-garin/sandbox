@@ -10,6 +10,37 @@ INDUSTRY_NAME = {
     "healthcare": "医療/ヘルスケア", "saas": "SaaS/B2B",
 }
 
+# カテゴリコード → 基本期待結果（ISTQB観点）
+_CAT_EXPECTED = {
+    "C-FUNC":  "正常に動作すること",
+    "C-BVA":   "境界値が正しく処理されること",
+    "C-EQ":    "適切なデータ種別として処理されること",
+    "C-EXC":   "適切なエラーが表示されること",
+    "C-STATE": "正しい状態に遷移すること",
+    "C-SEC":   "セキュリティ要件を満たすこと",
+    "C-PERF":  "規定の応答時間内に処理されること",
+    "C-COMPAT": "正しく表示・動作すること",
+    "C-USAB":  "ユーザーが理解できる表示であること",
+    "C-I18N":  "ロケール・文字コードが正しく処理されること",
+    "C-DATA":  "データが正確に保存・記録されること",
+    "C-CONC":  "データの整合性が維持されること",
+}
+
+# 技法が攻撃系・負荷系の場合はカテゴリに優先して上書き
+_TECHNIQUE_EXPECTED = {
+    "攻撃パターン": "攻撃が防御・拒否されること",
+    "負荷":        "規定の負荷シナリオ内で正常動作すること",
+    "同時実行":    "データの整合性が維持されること",
+    "データ整合":  "データが正確に保存・記録されること",
+}
+
+
+def _expected_for(cat_code, technique):
+    """カテゴリコードと技法名から期待結果の定型文を返す。"""
+    if technique in _TECHNIQUE_EXPECTED:
+        return _TECHNIQUE_EXPECTED[technique]
+    return _CAT_EXPECTED.get(cat_code, "正しく動作すること")
+
 
 def generate(feature, fields, flags, industry):
     """fields: [{"name","type"}], flags: [str], industry: str|"" 。"""
@@ -24,6 +55,7 @@ def generate(feature, fields, flags, industry):
             "id": f"TC-{n:03d}", "target": target,
             "viewpoint": vp.viewpoint, "technique": vp.technique,
             "cat": vp.category.code, "cat_name": vp.category.name,
+            "expected": _expected_for(vp.category.code, vp.technique),
         })
 
     # 常時観点

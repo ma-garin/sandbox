@@ -304,6 +304,24 @@ class UxHtmxTest(TestCase):
         self.assertIn("text/csv", r["Content-Type"])
         self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
 
+    # ── 期待結果列（テスター#1・AL-TA#3 ペルソナ対応） ──
+    def test_viewpoint_design_has_expected_column(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "ログイン", "field_name": "ID",
+                              "field_type": "email", "flags": "auth"})
+        self.assertContains(r, "期待結果")
+        self.assertContains(r, "正常に動作すること")
+        self.assertContains(r, "セキュリティ要件を満たすこと")
+
+    def test_viewpoint_csv_has_expected_column(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "ログイン",
+                              "field_name": "ID", "field_type": "email",
+                              "flags": "auth", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertIn("期待結果".encode(), r.content)
+        self.assertIn("正常に動作すること".encode(), r.content)
+
     def test_defect_csv_single_bom(self):
         url = reverse("service_detail", args=["defect-mgr"])
         self.client.post(url, {"action": "add", "title": "BOM検証"})

@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines
+from . import logic, engines, maturity
 from .models import Defect
 
 
@@ -395,6 +395,61 @@ def _viewpoint_kb(request, service):
     return render(request, "tools/viewpoint_kb.html", ctx)
 
 
+# ── 10. 品質プロセス成熟度アセスメント（TMMi準拠） ──
+def _maturity(request, service):
+    """シニアQAコンサルの成熟度診断を codify したツール。
+
+    回答（各設問0〜3）→領域別スコア・成熟度レベル・ギャップ・改善ロードマップ。
+    """
+    qkeys = maturity.question_keys()
+    if request.method == "POST":
+        responses = {qk["name"]: request.POST.get(qk["name"], 0) for qk in qkeys}
+    else:
+        # 初期表示はサンプル（全設問「部分的=1」）でレーダーが描ける状態にする
+        responses = maturity.blank_responses(default=1)
+    result = maturity.assess(responses)
+
+    # 設問を領域ごとにまとめてテンプレートへ（現在値を保持）
+    areas_form = []
+    for area in maturity.MODEL:
+        qs = []
+        for i, q in enumerate(area["questions"]):
+            name = f"q_{area['code']}_{i}"
+            qs.append({"name": name, "label": q,
+                       "value": int(responses.get(name, 0) or 0)})
+        areas_form.append({"code": area["code"], "name": area["name"],
+                           "level": area["level"], "questions": qs})
+
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "areas_form": areas_form,
+                "scale": maturity.SCALE,
+                "chart_json": json.dumps(result["chart"], ensure_ascii=False)})
+
+    if request.POST.get("export") == "csv":
+        return _maturity_csv(result)
+    if request.htmx:
+        return render(request, "tools/_partials/maturity_result.html", ctx)
+    return render(request, "tools/maturity.html", ctx)
+
+
+def _maturity_csv(result):
+    rows = [["品質プロセス成熟度アセスメント結果"]]
+    rows.append(["総合成熟度レベル", result["overall_level"], result["overall_level_name"]])
+    rows.append(["総合スコア(%)", result["overall_score"]])
+    rows.append([])
+    rows.append(["領域", "TMMiレベル", "スコア(%)", "達成基準(85%)"])
+    for a in result["areas"]:
+        rows.append([a["name"], a["level"], a["score"],
+                     "達成" if a["satisfied"] else "未達"])
+    rows.append([])
+    rows.append(["改善ロードマップ（着手順）"])
+    rows.append(["優先度", "領域", "目標レベル", "現状(%)", "改善アクション"])
+    for r in result["roadmap"]:
+        rows.append([r["priority"], r["area"], r["level"], r["score"],
+                     " / ".join(r["actions"])])
+    return _csv_response("maturity_assessment.csv", rows)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -405,4 +460,5 @@ HANDLERS = {
     "test_auto": _test_auto,
     "cicd": _cicd,
     "viewpoint_kb": _viewpoint_kb,
+    "maturity": _maturity,
 }

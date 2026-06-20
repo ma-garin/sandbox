@@ -1,0 +1,68 @@
+<div class="mat-summary">
+  <div class="mat-level-badge lv{{ result.overall_level }}">
+    <div class="mat-level-num">Level {{ result.overall_level }}</div>
+    <div class="mat-level-name">{{ result.overall_level_name }}</div>
+  </div>
+  <div class="mat-summary-body">
+    <div class="mat-score-row">
+      <span class="score-chip">総合スコア <strong>{{ result.overall_score }}</strong>%</span>
+      <span class="muted">達成基準: 各領域 {{ result.satisfied_pct }}% 以上</span>
+    </div>
+    <p class="mat-theme">{{ result.overall_level_theme }}</p>
+    {% if result.overall_level < 5 %}
+    <p class="mat-next">▶ 次の到達目標: <strong>Level {{ result.next_level }} {{ result.next_level_name }}</strong>
+      — そのために下記 <strong>{{ result.n_gaps }}</strong> 領域の改善が必要です。</p>
+    {% else %}
+    <p class="mat-next">🏆 最高レベルに到達。継続的最適化のフェーズです。</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="mat-levelbar">
+  {% for c in result.level_chips %}
+  <span class="mat-lvchip {% if c.achieved %}ok{% else %}ng{% endif %}">
+    L{{ c.lv }} {% if c.achieved %}✓達成{% else %}未達{% endif %}
+  </span>
+  {% endfor %}
+</div>
+
+<div class="chart-box mat-chart">
+  <canvas data-chart='{{ chart_json }}'></canvas>
+</div>
+
+<h4>領域別スコア</h4>
+<table class="tool-table">
+  <thead><tr><th>領域</th><th>TMMiレベル</th><th>スコア</th><th>判定</th></tr></thead>
+  <tbody>{% for a in result.areas %}
+    <tr>
+      <td>{{ a.name }}</td>
+      <td>L{{ a.level }}</td>
+      <td>
+        <div class="mat-bar"><span style="width:{{ a.score }}%"></span></div>
+        <span class="mat-bar-val">{{ a.score }}%</span>
+      </td>
+      <td>{% if a.satisfied %}<span class="sev sev-Minor">達成</span>{% else %}<span class="sev sev-Major">未達</span>{% endif %}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>
+
+{% if result.roadmap %}
+<h4>改善ロードマップ（着手順）</h4>
+<p class="muted">下位レベルから順に積み上げます。下の領域を満たさない限り上位レベルには到達できません。</p>
+<ol class="mat-roadmap">
+  {% for r in result.roadmap %}
+  <li class="mat-rm-item {% if r.priority == '最優先' %}top{% endif %}">
+    <div class="mat-rm-head">
+      <span class="mat-rm-pri">{{ r.priority }}</span>
+      <strong>{{ r.area }}</strong>
+      <span class="muted">（L{{ r.level }} ／ 現状 {{ r.score }}%）</span>
+    </div>
+    <ul class="mat-rm-actions">
+      {% for act in r.actions %}<li>{{ act }}</li>{% endfor %}
+    </ul>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<div class="vp-ok">✓ 全領域が達成基準を満たしています。</div>
+{% endif %}

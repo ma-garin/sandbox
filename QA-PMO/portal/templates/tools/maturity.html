@@ -1,0 +1,45 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">
+  TMMi（Test Maturity Model integration）に準拠した<strong>品質プロセス成熟度アセスメント</strong>です。
+  各設問に現状（0〜3）で回答すると、領域別スコア・成熟度レベル・ギャップ・<strong>優先度付き改善ロードマップ</strong>を自動生成します。
+  シニアQAコンサルタントの診断を決定的アルゴリズムで再現（AIなし・完全再現可能）。
+</p>
+
+<div class="mat-scale-legend">
+  {% for val, label, desc in scale %}
+  <span class="mat-scale-item"><b>{{ val }}</b> {{ label }} — <span class="muted">{{ desc }}</span></span>
+  {% endfor %}
+</div>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#mat-spin">
+  {% csrf_token %}
+  {% for area in areas_form %}
+  <fieldset class="mat-fieldset">
+    <legend><span class="mat-lvtag">L{{ area.level }}</span> {{ area.name }}</legend>
+    {% for q in area.questions %}
+    <div class="mat-q">
+      <div class="mat-q-label">{{ q.label }}</div>
+      <div class="mat-q-opts">
+        {% for val, label, desc in scale %}
+        <label class="mat-radio">
+          <input type="radio" name="{{ q.name }}" value="{{ val }}" {% if q.value == val %}checked{% endif %}>
+          <span>{{ val }}<small>{{ label }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">成熟度を診断する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">診断結果をCSV出力</button>
+    <span id="mat-spin" class="htmx-indicator spin">診断中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% include "tools/_partials/maturity_result.html" %}
+</div>
+{% endblock %}

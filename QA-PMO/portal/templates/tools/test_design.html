@@ -9,37 +9,42 @@
 </div>
 
 {% if mode == 'bva' %}
-<form method="post" hx-post="?mode=bva" hx-target="#tool-result" hx-swap="innerHTML">
+<form method="post">
   {% csrf_token %}<input type="hidden" name="mode" value="bva">
   <div class="form-row">
     <label class="lbl">項目名<input name="name" class="inp" value="{{ name }}"></label>
     <label class="lbl">最小<input name="min" class="inp" type="number" value="{{ min }}"></label>
     <label class="lbl">最大<input name="max" class="inp" type="number" value="{{ max }}"></label>
-    <button class="btn-primary" type="submit">生成</button>
+    <button class="btn-primary" type="submit" hx-post="?mode=bva" hx-target="#tool-result" hx-swap="innerHTML">生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
   </div>
 </form>
 
 {% elif mode == 'ep' %}
-<form method="post" hx-post="?mode=ep" hx-target="#tool-result" hx-swap="innerHTML">
+<form method="post">
   {% csrf_token %}<input type="hidden" name="mode" value="ep">
   <div class="form-row">
     <label class="lbl">項目名<input name="name" class="inp" value="{{ name }}"></label>
     <label class="lbl">最小<input name="min" class="inp" type="number" value="{{ min }}"></label>
     <label class="lbl">最大<input name="max" class="inp" type="number" value="{{ max }}"></label>
-    <button class="btn-primary" type="submit">生成</button>
+    <button class="btn-primary" type="submit" hx-post="?mode=ep" hx-target="#tool-result" hx-swap="innerHTML">生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
   </div>
 </form>
 
 {% elif mode == 'pw' %}
-<form method="post" hx-post="?mode=pw" hx-target="#tool-result" hx-swap="innerHTML">
+<form method="post">
   {% csrf_token %}<input type="hidden" name="mode" value="pw">
   <p class="muted">各パラメータの値をカンマ区切りで入力（行ごとに1パラメータ）。全ペアを網羅する最小ケースを生成します。</p>
   <textarea name="pw_text" class="tool-ta sm">{{ pw_text }}</textarea>
-  <div class="tool-actions"><button class="btn-primary" type="submit">ペアワイズ生成</button></div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit" hx-post="?mode=pw" hx-target="#tool-result" hx-swap="innerHTML">ペアワイズ生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+  </div>
 </form>
 
 {% else %}
-<form method="post" hx-post="?mode=vp" hx-target="#tool-result" hx-swap="innerHTML">
+<form method="post">
   {% csrf_token %}<input type="hidden" name="mode" value="vp">
   <label class="lbl">機能名<input name="feature" class="inp" value="{{ feature }}"></label>
   <div style="margin:12px 0">
@@ -75,7 +80,10 @@
     <label class="chk"><input type="radio" name="industry" value="healthcare" {% if industry == 'healthcare' %}checked{% endif %}>🏥 医療</label>
     <label class="chk"><input type="radio" name="industry" value="saas" {% if industry == 'saas' %}checked{% endif %}>☁️ SaaS/B2B</label>
   </div>
-  <div class="tool-actions"><button class="btn-primary" type="submit">観点ベースで生成</button></div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit" hx-post="?mode=vp" hx-target="#tool-result" hx-swap="innerHTML">観点ベースで生成</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+  </div>
 </form>
 {% endif %}
 

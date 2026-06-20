@@ -237,6 +237,34 @@ class UxHtmxTest(TestCase):
         ctype = r["Content-Type"]
         self.assertTrue("application/pdf" in ctype or "text/markdown" in ctype)
 
+    def test_test_design_csv_export(self):
+        # 田中さん動線: 観点設計の結果をExcelへ持ち出す
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "vp", "feature": "会員登録", "industry": "ecommerce",
+                              "field_name": "メール", "field_type": "email",
+                              "flags": "pii", "export": "csv"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertIn("test_design_vp.csv", r["Content-Disposition"])
+        body = r.content
+        # BOMは先頭に1回だけ（Excelで各行頭が化けない）
+        self.assertTrue(body.startswith(b"\xef\xbb\xbf"))
+        self.assertEqual(body.count(b"\xef\xbb\xbf"), 1)
+        self.assertIn("テスト観点".encode(), body)
+
+    def test_pairwise_csv_export(self):
+        r = self.client.post(reverse("service_detail", args=["test-design"]),
+                             {"mode": "pw", "pw_text": "OS, Win, Mac\nBrowser, Chrome, FF",
+                              "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+
+    def test_defect_csv_single_bom(self):
+        url = reverse("service_detail", args=["defect-mgr"])
+        self.client.post(url, {"action": "add", "title": "BOM検証"})
+        r = self.client.post(url, {"action": "csv"})
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+
     def test_doc_verify_pdf_upload(self):
         # WeasyPrint で本文入りPDFを作り、pdfplumber 抽出経路を検証
         pdf = engines.markdown_to_pdf("# 要件\n\n本文は適宜TBDで先送りする。")

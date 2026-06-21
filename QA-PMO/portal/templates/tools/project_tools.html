@@ -1,0 +1,31 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">プロジェクト情報を入力すると<strong>WBS（タスク分解）</strong>と<strong>リスク登録簿</strong>を自動生成します。品質PMO視点での標準フェーズ・リスクを内包済み。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#pt-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <label class="lbl" style="flex:1 1 220px">プロジェクト名
+      <input type="text" name="project_name" class="inp" value="{{ project_name }}" placeholder="例: 基幹システムリプレース">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">開始日
+      <input type="date" name="start_date" class="inp" value="{{ start_date }}">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">終了日
+      <input type="date" name="end_date" class="inp" value="{{ end_date }}">
+    </label>
+  </div>
+  <label class="lbl">追加リスク（1行1件。テンプレートリスクに加えて登録）
+    <textarea name="risks_text" class="tool-ta" rows="3" placeholder="例: サードパーティ製品ライセンス取得遅延&#10;上位管理者の意思決定遅延">{{ risks_text }}</textarea>
+  </label>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">WBSとリスクを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="pt-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/project_tools_result.html" %}{% endif %}
+</div>
+{% endblock %}

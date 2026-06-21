@@ -1,0 +1,44 @@
+<div class="mat-score-row" style="margin-bottom:12px">
+  <span class="score-chip">改善アクション <strong>{{ result.n_actions }}</strong> 件</span>
+  <span class="score-chip">期間 <strong>{{ result.horizon_months }}</strong> ヶ月</span>
+  <span class="muted">{{ result.phase1_end }} 〜 {{ result.phase3_end }}</span>
+</div>
+
+{% for phase in result.roadmap %}
+<div class="rm-phase">
+  <div class="rm-phase-head">
+    <strong>{{ phase.phase }}</strong>
+    <span class="muted">{{ phase.start }} 〜 {{ phase.end }}</span>
+    <span class="as-auth">{{ phase.theme }}</span>
+  </div>
+  <table class="tool-table">
+    <thead><tr><th>ID</th><th>領域</th><th>アクション</th><th>目安期間</th><th>効果</th></tr></thead>
+    <tbody>
+      {% for a in phase.actions %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.domain }}</td>
+        <td>{{ a.action }}</td>
+        <td>{{ a.timing }}</td>
+        <td>{{ a.effect }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+<h4 style="margin-top:18px">KPI目標</h4>
+<table class="tool-table">
+  <thead><tr><th>KPI</th><th>現状</th><th>目標</th><th>達成期限</th></tr></thead>
+  <tbody>
+    {% for k in result.kpis %}
+    <tr>
+      <td>{{ k.kpi }}</td>
+      <td class="muted">{{ k.current }}</td>
+      <td><strong>{{ k.target }}</strong></td>
+      <td>{{ k.when }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

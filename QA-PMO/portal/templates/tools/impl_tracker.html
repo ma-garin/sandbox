@@ -1,0 +1,24 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">実装タスクをCSV形式（タスク名, 担当者, ステータス, 期日）で入力し、<strong>進捗ダッシュボード</strong>とリスクを可視化します。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#it-spin">
+  {% csrf_token %}
+  <label class="lbl" style="margin-bottom:8px">プロジェクト名
+    <input type="text" name="project_name" class="inp" value="{{ project_name }}" placeholder="プロジェクト名">
+  </label>
+  <label class="lbl">タスクリスト（1行1件: タスク名, 担当者, ステータス, 期日）
+    <textarea name="tasks_text" class="tool-ta" rows="8"
+      placeholder="テスト計画書作成, QAリード, 完了, 2026-06-10&#10;テスト環境構築, インフラ, 進行中, 2026-06-20&#10;テスト実行, QAチーム, 未着手, 2026-06-25">{{ tasks_text }}</textarea>
+  </label>
+  <p class="muted" style="font-size:12px">ステータス候補: 未着手 / 進行中 / 完了 / 遅延 / ブロック</p>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">ダッシュボードを更新</button>
+    <span id="it-spin" class="htmx-indicator spin">集計中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/impl_tracker_result.html" %}{% endif %}
+</div>
+{% endblock %}

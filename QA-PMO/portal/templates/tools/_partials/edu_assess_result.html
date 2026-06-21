@@ -1,0 +1,36 @@
+<div class="mat-summary">
+  <div class="as-band band-{% if result.readiness >= 80 %}ok{% elif result.readiness >= 50 %}warn{% else %}bad{% endif %}">
+    <div class="as-band-label">合格準備度</div>
+    <div class="as-band-name">{{ result.cert }}</div>
+    <div class="as-band-score">{{ result.readiness }}<small>%</small></div>
+  </div>
+  <div class="mat-summary-body">
+    <div class="mat-score-row">
+      <span class="score-chip">理解済み <strong>{{ result.learned }}</strong>/{{ result.total_topics }}件</span>
+      <span class="score-chip">実践済み <strong>{{ result.practiced }}</strong>件</span>
+      {% if result.gap_count %}<span class="score-chip" style="background:#fdecea">学習ギャップ <strong>{{ result.gap_count }}</strong> 件</span>{% else %}<span class="score-chip ok">✓ 全トピック学習済み</span>{% endif %}
+    </div>
+    {% if result.gap_count %}<p class="mat-theme">推奨受験日: <strong>{{ result.exam_date }}</strong> 以降（ギャップ学習後2週間の余裕を確保）</p>{% endif %}
+  </div>
+</div>
+
+{% if result.gaps %}
+<h4>学習プラン（ギャップ: {{ result.gap_count }}件）</h4>
+<table class="tool-table">
+  <thead><tr><th>Day</th><th>日付</th><th>章</th><th>トピック</th><th>補足</th></tr></thead>
+  <tbody>
+    {% for p in result.study_plan %}
+    <tr>
+      <td>Day {{ p.day }}</td>
+      <td class="muted">{{ p.date }}</td>
+      <td>{{ p.chapter }}</td>
+      <td>{{ p.topic }}</td>
+      <td class="as-auth-cell">{{ p.memo }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h4 style="margin-top:16px">推奨学習リソース</h4>
+<ul>{% for r in result.resources %}<li>{{ r }}</li>{% endfor %}</ul>

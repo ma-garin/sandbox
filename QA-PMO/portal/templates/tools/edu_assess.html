@@ -1,0 +1,47 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">ISTQB Foundation Level シラバスのトピックを自己評価し、<strong>学習ギャップ分析</strong>と<strong>合格プラン</strong>を生成します。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#ea-spin">
+  {% csrf_token %}
+  <div class="form-row" style="margin-bottom:12px">
+    <label class="lbl">目標資格
+      <select name="target_cert" class="inp">
+        <option value="FL" {% if target_cert == 'FL' %}selected{% endif %}>ISTQB Foundation Level (JSTQB-FL)</option>
+        <option value="AL-TM" {% if target_cert == 'AL-TM' %}selected{% endif %}>Advanced Level - Test Manager</option>
+        <option value="AL-TTA" {% if target_cert == 'AL-TTA' %}selected{% endif %}>Advanced Level - Technical Test Analyst</option>
+      </select>
+    </label>
+  </div>
+  <p style="font-size:13px;color:var(--tx2)">各トピックの現在の習熟度を選択してください（0=未学習 / 1=理解 / 2=実践経験あり）</p>
+  {% for chapter in istqb_topics %}
+  <fieldset class="mat-fieldset">
+    <legend>{{ chapter.chapter }}</legend>
+    {% for topic, memo in chapter.topics %}
+    {% with key="t_"|add:chapter.code|add:"_"|add:forloop.counter0|stringformat:"d" %}
+    <div class="mat-q">
+      <div class="mat-q-label">{{ topic }} <span class="as-auth">{{ memo }}</span></div>
+      <div class="mat-q-opts">
+        {% for val, label in edu_scale %}
+        <label class="mat-radio">
+          <input type="radio" name="t_{{ chapter.code }}_{{ forloop.parentloop.counter0 }}" value="{{ val }}"
+                 {% if val == 0 %}checked{% endif %}>
+          <span>{{ val }}<small>{{ label }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">ギャップ分析＆学習プランを生成</button>
+    <span id="ea-spin" class="htmx-indicator spin">分析中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/edu_assess_result.html" %}{% endif %}
+</div>
+{% endblock %}

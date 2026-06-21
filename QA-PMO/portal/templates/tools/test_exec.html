@@ -1,0 +1,41 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">フェーズごとの<strong>テスト実行状況</strong>を入力してリリース判定ダッシュボードを生成します。終了基準の充足状況をリアルタイムに確認できます。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#te-spin">
+  {% csrf_token %}
+  <p class="muted" style="font-size:12px;margin-bottom:8px">各フェーズの計画数・実行数・合格数・不合格数・ブロック数を入力してください。</p>
+  <div id="phase-rows">
+    {% for ph in default_phases %}
+    <div class="form-row phase-row" style="gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:flex-end">
+      <label class="lbl" style="flex:1 1 120px">フェーズ名
+        <input type="text" name="phase_name" class="inp" value="{{ ph.name }}" placeholder="例: システムテスト">
+      </label>
+      <label class="lbl" style="flex:0 0 70px">計画
+        <input type="number" name="planned" class="inp" value="{{ ph.planned }}" min="0">
+      </label>
+      <label class="lbl" style="flex:0 0 70px">実行
+        <input type="number" name="executed" class="inp" value="{{ ph.executed }}" min="0">
+      </label>
+      <label class="lbl" style="flex:0 0 70px">合格
+        <input type="number" name="passed" class="inp" value="{{ ph.passed }}" min="0">
+      </label>
+      <label class="lbl" style="flex:0 0 70px">不合格
+        <input type="number" name="failed" class="inp" value="{{ ph.failed }}" min="0">
+      </label>
+      <label class="lbl" style="flex:0 0 70px">ブロック
+        <input type="number" name="blocked" class="inp" value="{{ ph.blocked }}" min="0">
+      </label>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">リリース判定ダッシュボードを更新</button>
+    <span id="te-spin" class="htmx-indicator spin">集計中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/test_exec_result.html" %}{% endif %}
+</div>
+{% endblock %}

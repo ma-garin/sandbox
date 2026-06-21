@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity, nonfunc as nf, assessments
+from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec
 from .models import Defect
 
 
@@ -558,6 +558,231 @@ def _assessment_csv(model, result):
     return _csv_response(f"{model['key']}_assessment.csv", rows)
 
 
+# ── 12b. QA文書スイートジェネレータ（ISO 29119準拠） ──
+_DEFAULT_PHASES_EXEC = [
+    {"name": "結合テスト", "planned": 120, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+    {"name": "システムテスト", "planned": 300, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+    {"name": "回帰テスト", "planned": 80, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+]
+
+_DOMAINS = {
+    "process": "テストプロセス標準化",
+    "metrics": "メトリクス・可視化",
+    "automation": "テスト自動化・CI",
+    "culture": "品質文化・人材育成",
+}
+
+
+def _qa_planning(request, service):
+    doc_type = request.POST.get("doc_type") or "test_plan"
+    project_name = request.POST.get("project_name") or ""
+    scope = request.POST.get("scope") or ""
+    start_date = request.POST.get("start_date") or ""
+    end_date = request.POST.get("end_date") or ""
+    entry_criteria = request.POST.get("entry_criteria") or ""
+    exit_criteria = request.POST.get("exit_criteria") or ""
+    risks = request.POST.get("risks") or ""
+    team_size = request.POST.get("team_size") or "2"
+
+    result = gec.qa_planning_generate(
+        doc_type, project_name, scope, start_date, end_date,
+        entry_criteria, exit_criteria, risks, team_size)
+
+    if request.POST.get("download") == "md":
+        resp = HttpResponse(result["markdown"],
+                            content_type="text/markdown; charset=utf-8")
+        resp["Content-Disposition"] = f"attachment; filename={result['doc_id']}.md"
+        return resp
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "doc_type": doc_type, "project_name": project_name,
+        "scope": scope, "start_date": start_date, "end_date": end_date,
+        "entry_criteria": entry_criteria, "exit_criteria": exit_criteria,
+        "team_size": team_size, "doc_types": gec.DOC_TYPES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/qa_planning_result.html", ctx)
+    return render(request, "tools/qa_planning.html", ctx)
+
+
+def _project_tools(request, service):
+    project_name = request.POST.get("project_name") or ""
+    start_date = request.POST.get("start_date") or ""
+    end_date = request.POST.get("end_date") or ""
+    phases_text = request.POST.get("phases_text") or ""
+    risks_text = request.POST.get("risks_text") or ""
+
+    result = gec.project_tools_generate(project_name, start_date, end_date, phases_text, risks_text)
+
+    if request.POST.get("export") == "csv":
+        rows = [["WBS", "No", "タスク名", "開始", "終了", "日数", "担当"]]
+        for ph in result["wbs"]:
+            rows.append([ph["no"], ph["level"], ph["name"], ph["start"], ph["end"], ph["duration"], ph["owner"]])
+            for sub in ph["subtasks"]:
+                rows.append(["", sub["no"], sub["name"], sub["start"], sub["end"], sub["duration"], ""])
+        rows.append([])
+        rows.append(["リスクID", "リスク名", "カテゴリ", "影響度", "発生率", "優先度", "対策", "担当", "ステータス"])
+        for r in result["risks"]:
+            rows.append([r["id"], r["name"], r["category"], r["impact"], r["probability"], r["priority"], r["mitigation"], r["owner"], r["status"]])
+        return _csv_response("wbs_risk.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "project_name": project_name,
+        "start_date": start_date, "end_date": end_date, "risks_text": risks_text,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/project_tools_result.html", ctx)
+    return render(request, "tools/project_tools.html", ctx)
+
+
+def _quality_roadmap(request, service):
+    scores = {d: int(request.POST.get(d) or 1) for d in _DOMAINS}
+    horizon_months = request.POST.get("horizon_months") or "6"
+    goals_raw = request.POST.get("goals") or ""
+    goals = [g.strip() for g in goals_raw.splitlines() if g.strip()]
+
+    result = gec.quality_roadmap_generate(scores, goals, horizon_months)
+
+    if request.POST.get("export") == "csv":
+        rows = [["品質改善ロードマップ"]]
+        rows.append(["フェーズ", "アクションID", "領域", "アクション", "目安期間", "効果"])
+        for phase in result["roadmap"]:
+            for a in phase["actions"]:
+                rows.append([phase["phase"], a["id"], a["domain"], a["action"], a["timing"], a["effect"]])
+        rows.append([])
+        rows.append(["KPI", "現状", "目標", "期限"])
+        for k in result["kpis"]:
+            rows.append([k["kpi"], k["current"], k["target"], k["when"]])
+        return _csv_response("quality_roadmap.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "domains": _DOMAINS,
+        "scores": scores, "horizon_months": horizon_months, "goals": goals_raw,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/quality_roadmap_result.html", ctx)
+    return render(request, "tools/quality_roadmap.html", ctx)
+
+
+_EDU_SCALE = [(0, "未学習"), (1, "理解"), (2, "実践")]
+
+
+def _edu_assess(request, service):
+    target_cert = request.POST.get("target_cert") or "FL"
+    keys = gec.edu_item_keys()
+    if request.method == "POST":
+        responses = {k["name"]: int(request.POST.get(k["name"]) or 0) for k in keys}
+    else:
+        responses = {k["name"]: 0 for k in keys}
+
+    result = gec.edu_assess(responses, target_cert)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "target_cert": target_cert,
+        "istqb_topics": gec.ISTQB_TOPICS, "edu_scale": _EDU_SCALE,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/edu_assess_result.html", ctx)
+    return render(request, "tools/edu_assess.html", ctx)
+
+
+def _impl_tracker(request, service):
+    tasks_text = request.POST.get("tasks_text") or ""
+    project_name = request.POST.get("project_name") or ""
+
+    result = gec.impl_tracker_process(tasks_text, project_name)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "タスク名", "担当者", "ステータス", "期日", "期日超過"]]
+        for t in result["tasks"]:
+            rows.append([t["id"], t["name"], t["owner"], t["status"], t["due"], "超過" if t["is_late"] else ""])
+        return _csv_response("impl_tracker.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "tasks_text": tasks_text, "project_name": project_name,
+        "default_tasks_text": "テスト計画書作成, QAリード, 完了, \nテスト環境構築, インフラ, 進行中, \nテストケース設計, QAチーム, 進行中, ",
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/impl_tracker_result.html", ctx)
+    return render(request, "tools/impl_tracker.html", ctx)
+
+
+def _parse_phases_post(request):
+    """POST からフェーズ行を読み取る（test_exec / test_outsource 共通）。"""
+    names = request.POST.getlist("phase_name")
+    planneds = request.POST.getlist("planned")
+    executeds = request.POST.getlist("executed")
+    passeds = request.POST.getlist("passed")
+    faileds = request.POST.getlist("failed")
+    blockeds = request.POST.getlist("blocked")
+    phases = []
+    for i, name in enumerate(names):
+        if not name:
+            continue
+        phases.append({
+            "name": name,
+            "planned": int(planneds[i] or 0) if i < len(planneds) else 0,
+            "executed": int(executeds[i] or 0) if i < len(executeds) else 0,
+            "passed": int(passeds[i] or 0) if i < len(passeds) else 0,
+            "failed": int(faileds[i] or 0) if i < len(faileds) else 0,
+            "blocked": int(blockeds[i] or 0) if i < len(blockeds) else 0,
+        })
+    return phases
+
+
+def _test_exec(request, service):
+    if request.method == "POST":
+        phases_data = _parse_phases_post(request)
+    else:
+        phases_data = None
+
+    result = gec.test_exec_dashboard(phases_data)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result,
+        "default_phases": result["phases"] if phases_data else _DEFAULT_PHASES_EXEC,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/test_exec_result.html", ctx)
+    return render(request, "tools/test_exec.html", ctx)
+
+
+def _test_outsource(request, service):
+    project_name = request.POST.get("project_name") or ""
+    client_name = request.POST.get("client_name") or ""
+    defects_text = request.POST.get("defects_text") or ""
+
+    if request.method == "POST":
+        phases_data = _parse_phases_post(request)
+    else:
+        phases_data = None
+
+    result = gec.test_outsource_tracker(project_name, client_name, phases_data, defects_text)
+
+    if request.POST.get("download") == "md":
+        resp = HttpResponse(result["report_md"],
+                            content_type="text/markdown; charset=utf-8")
+        resp["Content-Disposition"] = "attachment; filename=test_summary_report.md"
+        return resp
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "project_name": project_name, "client_name": client_name,
+        "defects_text": defects_text,
+        "default_phases": result["dashboard"]["phases"] if phases_data
+                         else _DEFAULT_PHASES_EXEC,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/test_outsource_result.html", ctx)
+    return render(request, "tools/test_outsource.html", ctx)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -570,6 +795,14 @@ HANDLERS = {
     "viewpoint_kb": _viewpoint_kb,
     "maturity": _maturity,
     "nonfunc": _nonfunc,
+    # gen_engines_c: 文書・計画・ロードマップ系（7ツール）
+    "qa_planning": _qa_planning,
+    "project_tools": _project_tools,
+    "quality_roadmap": _quality_roadmap,
+    "edu_assess": _edu_assess,
+    "impl_tracker": _impl_tracker,
+    "test_exec": _test_exec,
+    "test_outsource": _test_outsource,
     # 汎用アセスメント（8ツールを単一エンジンで駆動）
     "tpi_next": _assessment,
     "qa4ai": _assessment,

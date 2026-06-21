@@ -645,3 +645,195 @@ class AssessmentTest(TestCase):
             s = Service.objects.get(slug=slug)
             self.assertEqual(s.kind, "tool", f"{slug} がtoolになっていない")
             self.assertEqual(s.tool_key, key)
+
+
+class GenEngineCTest(TestCase):
+    """gen_engines_c.py (7 Batch-3 tools) の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    TOOL_SLUGS = [
+        ("planning", "qa_planning"),
+        ("advisor", "quality_roadmap"),
+        ("education", "edu_assess"),
+        ("impl", "impl_tracker"),
+        ("project", "project_tools"),
+        ("test-promo", "test_exec"),
+        ("test-outsource", "test_outsource"),
+    ]
+
+    # ── エンジン単体テスト ──
+
+    def test_qa_planning_returns_markdown(self):
+        from tools import gen_engines_c as gec
+        r = gec.qa_planning_generate("test_plan", "テストPJ", "購入フロー", "", "", "", "", "", "3")
+        self.assertIn("markdown", r)
+        self.assertIn("ISO/IEC 29119-3", r["markdown"])
+        self.assertIn("doc_types", r)
+        self.assertEqual(len(r["doc_types"]), 6)
+
+    def test_qa_planning_all_doc_types(self):
+        from tools import gen_engines_c as gec
+        for dt in gec.DOC_TYPES:
+            r = gec.qa_planning_generate(dt, "PJ", "", "", "", "", "", "", "2")
+            self.assertIn("markdown", r)
+            self.assertTrue(r["markdown"])
+
+    def test_project_tools_wbs_and_risks(self):
+        from tools import gen_engines_c as gec
+        r = gec.project_tools_generate("ECサイト", "2026-01-01", "2026-03-31", "", "カスタムリスク1")
+        self.assertEqual(len(r["wbs"]), 6)
+        self.assertGreater(r["n_risks"], 7)
+        self.assertTrue(r["p1_risks"])
+
+    def test_quality_roadmap_phases(self):
+        from tools import gen_engines_c as gec
+        scores = {"process": 1, "metrics": 0, "automation": 2, "culture": 1}
+        r = gec.quality_roadmap_generate(scores, ["欠陥0件"], 6)
+        self.assertEqual(len(r["roadmap"]), 3)
+        self.assertEqual(len(r["kpis"]), 4)
+        self.assertGreater(r["n_actions"], 0)
+
+    def test_edu_assess_gap_analysis(self):
+        from tools import gen_engines_c as gec
+        responses = {}  # 全0=未学習
+        r = gec.edu_assess(responses, "FL")
+        self.assertEqual(r["readiness"], 0)
+        self.assertEqual(r["gap_count"], r["total_topics"])
+        self.assertTrue(r["study_plan"])
+        self.assertTrue(r["resources"])
+
+    def test_edu_assess_full_readiness(self):
+        from tools import gen_engines_c as gec
+        keys = gec.edu_item_keys()
+        responses = {k["name"]: 2 for k in keys}
+        r = gec.edu_assess(responses, "FL")
+        self.assertEqual(r["readiness"], 100)
+        self.assertEqual(r["gap_count"], 0)
+
+    def test_impl_tracker_default_data(self):
+        from tools import gen_engines_c as gec
+        r = gec.impl_tracker_process("", "テストPJ")
+        self.assertGreater(r["total"], 0)
+        self.assertIn("done", r)
+
+    def test_impl_tracker_csv_input(self):
+        from tools import gen_engines_c as gec
+        csv = "タスクA, 田中, 完了, 2026-01-01\nタスクB, 山田, ブロック, "
+        r = gec.impl_tracker_process(csv, "PJ")
+        self.assertEqual(r["total"], 2)
+        self.assertEqual(r["done"], 1)
+        self.assertEqual(r["blocked_count"], 1)
+
+    def test_test_exec_dashboard_release_ok(self):
+        from tools import gen_engines_c as gec
+        phases = [{"name": "SIT", "planned": 100, "executed": 100,
+                   "passed": 100, "failed": 0, "blocked": 0}]
+        r = gec.test_exec_dashboard(phases)
+        self.assertTrue(r["release_ok"])
+        self.assertEqual(r["overall_exec_rate"], 100)
+
+    def test_test_exec_dashboard_not_ok(self):
+        from tools import gen_engines_c as gec
+        phases = [{"name": "SIT", "planned": 100, "executed": 80,
+                   "passed": 70, "failed": 10, "blocked": 0}]
+        r = gec.test_exec_dashboard(phases)
+        self.assertFalse(r["release_ok"])
+
+    def test_test_outsource_tracker(self):
+        from tools import gen_engines_c as gec
+        phases = [{"name": "ST", "planned": 50, "executed": 50,
+                   "passed": 48, "failed": 2, "blocked": 0}]
+        defects = "ログイン後に白画面, Critical, Open, ST\n入力制限不備, Major, Fixed, 結合"
+        r = gec.test_outsource_tracker("PJ", "クライアントA", phases, defects)
+        self.assertEqual(r["n_defects"], 2)
+        self.assertIn("テストサマリーレポート", r["report_md"])
+
+    # ── HTTP 統合テスト ──
+
+    def test_all_tools_get_200(self):
+        for slug, _key in self.TOOL_SLUGS:
+            r = self.client.get(reverse("service_detail", args=[slug]))
+            self.assertEqual(r.status_code, 200, f"{slug} GET が失敗")
+
+    def test_qa_planning_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["planning"]),
+            {"doc_type": "test_plan", "project_name": "テスト計画PJ", "team_size": "2"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "ISO/IEC 29119-3")
+
+    def test_qa_planning_download_md(self):
+        r = self.client.post(
+            reverse("service_detail", args=["planning"]),
+            {"doc_type": "test_plan", "project_name": "DL-PJ", "download": "md"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("text/markdown", r["Content-Type"])
+
+    def test_project_tools_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["project"]),
+            {"project_name": "テスト", "start_date": "2026-01-01", "end_date": "2026-03-31"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "WBS")
+
+    def test_project_tools_csv(self):
+        r = self.client.post(
+            reverse("service_detail", args=["project"]),
+            {"project_name": "PJ", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_quality_roadmap_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["advisor"]),
+            {"process": "1", "metrics": "0", "automation": "1", "culture": "2",
+             "horizon_months": "6"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Phase 1")
+
+    def test_edu_assess_post_htmx(self):
+        keys = __import__("tools.gen_engines_c", fromlist=["edu_item_keys"]).edu_item_keys()
+        data = {k["name"]: "1" for k in keys}
+        data["target_cert"] = "FL"
+        r = self.client.post(reverse("service_detail", args=["education"]), data, **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "ISTQB")
+
+    def test_impl_tracker_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["impl"]),
+            {"tasks_text": "タスクA, 田中, 完了, \nタスクB, 山田, 進行中, "},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "タスクA")
+
+    def test_test_exec_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["test-promo"]),
+            {"phase_name": ["システムテスト"], "planned": ["100"],
+             "executed": ["100"], "passed": ["100"], "failed": ["0"], "blocked": ["0"]},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "リリース判定")
+
+    def test_test_outsource_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["test-outsource"]),
+            {"project_name": "受託PJ", "client_name": "クライアントA",
+             "phase_name": ["ST"], "planned": ["50"], "executed": ["50"],
+             "passed": ["48"], "failed": ["2"], "blocked": ["0"],
+             "defects_text": "バグ1, Critical, Open, ST"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "フェーズ別進捗")
+
+    def test_tools_are_wired_as_tools(self):
+        for slug, key in self.TOOL_SLUGS:
+            s = Service.objects.get(slug=slug)
+            self.assertEqual(s.kind, "tool", f"{slug} がtoolになっていない")
+            self.assertEqual(s.tool_key, key)

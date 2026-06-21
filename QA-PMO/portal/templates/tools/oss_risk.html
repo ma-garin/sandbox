@@ -1,0 +1,32 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">依存関係リスト（requirements.txt / package.json）を貼り付けると<strong>OSSリスク評価</strong>とSBOMを生成します。ライセンスリスク・保守状況・総合リスクを可視化。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#or-spin">
+  {% csrf_token %}
+  <div class="form-row" style="margin-bottom:10px">
+    <label class="lbl" style="flex:0 0 180px">エコシステム
+      <select name="ecosystem" class="inp">
+        <option value="python" {% if ecosystem == 'python' %}selected{% endif %}>Python (requirements.txt)</option>
+        <option value="node" {% if ecosystem == 'node' %}selected{% endif %}>Node.js (package.json)</option>
+        <option value="java" {% if ecosystem == 'java' %}selected{% endif %}>Java (Maven/Gradle)</option>
+        <option value="other" {% if ecosystem == 'other' %}selected{% endif %}>その他</option>
+      </select>
+    </label>
+  </div>
+  <label class="lbl">依存関係リスト
+    <textarea name="dependency_text" class="tool-ta" rows="10"
+      style="font-family:monospace;font-size:12px"
+      placeholder="例（Python）:&#10;django==4.2.7&#10;requests==2.31.0&#10;numpy>=1.24.0&#10;flask&#10;&#10;例（Node）:&#10;{&quot;dependencies&quot;:{&quot;express&quot;:&quot;^4.18.2&quot;}}">{{ dependency_text }}</textarea>
+  </label>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">OSSリスクを評価する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">SBOMをCSVエクスポート</button>
+    <span id="or-spin" class="htmx-indicator spin">解析中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/oss_risk_result.html" %}{% endif %}
+</div>
+{% endblock %}

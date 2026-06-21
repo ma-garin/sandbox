@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec, gen_engines_a as gea
+from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec, gen_engines_a as gea, gen_engines_b as geb
 from .models import Defect
 
 
@@ -863,6 +863,101 @@ def _test_outsource(request, service):
     return render(request, "tools/test_outsource.html", ctx)
 
 
+# ── gen_engines_b: 静的解析・OSSリスク・負荷テスト・SAPシナリオ ──
+
+_SCOPE_CHOICES = [
+    ("happy_path", "ハッピーパス"),
+    ("regression", "回帰テスト"),
+    ("data_migration", "データ移行検証"),
+    ("integration", "統合テスト"),
+    ("performance", "性能テスト"),
+    ("authorization", "認可テスト"),
+]
+
+
+def _static_analysis(request, service):
+    code_text = request.POST.get("code_text") or ""
+    language = request.POST.get("language") or "python"
+    result = None
+    if request.method == "POST" and code_text.strip():
+        result = geb.static_code_analysis(code_text, language)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["ID", "重大度", "行", "カテゴリ", "メッセージ", "修正案"]]
+            for f in result.get("findings", []):
+                rows.append([f["id"], f["severity"], f.get("line", ""),
+                             f.get("category", ""), f["message"], f.get("fix", "")])
+            return _csv_response("static_analysis.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "code_text": code_text, "language": language})
+    if request.htmx:
+        return render(request, "tools/_partials/static_analysis_result.html", ctx)
+    return render(request, "tools/static_analysis.html", ctx)
+
+
+def _oss_risk(request, service):
+    dependency_text = request.POST.get("dependency_text") or ""
+    ecosystem = request.POST.get("ecosystem") or "python"
+    result = None
+    if request.method == "POST" and dependency_text.strip():
+        result = geb.oss_risk_calc(dependency_text, ecosystem)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["パッケージ", "バージョン", "ライセンス", "総合リスク", "ライセンスリスク", "保守リスク", "備考"]]
+            for p in result.get("packages", []):
+                rows.append([p["name"], p["version"], p["license"],
+                             p.get("overall_risk", ""), p.get("license_risk", ""),
+                             p.get("maintenance_risk", ""), p.get("notes", "")])
+            return _csv_response("oss_risk.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "dependency_text": dependency_text, "ecosystem": ecosystem})
+    if request.htmx:
+        return render(request, "tools/_partials/oss_risk_result.html", ctx)
+    return render(request, "tools/oss_risk.html", ctx)
+
+
+def _load_test(request, service):
+    system_type = request.POST.get("system_type") or "web"
+    protocol = request.POST.get("protocol") or "https"
+    concurrent_users = int(request.POST.get("concurrent_users") or 500)
+    sla_resp_ms = int(request.POST.get("sla_resp_ms") or 2000)
+    sla_tps = int(request.POST.get("sla_tps") or 100)
+    duration_min = int(request.POST.get("duration_min") or 30)
+    result = geb.load_test_gen(system_type, concurrent_users, sla_resp_ms, sla_tps, duration_min, protocol)
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "種別", "シナリオ名", "ユーザー数", "ランプアップ(分)", "実行時間(分)", "目標TPS", "合否基準", "優先度"]]
+        for s in result.get("scenarios", []):
+            rows.append([s["id"], s["type"], s["name"], s["users"], s["ramp_up_min"],
+                         s["duration_min"], s["target_tps"], s["acceptance_criteria"], s["priority"]])
+        return _csv_response("load_test.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "system_type": system_type, "protocol": protocol,
+                "concurrent_users": concurrent_users, "sla_resp_ms": sla_resp_ms,
+                "sla_tps": sla_tps, "duration_min": duration_min})
+    if request.htmx:
+        return render(request, "tools/_partials/load_test_result.html", ctx)
+    return render(request, "tools/load_test.html", ctx)
+
+
+def _sap_verify(request, service):
+    module = request.POST.get("module") or "FI"
+    process = request.POST.get("process") or ""
+    selected_scope = request.POST.getlist("scope") or ["happy_path", "regression", "authorization"]
+    result = None
+    if request.method == "POST":
+        result = geb.sap_scenario_gen(module, process, selected_scope)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["ID", "タイトル", "範囲", "Tコード", "優先度", "前提条件", "ステップ数"]]
+            for sc in result.get("scenarios", []):
+                rows.append([sc["id"], sc["title"], sc["scope_type"], sc["t_code"],
+                             sc["priority"], sc["precondition"], len(sc.get("steps", []))])
+            return _csv_response("sap_verify.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "module": module, "process": process,
+                "selected_scope": selected_scope, "scope_choices": _SCOPE_CHOICES})
+    if request.htmx:
+        return render(request, "tools/_partials/sap_verify_result.html", ctx)
+    return render(request, "tools/sap_verify.html", ctx)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -886,6 +981,11 @@ HANDLERS = {
     "impl_tracker": _impl_tracker,
     "test_exec": _test_exec,
     "test_outsource": _test_outsource,
+    # gen_engines_b: 静的解析・OSSリスク・負荷テスト・SAPシナリオ（4ツール）
+    "static_analysis": _static_analysis,
+    "oss_risk": _oss_risk,
+    "load_test": _load_test,
+    "sap_verify": _sap_verify,
     # 汎用アセスメント（8ツールを単一エンジンで駆動）
     "tpi_next": _assessment,
     "qa4ai": _assessment,

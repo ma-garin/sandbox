@@ -1,0 +1,46 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">SAPモジュールと業務プロセスを入力すると<strong>SAPテストシナリオ</strong>（Tコード・前提条件・手順・認可オブジェクト付き）を生成します。FI/MM/SD/PP/HR/Basis に対応。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#sv-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <label class="lbl" style="flex:0 0 160px">SAPモジュール
+      <select name="module" class="inp">
+        <option value="FI" {% if module == 'FI' %}selected{% endif %}>FI（財務会計）</option>
+        <option value="MM" {% if module == 'MM' %}selected{% endif %}>MM（購買・在庫）</option>
+        <option value="SD" {% if module == 'SD' %}selected{% endif %}>SD（販売・流通）</option>
+        <option value="PP" {% if module == 'PP' %}selected{% endif %}>PP（生産計画）</option>
+        <option value="HR" {% if module == 'HR' %}selected{% endif %}>HR（人事）</option>
+        <option value="PS" {% if module == 'PS' %}selected{% endif %}>PS（プロジェクト）</option>
+        <option value="WM" {% if module == 'WM' %}selected{% endif %}>WM（倉庫管理）</option>
+        <option value="basis" {% if module == 'basis' %}selected{% endif %}>Basis（基盤）</option>
+        <option value="custom" {% if module == 'custom' %}selected{% endif %}>カスタム開発</option>
+      </select>
+    </label>
+  </div>
+  <label class="lbl">業務プロセス説明
+    <textarea name="process" class="tool-ta" rows="3"
+      placeholder="例: 購買依頼から発注、検収、請求書照合までのP2Pプロセスを検証する">{{ process }}</textarea>
+  </label>
+  <p class="muted" style="font-size:12px;margin:8px 0 4px">テスト範囲（複数選択可）</p>
+  <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    {% for code, label in scope_choices %}
+    <label class="mat-radio" style="min-width:150px">
+      <input type="checkbox" name="scope" value="{{ code }}"
+             {% if code in selected_scope %}checked{% endif %}>
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">テストシナリオを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="sv-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/sap_verify_result.html" %}{% endif %}
+</div>
+{% endblock %}

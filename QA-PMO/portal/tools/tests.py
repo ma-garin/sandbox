@@ -926,3 +926,236 @@ class GenEngineATest(TestCase):
             s = Service.objects.get(slug=slug)
             self.assertEqual(s.kind, "tool")
             self.assertEqual(s.tool_key, key)
+
+
+class GenEngineBTest(TestCase):
+    """gen_engines_b.py (静的解析・OSSリスク・負荷テスト・SAPシナリオ) の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    # ── 負荷テスト ──
+
+    def test_load_test_gen_produces_4_scenarios(self):
+        from tools import gen_engines_b as geb
+        r = geb.load_test_gen("web", 500, 2000, 100, 30, "https")
+        self.assertEqual(r["total_scenarios"], 4)
+        types = {s["type"] for s in r["scenarios"]}
+        self.assertIn("スモーク", types)
+        self.assertIn("負荷", types)
+        self.assertIn("スパイク", types)
+        self.assertIn("耐久", types)
+
+    def test_load_test_gen_locust_script(self):
+        from tools import gen_engines_b as geb
+        r = geb.load_test_gen("api", 200, 1000, 50, 15, "https")
+        self.assertIn("locust_script", r)
+        self.assertIn("from locust import", r["locust_script"])
+
+    def test_load_test_gen_sla_table(self):
+        from tools import gen_engines_b as geb
+        r = geb.load_test_gen("web", 100, 3000, 200, 60, "https")
+        self.assertGreater(len(r["sla_table"]), 0)
+        self.assertIn("metric", r["sla_table"][0])
+        self.assertIn("target", r["sla_table"][0])
+
+    def test_load_test_gen_bottleneck_checklist(self):
+        from tools import gen_engines_b as geb
+        r = geb.load_test_gen("web", 100, 2000, 100, 30, "https")
+        self.assertGreater(len(r["bottleneck_checklist"]), 0)
+
+    # ── OSSリスク ──
+
+    def test_oss_risk_python_requirements(self):
+        from tools import gen_engines_b as geb
+        text = "django==4.2.1\nrequests==2.31.0\nmysqlclient==2.2.0"
+        r = geb.oss_risk_calc(text, "python")
+        self.assertEqual(len(r["packages"]), 3)
+        names = [p["name"] for p in r["packages"]]
+        self.assertIn("django", names)
+        self.assertIn("requests", names)
+
+    def test_oss_risk_license_detection(self):
+        from tools import gen_engines_b as geb
+        text = "mysqlclient==2.2.0"
+        r = geb.oss_risk_calc(text, "python")
+        pkg = r["packages"][0]
+        self.assertIn("GPL", pkg["license"])
+
+    def test_oss_risk_summary_keys(self):
+        from tools import gen_engines_b as geb
+        r = geb.oss_risk_calc("flask==3.0.0\nnumpy==1.26.0", "python")
+        self.assertIn("summary", r)
+        self.assertIn("sbom", r)
+        self.assertIn("recommendations", r)
+
+    def test_oss_risk_node_ecosystem(self):
+        from tools import gen_engines_b as geb
+        text = '{"dependencies": {"express": "^4.18.0", "lodash": "^4.17.21"}}'
+        r = geb.oss_risk_calc(text, "node")
+        self.assertGreater(len(r["packages"]), 0)
+
+    # ── 静的解析 ──
+
+    def test_static_analysis_python_findings(self):
+        from tools import gen_engines_b as geb
+        code = "import os\npassword = 'abc123'\nexec(user_input)\neval(x)"
+        r = geb.static_code_analysis(code, "python")
+        self.assertGreater(len(r["findings"]), 0)
+        self.assertIn("score", r)
+        self.assertIn("grade", r)
+
+    def test_static_analysis_grade_scale(self):
+        from tools import gen_engines_b as geb
+        clean_code = "def add(a, b):\n    return a + b\n"
+        r = geb.static_code_analysis(clean_code, "python")
+        self.assertIn(r["grade"], ["A", "B", "C", "D", "F"])
+        self.assertGreaterEqual(r["score"], 0)
+        self.assertLessEqual(r["score"], 100)
+
+    def test_static_analysis_metrics(self):
+        from tools import gen_engines_b as geb
+        code = "def f():\n    x = 1\n    return x\n"
+        r = geb.static_code_analysis(code, "python")
+        self.assertIn("metrics", r)
+        self.assertIn("lines", r["metrics"])
+
+    def test_static_analysis_javascript(self):
+        from tools import gen_engines_b as geb
+        code = "var x = eval(input);\nconsole.log(x);"
+        r = geb.static_code_analysis(code, "javascript")
+        self.assertGreater(len(r["findings"]), 0)
+
+    def test_static_analysis_severity_counts(self):
+        from tools import gen_engines_b as geb
+        code = "exec(x)\neval(y)\npassword='abc'"
+        r = geb.static_code_analysis(code, "python")
+        self.assertIn("summary", r)
+        s = r["summary"]
+        total = s["Critical"] + s["Major"] + s["Minor"] + s["Info"]
+        self.assertEqual(total, len(r["findings"]))
+
+    # ── SAPシナリオ ──
+
+    def test_sap_scenario_gen_fi_module(self):
+        from tools import gen_engines_b as geb
+        r = geb.sap_scenario_gen("FI", "仕入先請求書の照合と支払処理", ["happy_path", "authorization"])
+        self.assertGreater(r["total"], 0)
+        self.assertIn("FI", r["module"])  # 例: "財務会計（FI）"
+        for sc in r["scenarios"]:
+            self.assertIn("id", sc)
+            self.assertIn("t_code", sc)
+            self.assertIn("steps", sc)
+            self.assertTrue(sc["steps"])
+
+    def test_sap_scenario_gen_mm_module(self):
+        from tools import gen_engines_b as geb
+        r = geb.sap_scenario_gen("MM", "購買依頼から発注・検収", ["happy_path"])
+        self.assertGreater(r["total"], 0)
+        t_codes = [sc["t_code"] for sc in r["scenarios"]]
+        self.assertTrue(any("ME" in t for t in t_codes))
+
+    def test_sap_scenario_gen_checklists(self):
+        from tools import gen_engines_b as geb
+        r = geb.sap_scenario_gen("SD", "受注から出荷・請求", ["happy_path", "regression"])
+        self.assertIn("master_data_checklist", r)
+        self.assertIn("transport_checklist", r)
+        self.assertGreater(len(r["master_data_checklist"]), 0)
+        self.assertGreater(len(r["transport_checklist"]), 0)
+
+    def test_sap_scenario_steps_have_required_keys(self):
+        from tools import gen_engines_b as geb
+        r = geb.sap_scenario_gen("PP", "生産計画から製造指図", ["happy_path"])
+        for sc in r["scenarios"]:
+            for step in sc["steps"]:
+                self.assertIn("action", step)
+                self.assertIn("expected", step)
+                self.assertIn("t_code", step)
+
+    # ── HTTP 統合テスト ──
+
+    def test_static_analysis_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["static-analysis"]))
+        self.assertEqual(r.status_code, 200)
+
+    def test_static_analysis_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["static-analysis"]),
+            {"code_text": "eval(user_input)\npassword='secret'", "language": "python"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "SA-")
+
+    def test_static_analysis_csv_export(self):
+        r = self.client.post(
+            reverse("service_detail", args=["static-analysis"]),
+            {"code_text": "eval(x)", "language": "python", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_oss_risk_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["oss-risk"]))
+        self.assertEqual(r.status_code, 200)
+
+    def test_oss_risk_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["oss-risk"]),
+            {"dependency_text": "django==4.2.1\nrequests==2.31.0", "ecosystem": "python"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "django")
+
+    def test_oss_risk_csv_export(self):
+        r = self.client.post(
+            reverse("service_detail", args=["oss-risk"]),
+            {"dependency_text": "flask==3.0.0", "ecosystem": "python", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_load_test_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["nonfunctional"]))
+        self.assertEqual(r.status_code, 200)
+
+    def test_load_test_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["nonfunctional"]),
+            {"system_type": "web", "protocol": "https",
+             "concurrent_users": "500", "sla_resp_ms": "2000",
+             "sla_tps": "100", "duration_min": "30"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "スモーク")
+
+    def test_load_test_csv_export(self):
+        r = self.client.post(
+            reverse("service_detail", args=["nonfunctional"]),
+            {"system_type": "api", "concurrent_users": "200", "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_sap_verify_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["sap-verify"]))
+        self.assertEqual(r.status_code, 200)
+
+    def test_sap_verify_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["sap-verify"]),
+            {"module": "FI", "process": "請求書照合と支払処理",
+             "scope": ["happy_path", "authorization"]},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "SAP-")
+
+    def test_sap_verify_csv_export(self):
+        r = self.client.post(
+            reverse("service_detail", args=["sap-verify"]),
+            {"module": "MM", "process": "購買依頼から発注",
+             "scope": ["happy_path"], "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_batch5_tools_are_wired(self):
+        for slug, key in [("static-analysis", "static_analysis"),
+                          ("oss-risk", "oss_risk"),
+                          ("nonfunctional", "load_test"),
+                          ("sap-verify", "sap_verify")]:
+            s = Service.objects.get(slug=slug)
+            self.assertEqual(s.kind, "tool", f"{slug} がtoolになっていない")
+            self.assertEqual(s.tool_key, key)

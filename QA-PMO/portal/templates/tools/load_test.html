@@ -1,0 +1,47 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">システム情報とSLAを入力すると<strong>負荷テストシナリオ</strong>（スモーク/負荷/スパイク/耐久）とLocustスクリプトを生成します。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#lt-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <label class="lbl" style="flex:0 0 160px">システム種別
+      <select name="system_type" class="inp">
+        <option value="web" {% if system_type == 'web' %}selected{% endif %}>Webアプリ</option>
+        <option value="api" {% if system_type == 'api' %}selected{% endif %}>REST API</option>
+        <option value="batch" {% if system_type == 'batch' %}selected{% endif %}>バッチ処理</option>
+        <option value="streaming" {% if system_type == 'streaming' %}selected{% endif %}>ストリーミング</option>
+      </select>
+    </label>
+    <label class="lbl" style="flex:0 0 140px">プロトコル
+      <select name="protocol" class="inp">
+        <option value="https" {% if protocol == 'https' %}selected{% endif %}>HTTPS</option>
+        <option value="http" {% if protocol == 'http' %}selected{% endif %}>HTTP</option>
+        <option value="grpc" {% if protocol == 'grpc' %}selected{% endif %}>gRPC</option>
+        <option value="ws" {% if protocol == 'ws' %}selected{% endif %}>WebSocket</option>
+      </select>
+    </label>
+    <label class="lbl" style="flex:0 0 130px">同時接続ユーザー数
+      <input type="number" name="concurrent_users" class="inp" value="{{ concurrent_users }}" min="1" placeholder="500">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">応答時間SLA (ms)
+      <input type="number" name="sla_resp_ms" class="inp" value="{{ sla_resp_ms }}" min="100" placeholder="2000">
+    </label>
+    <label class="lbl" style="flex:0 0 130px">スループットSLA (TPS)
+      <input type="number" name="sla_tps" class="inp" value="{{ sla_tps }}" min="1" placeholder="100">
+    </label>
+    <label class="lbl" style="flex:0 0 120px">テスト時間 (分)
+      <input type="number" name="duration_min" class="inp" value="{{ duration_min }}" min="5" placeholder="30">
+    </label>
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">シナリオを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="lt-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/load_test_result.html" %}{% endif %}
+</div>
+{% endblock %}

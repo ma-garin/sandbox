@@ -1,0 +1,30 @@
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">総計 <strong>{{ result.summary.total }}</strong> パッケージ</span>
+  {% if result.summary.critical %}<span class="score-chip" style="background:#fdecea">重大リスク <strong>{{ result.summary.critical }}</strong></span>{% endif %}
+  {% if result.summary.high %}<span class="score-chip" style="background:#fff3e0">高リスク <strong>{{ result.summary.high }}</strong></span>{% endif %}
+  {% if result.summary.medium %}<span class="score-chip">中リスク <strong>{{ result.summary.medium }}</strong></span>{% endif %}
+  <span class="score-chip {% if result.summary.sbom_ready %}ok{% endif %}">SBOM {% if result.summary.sbom_ready %}✓ 準備完了{% else %}△ 要確認{% endif %}</span>
+</div>
+
+{% if result.recommendations %}
+<div class="vp-warn" style="margin-bottom:12px">
+  {% for r in result.recommendations %}<p>⚠️ {{ r }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<table class="tool-table">
+  <thead><tr><th>パッケージ名</th><th>バージョン</th><th>ライセンス</th><th>ライセンスリスク</th><th>保守リスク</th><th>総合リスク</th><th>備考</th></tr></thead>
+  <tbody>
+  {% for pkg in result.packages %}
+    <tr>
+      <td><strong>{{ pkg.name }}</strong></td>
+      <td class="muted">{{ pkg.version }}</td>
+      <td class="muted">{{ pkg.license }}</td>
+      <td><span class="sev sev-{% if pkg.license_risk == '高' %}Major{% elif pkg.license_risk == '中' %}Minor{% else %}Cosmetic{% endif %}">{{ pkg.license_risk }}</span></td>
+      <td><span class="sev sev-{% if pkg.maintenance_risk == '高' %}Major{% elif pkg.maintenance_risk == '中' %}Minor{% else %}Cosmetic{% endif %}">{{ pkg.maintenance_risk }}</span></td>
+      <td><span class="sev sev-{% if pkg.overall_risk == '重大' %}Critical{% elif pkg.overall_risk == '高' %}Major{% elif pkg.overall_risk == '中' %}Minor{% else %}Cosmetic{% endif %}">{{ pkg.overall_risk }}</span></td>
+      <td class="muted" style="font-size:11px">{{ pkg.notes }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

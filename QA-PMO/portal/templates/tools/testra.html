@@ -1,0 +1,36 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">機能仕様テキストを入力すると<strong>実行可能なテストケース</strong>（ISTQB FL / ISO 29119準拠）を自動生成します。機能・境界値・例外・状態遷移・セキュリティ・性能の6種別に対応。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#tr-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <label class="lbl" style="flex:1 1 220px">機能名
+      <input type="text" name="feature_name" class="inp" value="{{ feature_name }}" placeholder="例: ユーザーログイン機能">
+    </label>
+  </div>
+  <label class="lbl">機能仕様・要件テキスト
+    <textarea name="spec_text" class="tool-ta" rows="6"
+      placeholder="例: ユーザーはメールアドレスとパスワードでログインできる。&#10;パスワードを5回連続で誤入力するとアカウントがロックされる。&#10;ログイン成功後はダッシュボードへ遷移する。">{{ spec_text }}</textarea>
+  </label>
+  <p class="muted" style="font-size:12px;margin:8px 0 4px">生成するテスト種別（複数選択可）</p>
+  <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    {% for code, label in test_type_choices %}
+    <label class="mat-radio" style="min-width:120px">
+      <input type="checkbox" name="test_types" value="{{ code }}"
+             {% if code in selected_types %}checked{% endif %}>
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">テストケースを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="tr-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/testra_result.html" %}{% endif %}
+</div>
+{% endblock %}

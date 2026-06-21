@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec
+from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec, gen_engines_a as gea
 from .models import Defect
 
 
@@ -558,6 +558,86 @@ def _assessment_csv(model, result):
     return _csv_response(f"{model['key']}_assessment.csv", rows)
 
 
+# ── 12a. テストケース生成エージェント（TESTRA / gen_engines_a） ──
+
+_TC_TYPE_CHOICES = [
+    ("func", "機能テスト"),
+    ("boundary", "境界値テスト"),
+    ("exception", "例外・異常系"),
+    ("state", "状態遷移テスト"),
+    ("security", "セキュリティテスト"),
+    ("perf", "性能テスト"),
+]
+
+_AREA_CHOICES = [
+    ("func", "機能"),
+    ("boundary", "境界値"),
+    ("ux", "UX/ユーザビリティ"),
+    ("security", "セキュリティ"),
+    ("perf", "性能"),
+    ("integration", "統合/連携"),
+    ("data", "データ整合性"),
+]
+
+_TESTRA_SAMPLE_SPEC = """ユーザーはメールアドレスとパスワードでログインできる。
+パスワードを5回連続で誤入力するとアカウントがロックされる。
+ロック解除は管理者またはメール認証で行う。
+セッションは30分操作がないと自動タイムアウトする。"""
+
+
+def _testra(request, service):
+    spec_text = request.POST.get("spec_text") or _TESTRA_SAMPLE_SPEC
+    feature_name = request.POST.get("feature_name") or "ユーザーログイン機能"
+    test_types = request.POST.getlist("test_types") or ["func", "boundary", "exception"]
+
+    result = gea.spec_to_tc(spec_text, feature_name, test_types)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "種別", "優先度", "タイトル", "前提条件", "手順", "テストデータ", "根拠"]]
+        for tc in result.get("cases", []):
+            steps_text = " / ".join(f"{s['action']}→{s['expected']}" for s in tc["steps"])
+            rows.append([tc["id"], tc["type"], tc["priority"], tc["title"],
+                         tc["precondition"], steps_text, tc.get("test_data", ""), tc.get("authority", "")])
+        return _csv_response("testcases.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "spec_text": spec_text,
+        "feature_name": feature_name, "selected_types": test_types,
+        "test_type_choices": _TC_TYPE_CHOICES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/testra_result.html", ctx)
+    return render(request, "tools/testra.html", ctx)
+
+
+def _exploratory(request, service):
+    feature = request.POST.get("feature") or "ユーザー登録フォーム"
+    time_budget_min = int(request.POST.get("time_budget_min") or 120)
+    areas = request.POST.getlist("areas") or ["func", "boundary", "ux"]
+    risk_level = request.POST.get("risk_level") or "medium"
+
+    result = gea.exploratory_charters(feature, time_budget_min, areas, risk_level)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "ミッション", "領域", "時間(分)", "優先度", "フォーカス", "ヒント", "合否基準"]]
+        for ch in result.get("charters", []):
+            rows.append([ch["id"], ch["mission"], ch["area"], ch["duration_min"],
+                         ch["priority"], " / ".join(ch["focus"]),
+                         " / ".join(ch["hints"]), ch["oracle"]])
+        return _csv_response("exploratory_charters.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "feature": feature,
+        "time_budget_min": time_budget_min, "selected_areas": areas,
+        "risk_level": risk_level, "area_choices": _AREA_CHOICES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/exploratory_result.html", ctx)
+    return render(request, "tools/exploratory.html", ctx)
+
+
 # ── 12b. QA文書スイートジェネレータ（ISO 29119準拠） ──
 _DEFAULT_PHASES_EXEC = [
     {"name": "結合テスト", "planned": 120, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
@@ -795,6 +875,9 @@ HANDLERS = {
     "viewpoint_kb": _viewpoint_kb,
     "maturity": _maturity,
     "nonfunc": _nonfunc,
+    # gen_engines_a: テストケース生成・探索的テスト（2ツール）
+    "testra": _testra,
+    "exploratory": _exploratory,
     # gen_engines_c: 文書・計画・ロードマップ系（7ツール）
     "qa_planning": _qa_planning,
     "project_tools": _project_tools,

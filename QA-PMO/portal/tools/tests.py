@@ -837,3 +837,92 @@ class GenEngineCTest(TestCase):
             s = Service.objects.get(slug=slug)
             self.assertEqual(s.kind, "tool", f"{slug} がtoolになっていない")
             self.assertEqual(s.tool_key, key)
+
+
+class GenEngineATest(TestCase):
+    """gen_engines_a.py (testra + exploratory) の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    def test_spec_to_tc_generates_cases(self):
+        from tools import gen_engines_a as gea
+        r = gea.spec_to_tc("ユーザーはメールとパスワードでログインできる", "ログイン機能",
+                            ["func", "boundary", "exception"])
+        self.assertGreater(r["total"], 0)
+        self.assertFalse(r["error"])
+        for tc in r["cases"]:
+            self.assertIn("id", tc)
+            self.assertIn("title", tc)
+            self.assertIn("steps", tc)
+            self.assertTrue(tc["steps"])
+
+    def test_spec_to_tc_empty_spec_returns_error(self):
+        from tools import gen_engines_a as gea
+        r = gea.spec_to_tc("", "テスト", ["func"])
+        self.assertTrue(r["error"])
+        self.assertEqual(r["total"], 0)
+
+    def test_spec_to_tc_all_types(self):
+        from tools import gen_engines_a as gea
+        all_types = ["func", "boundary", "exception", "state", "security", "perf"]
+        r = gea.spec_to_tc("ユーザーがログインできる。パスワードは8文字以上。", "ログイン", all_types)
+        self.assertGreater(r["total"], 0)
+        self.assertFalse(r.get("error"))
+
+    def test_exploratory_charters_generated(self):
+        from tools import gen_engines_a as gea
+        r = gea.exploratory_charters("カートページ", 120, ["func", "security", "perf"], "high")
+        self.assertGreater(r["total_charters"], 0)
+        self.assertFalse(r["error"])
+        for ch in r["charters"]:
+            self.assertIn("mission", ch)
+            self.assertIn("focus", ch)
+            self.assertGreater(ch["duration_min"], 0)
+
+    def test_exploratory_empty_feature_returns_error(self):
+        from tools import gen_engines_a as gea
+        r = gea.exploratory_charters("", 60, ["func"], "medium")
+        self.assertTrue(r["error"])
+
+    def test_testra_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["testra"]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "テストケースを生成する")
+
+    def test_testra_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["testra"]),
+            {"spec_text": "ユーザーがログインできる", "feature_name": "ログイン",
+             "test_types": ["func", "boundary"]},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "TC-")
+
+    def test_testra_csv_export(self):
+        r = self.client.post(
+            reverse("service_detail", args=["testra"]),
+            {"spec_text": "ユーザーがログインできる", "feature_name": "ログイン",
+             "test_types": ["func"], "export": "csv"})
+        self.assertIn("text/csv", r["Content-Type"])
+
+    def test_exploratory_get_200(self):
+        r = self.client.get(reverse("service_detail", args=["exploratory"]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "チャーターを生成する")
+
+    def test_exploratory_post_htmx(self):
+        r = self.client.post(
+            reverse("service_detail", args=["exploratory"]),
+            {"feature": "ログインフォーム", "time_budget_min": "60",
+             "areas": ["func", "security"], "risk_level": "high"},
+            **HX)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "CH-")
+
+    def test_tools_are_wired_as_tools(self):
+        for slug, key in [("testra", "testra"), ("exploratory", "exploratory")]:
+            s = Service.objects.get(slug=slug)
+            self.assertEqual(s.kind, "tool")
+            self.assertEqual(s.tool_key, key)

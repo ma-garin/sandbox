@@ -1,0 +1,20 @@
+{
+  "name": "qa-knowledge",
+  "version": "1.0.0",
+  "description": "公開WebシステムのURLから画面要素を解析し、上流工程で使うドキュメントをルールベースで生成するPython製MVP。",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^26.0.0"
+  }
+}

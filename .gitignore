@@ -16,6 +16,13 @@ Thumbs.db
 # Logs
 *.log
 
+# Test/runtime artifacts
+.hypothesis/
+.playwright-mcp/
+.pytest_cache/
+playwright-report/
+test-results/
+
 # Node
 node_modules/
 

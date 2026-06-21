@@ -15,7 +15,7 @@ from django.urls import reverse
 
 from catalog.models import Service
 from knowledge.models import Viewpoint
-from tools import engines, logic, maturity, nonfunc as nf
+from tools import engines, logic, maturity, nonfunc as nf, assessments
 from tools.models import Defect
 
 HX = {"HTTP_HX_REQUEST": "true"}  # HTMX リクエストを模す
@@ -558,3 +558,90 @@ class NonfuncTest(TestCase):
         self.assertIn("非機能テスト観点".encode(), r.content)
         self.assertIn("根拠標準".encode(), r.content)
         self.assertIn("ISO/IEC 25010:2023".encode(), r.content)
+
+
+class AssessmentTest(TestCase):
+    """汎用アセスメント・エンジン（8ツールを単一エンジンで駆動）の検証。"""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_data")
+
+    TOOLS = [
+        ("consultant", "consultant"), ("tpi-next", "tpi_next"),
+        ("embedded-verify", "embedded_verify"), ("qa4ai", "qa4ai"),
+        ("genai-qa", "genai_qa"), ("vuln-web", "vuln_web"),
+        ("vuln-embedded", "vuln_embedded"), ("sec-training", "sec_training"),
+    ]
+
+    def test_all_models_well_formed(self):
+        from tools import assessments
+        self.assertEqual(len(assessments.MODELS), 8)
+        for key, model in assessments.MODELS.items():
+            self.assertEqual(model["key"], key)
+            self.assertTrue(model["areas"], f"{key} に領域がない")
+            self.assertEqual(len(model["bands"]), 4, f"{key} のバンドは4段階")
+            for area in model["areas"]:
+                self.assertTrue(area["items"], f"{key}/{area['code']} に項目がない")
+                for item in area["items"]:
+                    self.assertIn("q", item)
+                    self.assertIn("fix", item)
+
+    def test_assess_all_zero_is_worst_band(self):
+        from tools import assessments
+        for key, model in assessments.MODELS.items():
+            res = assessments.assess(model, {})
+            self.assertEqual(res["overall_score"], 0, f"{key} で0点にならない")
+            self.assertEqual(res["band"]["tone"], "bad")
+            n_items = sum(len(a["items"]) for a in model["areas"])
+            self.assertEqual(res["n_findings"], n_items)
+
+    def test_assess_all_max_is_best_band(self):
+        from tools import assessments
+        for key, model in assessments.MODELS.items():
+            full = {k["name"]: 3 for k in assessments.item_keys(model)}
+            res = assessments.assess(model, full)
+            self.assertEqual(res["overall_score"], 100, f"{key} で100点にならない")
+            self.assertEqual(res["band"]["tone"], "ok")
+            self.assertEqual(res["n_findings"], 0)
+
+    def test_recommendations_have_authority(self):
+        from tools import assessments
+        model = assessments.get_model("vuln_web")
+        res = assessments.assess(model, {})
+        self.assertTrue(res["recommendations"])
+        for r in res["recommendations"]:
+            self.assertTrue(r["fix"])
+            self.assertTrue(r["authority"])
+            self.assertIn(r["priority"], ("最優先", "優先", "推奨"))
+
+    def test_all_tools_get_renders_form(self):
+        for slug, _key in self.TOOLS:
+            r = self.client.get(reverse("service_detail", args=[slug]))
+            self.assertEqual(r.status_code, 200, f"{slug} が開けない")
+            self.assertContains(r, "診断する")
+
+    def test_all_tools_post_generates_result(self):
+        from tools import assessments
+        for slug, key in self.TOOLS:
+            model = assessments.get_model(key)
+            data = {k["name"]: 1 for k in assessments.item_keys(model)}
+            r = self.client.post(reverse("service_detail", args=[slug]), data, **HX)
+            self.assertEqual(r.status_code, 200, f"{slug} のPOSTが失敗")
+            self.assertContains(r, "領域別スコア")
+
+    def test_csv_export(self):
+        from tools import assessments
+        model = assessments.get_model("qa4ai")
+        data = {k["name"]: 2 for k in assessments.item_keys(model)}
+        data["export"] = "csv"
+        r = self.client.post(reverse("service_detail", args=["qa4ai"]), data)
+        self.assertIn("text/csv", r["Content-Type"])
+        self.assertEqual(r.content.count(b"\xef\xbb\xbf"), 1)
+        self.assertIn("改善アクション".encode(), r.content)
+
+    def test_tools_are_wired_as_tools(self):
+        for slug, key in self.TOOLS:
+            s = Service.objects.get(slug=slug)
+            self.assertEqual(s.kind, "tool", f"{slug} がtoolになっていない")
+            self.assertEqual(s.tool_key, key)

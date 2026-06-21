@@ -1,0 +1,59 @@
+<div class="mat-summary">
+  <div class="as-band band-{{ result.band.tone }}">
+    <div class="as-band-label">{{ result.band_label }}</div>
+    <div class="as-band-name">{{ result.band.label }}</div>
+    <div class="as-band-score">{{ result.overall_score }}<small>%</small></div>
+  </div>
+  <div class="mat-summary-body">
+    <p class="mat-theme">{{ result.band.desc }}</p>
+    <div class="mat-score-row">
+      {% if result.n_findings %}
+      <span class="score-chip">改善提案 <strong>{{ result.n_findings }}</strong> 件</span>
+      <span class="muted">充足基準: 各項目 {{ result.satisfied }} 以上</span>
+      {% else %}
+      <span class="score-chip ok">✓ 全項目が充足基準を満たしています</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="chart-box mat-chart">
+  <canvas data-chart='{{ chart_json }}'></canvas>
+</div>
+
+<h4>領域別スコア</h4>
+<table class="tool-table">
+  <thead><tr><th>領域</th><th>スコア</th><th>判定</th><th>根拠</th></tr></thead>
+  <tbody>{% for a in result.areas %}
+    <tr>
+      <td>{{ a.name }}</td>
+      <td>
+        <div class="mat-bar"><span style="width:{{ a.score }}%"></span></div>
+        <span class="mat-bar-val">{{ a.score }}%</span>
+      </td>
+      <td>{% if a.satisfied %}<span class="sev sev-Minor">良好</span>{% else %}<span class="sev sev-Major">要改善</span>{% endif %}</td>
+      <td class="as-auth-cell">{{ a.authority }}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>
+
+{% if result.recommendations %}
+<h4>優先度付き改善提案（{{ result.n_findings }}件）</h4>
+<p class="muted">充足していない項目を、重要度・現状の弱さで並べています。上位から着手してください。</p>
+<ol class="mat-roadmap">
+  {% for r in result.recommendations %}
+  <li class="mat-rm-item {% if r.priority == '最優先' %}top{% endif %}">
+    <div class="mat-rm-head">
+      <span class="mat-rm-pri">{{ r.priority }}</span>
+      <strong>{{ r.area }}</strong>
+      <span class="muted">（現状レベル {{ r.value }}）</span>
+    </div>
+    <div class="as-rec-q">{{ r.q }}</div>
+    <ul class="mat-rm-actions"><li>{{ r.fix }}</li></ul>
+    <div class="as-rec-auth">出典: {{ r.authority }}</div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<div class="vp-ok">✓ 全項目が充足基準を満たしています。継続的な維持・改善のフェーズです。</div>
+{% endif %}

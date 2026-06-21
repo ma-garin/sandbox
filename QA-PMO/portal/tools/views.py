@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity, nonfunc as nf
+from . import logic, engines, maturity, nonfunc as nf, assessments
 from .models import Defect
 
 
@@ -499,6 +499,65 @@ def _nonfunc_csv(result):
     return _csv_response("nonfunc_viewpoints.csv", rows)
 
 
+# ── 12〜19. 汎用アセスメント（TPI Next / QA4AI / 生成AI / Web脆弱性 / 組込みSec /
+#            組込み検証 / 品質コンサル診断 / セキュリティ習熟度） ──
+def _assessment(request, service):
+    """単一エンジンで複数のアセスメント系ツールを駆動する。
+
+    service.tool_key から assessments.MODELS のモデルを引き当て、
+    回答（各項目0〜3）→ 領域別スコア・バンド判定・優先度付き改善提案を生成。
+    AIなし・外部依存なし・完全再現可能。AI採点への換装も呼び出し側は不変。
+    """
+    model = assessments.get_model(service.tool_key)
+    if model is None:
+        return render(request, "catalog/service_detail.html", _base_ctx(service))
+
+    keys = assessments.item_keys(model)
+    if request.method == "POST":
+        responses = {k["name"]: request.POST.get(k["name"], 0) for k in keys}
+    else:
+        responses = assessments.blank_responses(model, default=1)
+    result = assessments.assess(model, responses)
+
+    # 設問を領域ごとにまとめる（現在値を保持）
+    areas_form = []
+    for area in model["areas"]:
+        qs = []
+        for i, item in enumerate(area["items"]):
+            name = f"a_{area['code']}_{i}"
+            qs.append({"name": name, "label": item["q"],
+                       "value": int(responses.get(name, 0) or 0)})
+        areas_form.append({"code": area["code"], "name": area["name"],
+                           "authority": area["authority"], "questions": qs})
+
+    ctx = _base_ctx(service)
+    ctx.update({"model": model, "result": result, "areas_form": areas_form,
+                "scale": assessments.scale_of(model),
+                "chart_json": json.dumps(result["chart"], ensure_ascii=False)})
+
+    if request.POST.get("export") == "csv":
+        return _assessment_csv(model, result)
+    if request.htmx:
+        return render(request, "tools/_partials/assessment_result.html", ctx)
+    return render(request, "tools/assessment.html", ctx)
+
+
+def _assessment_csv(model, result):
+    rows = [[model["title"]]]
+    rows.append(["準拠/出典", model["standard"]])
+    rows.append([model["band_label"], result["band"]["label"], f'{result["overall_score"]}%'])
+    rows.append([])
+    rows.append(["領域", "スコア(%)", "判定", "根拠標準"])
+    for a in result["areas"]:
+        rows.append([a["name"], a["score"], "良好" if a["satisfied"] else "要改善", a["authority"]])
+    rows.append([])
+    rows.append(["優先度付き改善提案"])
+    rows.append(["優先度", "領域", "項目", "現状", "改善アクション", "出典"])
+    for r in result["recommendations"]:
+        rows.append([r["priority"], r["area"], r["q"], r["value"], r["fix"], r["authority"]])
+    return _csv_response(f"{model['key']}_assessment.csv", rows)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -511,4 +570,13 @@ HANDLERS = {
     "viewpoint_kb": _viewpoint_kb,
     "maturity": _maturity,
     "nonfunc": _nonfunc,
+    # 汎用アセスメント（8ツールを単一エンジンで駆動）
+    "tpi_next": _assessment,
+    "qa4ai": _assessment,
+    "genai_qa": _assessment,
+    "vuln_web": _assessment,
+    "vuln_embedded": _assessment,
+    "embedded_verify": _assessment,
+    "consultant": _assessment,
+    "sec_training": _assessment,
 }

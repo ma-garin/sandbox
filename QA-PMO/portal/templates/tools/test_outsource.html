@@ -1,0 +1,40 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">受託テストの<strong>フェーズ管理・欠陥サマリー・テストサマリーレポート</strong>を生成します。中立な第三者検証の証跡として活用できます。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#to-spin">
+  {% csrf_token %}
+  <div class="form-row" style="gap:12px;margin-bottom:10px;flex-wrap:wrap">
+    <label class="lbl" style="flex:1 1 180px">プロジェクト名
+      <input type="text" name="project_name" class="inp" value="{{ project_name }}" placeholder="受託テストプロジェクト名">
+    </label>
+    <label class="lbl" style="flex:1 1 160px">クライアント名
+      <input type="text" name="client_name" class="inp" value="{{ client_name }}" placeholder="クライアント社名">
+    </label>
+  </div>
+  <p class="muted" style="font-size:12px;margin-bottom:6px">フェーズ別進捗（計画数・実行数・合格数・不合格数・ブロック数）</p>
+  {% for ph in default_phases %}
+  <div class="form-row" style="gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:flex-end">
+    <input type="text" name="phase_name" class="inp" style="flex:1 1 120px" value="{{ ph.name }}">
+    <input type="number" name="planned" class="inp" style="flex:0 0 70px" value="{{ ph.planned }}" placeholder="計画">
+    <input type="number" name="executed" class="inp" style="flex:0 0 70px" value="{{ ph.executed }}" placeholder="実行">
+    <input type="number" name="passed" class="inp" style="flex:0 0 70px" value="{{ ph.passed }}" placeholder="合格">
+    <input type="number" name="failed" class="inp" style="flex:0 0 70px" value="{{ ph.failed }}" placeholder="不合格">
+    <input type="number" name="blocked" class="inp" style="flex:0 0 70px" value="{{ ph.blocked }}" placeholder="ブロック">
+  </div>
+  {% endfor %}
+  <label class="lbl" style="margin-top:8px">欠陥リスト（1行1件: タイトル, Severity, ステータス, 検出フェーズ）
+    <textarea name="defects_text" class="tool-ta" rows="5"
+      placeholder="ログイン後に画面が白くなる, Critical, Open, システムテスト&#10;入力フォームの文字数制限が機能しない, Major, Fixed, 結合テスト">{{ defects_text }}</textarea>
+  </label>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">報告書を生成する</button>
+    <button class="btn-ghost" type="submit" name="download" value="md">レポートMDダウンロード</button>
+    <span id="to-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/test_outsource_result.html" %}{% endif %}
+</div>
+{% endblock %}

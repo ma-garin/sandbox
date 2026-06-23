@@ -1,0 +1,42 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">機能名・探索領域・時間を入力するとSBTM形式の<strong>探索的テストチャーター</strong>を自動生成します。InsighTestのセッションベーステスト管理（SBTM）手法に準拠。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#et-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <label class="lbl" style="flex:1 1 220px">テスト対象機能名
+      <input type="text" name="feature" class="inp" value="{{ feature }}" placeholder="例: ショッピングカート">
+    </label>
+    <label class="lbl" style="flex:0 0 130px">総テスト時間（分）
+      <input type="number" name="time_budget_min" class="inp" value="{{ time_budget_min }}" min="30" max="480" placeholder="120">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">リスクレベル
+      <select name="risk_level" class="inp">
+        <option value="high" {% if risk_level == 'high' %}selected{% endif %}>高（リリース直前）</option>
+        <option value="medium" {% if risk_level == 'medium' %}selected{% endif %}>中（通常フェーズ）</option>
+        <option value="low" {% if risk_level == 'low' %}selected{% endif %}>低（探索重視）</option>
+      </select>
+    </label>
+  </div>
+  <p class="muted" style="font-size:12px;margin:8px 0 4px">探索領域（複数選択可）</p>
+  <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    {% for code, label in area_choices %}
+    <label class="mat-radio" style="min-width:130px">
+      <input type="checkbox" name="areas" value="{{ code }}"
+             {% if code in selected_areas %}checked{% endif %}>
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">チャーターを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="et-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/exploratory_result.html" %}{% endif %}
+</div>
+{% endblock %}

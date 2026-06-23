@@ -1,0 +1,37 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">現状の品質成熟度スコアと目標を入力すると<strong>品質改善ロードマップ</strong>（フェーズ別アクション・KPI目標）を生成します。顧問コンサルタントの視点で優先度を自動設定します。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#rm-spin">
+  {% csrf_token %}
+  <p style="font-size:13px;color:var(--tx2);margin-bottom:8px">現状スコア（0=未実施 / 1=部分的 / 2=標準化 / 3=定着）</p>
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:12px">
+    {% for code, label in domains.items %}
+    <label class="lbl" style="flex:0 0 160px">{{ label }}
+      <select name="{{ code }}" class="inp">
+        {% for v in "0123" %}<option value="{{ v }}" {% if scores|default:'' == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endfor %}
+    <label class="lbl" style="flex:0 0 140px">期間（ヶ月）
+      <select name="horizon_months" class="inp">
+        <option value="3">3ヶ月</option>
+        <option value="6" selected>6ヶ月</option>
+        <option value="12">12ヶ月</option>
+      </select>
+    </label>
+  </div>
+  <label class="lbl">目標・ゴール（任意：自由記述）
+    <textarea name="goals" class="tool-ta" rows="2" placeholder="例: リリース前の重大欠陥0件、テスト自動化率50%達成">{{ goals }}</textarea>
+  </label>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">ロードマップを生成する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="rm-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/quality_roadmap_result.html" %}{% endif %}
+</div>
+{% endblock %}

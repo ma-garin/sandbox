@@ -1,0 +1,52 @@
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">総タスク数 <strong>{{ result.n_tasks }}</strong> 件</span>
+  <span class="score-chip">リスク <strong>{{ result.n_risks }}</strong> 件</span>
+  {% if result.p1_risks %}<span class="score-chip" style="background:#fdecea">P1リスク <strong>{{ result.p1_risks|length }}</strong> 件（即時対応）</span>{% endif %}
+  <span class="muted">期間: {{ result.start }} 〜 {{ result.end }}（{{ result.total_days }}日間）</span>
+</div>
+
+<h4>WBS（作業分解構造）</h4>
+<table class="tool-table">
+  <thead><tr><th>No.</th><th>フェーズ / タスク</th><th>開始</th><th>終了</th><th>日数</th><th>担当</th></tr></thead>
+  <tbody>
+    {% for phase in result.wbs %}
+    <tr class="wbs-phase-row">
+      <td>{{ phase.no }}</td>
+      <td><strong>{{ phase.name }}</strong></td>
+      <td>{{ phase.start }}</td>
+      <td>{{ phase.end }}</td>
+      <td>{{ phase.duration }}</td>
+      <td>{{ phase.owner }}</td>
+    </tr>
+    {% for sub in phase.subtasks %}
+    <tr>
+      <td class="muted" style="font-size:11px">{{ sub.no }}</td>
+      <td style="padding-left:20px">└ {{ sub.name }}</td>
+      <td class="muted">{{ sub.start }}</td>
+      <td class="muted">{{ sub.end }}</td>
+      <td class="muted">{{ sub.duration }}</td>
+      <td>—</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4 style="margin-top:18px">リスク登録簿</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>リスク名</th><th>区分</th><th>影響度</th><th>発生率</th><th>優先度</th><th>対策</th><th>状態</th></tr></thead>
+  <tbody>
+    {% for r in result.risks %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.name }}</td>
+      <td>{{ r.category }}</td>
+      <td><span class="sev sev-{{ r.impact|default:'Minor' }}">{{ r.impact }}</span></td>
+      <td>{{ r.probability }}</td>
+      <td><strong>{{ r.priority }}</strong></td>
+      <td style="font-size:12px">{{ r.mitigation }}</td>
+      <td>{{ r.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

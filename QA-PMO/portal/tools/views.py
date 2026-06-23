@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from catalog.nav import build_nav
 from knowledge.models import Viewpoint, ViewpointCategory, DefectPattern
 from knowledge import engine
-from . import logic, engines, maturity, nonfunc as nf
+from . import logic, engines, maturity, nonfunc as nf, assessments, gen_engines_c as gec, gen_engines_a as gea, gen_engines_b as geb
 from .models import Defect
 
 
@@ -499,6 +499,465 @@ def _nonfunc_csv(result):
     return _csv_response("nonfunc_viewpoints.csv", rows)
 
 
+# ── 12〜19. 汎用アセスメント（TPI Next / QA4AI / 生成AI / Web脆弱性 / 組込みSec /
+#            組込み検証 / 品質コンサル診断 / セキュリティ習熟度） ──
+def _assessment(request, service):
+    """単一エンジンで複数のアセスメント系ツールを駆動する。
+
+    service.tool_key から assessments.MODELS のモデルを引き当て、
+    回答（各項目0〜3）→ 領域別スコア・バンド判定・優先度付き改善提案を生成。
+    AIなし・外部依存なし・完全再現可能。AI採点への換装も呼び出し側は不変。
+    """
+    model = assessments.get_model(service.tool_key)
+    if model is None:
+        return render(request, "catalog/service_detail.html", _base_ctx(service))
+
+    keys = assessments.item_keys(model)
+    if request.method == "POST":
+        responses = {k["name"]: request.POST.get(k["name"], 0) for k in keys}
+    else:
+        responses = assessments.blank_responses(model, default=1)
+    result = assessments.assess(model, responses)
+
+    # 設問を領域ごとにまとめる（現在値を保持）
+    areas_form = []
+    for area in model["areas"]:
+        qs = []
+        for i, item in enumerate(area["items"]):
+            name = f"a_{area['code']}_{i}"
+            qs.append({"name": name, "label": item["q"],
+                       "value": int(responses.get(name, 0) or 0)})
+        areas_form.append({"code": area["code"], "name": area["name"],
+                           "authority": area["authority"], "questions": qs})
+
+    ctx = _base_ctx(service)
+    ctx.update({"model": model, "result": result, "areas_form": areas_form,
+                "scale": assessments.scale_of(model),
+                "chart_json": json.dumps(result["chart"], ensure_ascii=False)})
+
+    if request.POST.get("export") == "csv":
+        return _assessment_csv(model, result)
+    if request.htmx:
+        return render(request, "tools/_partials/assessment_result.html", ctx)
+    return render(request, "tools/assessment.html", ctx)
+
+
+def _assessment_csv(model, result):
+    rows = [[model["title"]]]
+    rows.append(["準拠/出典", model["standard"]])
+    rows.append([model["band_label"], result["band"]["label"], f'{result["overall_score"]}%'])
+    rows.append([])
+    rows.append(["領域", "スコア(%)", "判定", "根拠標準"])
+    for a in result["areas"]:
+        rows.append([a["name"], a["score"], "良好" if a["satisfied"] else "要改善", a["authority"]])
+    rows.append([])
+    rows.append(["優先度付き改善提案"])
+    rows.append(["優先度", "領域", "項目", "現状", "改善アクション", "出典"])
+    for r in result["recommendations"]:
+        rows.append([r["priority"], r["area"], r["q"], r["value"], r["fix"], r["authority"]])
+    return _csv_response(f"{model['key']}_assessment.csv", rows)
+
+
+# ── 12a. テストケース生成エージェント（TESTRA / gen_engines_a） ──
+
+_TC_TYPE_CHOICES = [
+    ("func", "機能テスト"),
+    ("boundary", "境界値テスト"),
+    ("exception", "例外・異常系"),
+    ("state", "状態遷移テスト"),
+    ("security", "セキュリティテスト"),
+    ("perf", "性能テスト"),
+]
+
+_AREA_CHOICES = [
+    ("func", "機能"),
+    ("boundary", "境界値"),
+    ("ux", "UX/ユーザビリティ"),
+    ("security", "セキュリティ"),
+    ("perf", "性能"),
+    ("integration", "統合/連携"),
+    ("data", "データ整合性"),
+]
+
+_TESTRA_SAMPLE_SPEC = """ユーザーはメールアドレスとパスワードでログインできる。
+パスワードを5回連続で誤入力するとアカウントがロックされる。
+ロック解除は管理者またはメール認証で行う。
+セッションは30分操作がないと自動タイムアウトする。"""
+
+
+def _testra(request, service):
+    spec_text = request.POST.get("spec_text") or _TESTRA_SAMPLE_SPEC
+    feature_name = request.POST.get("feature_name") or "ユーザーログイン機能"
+    test_types = request.POST.getlist("test_types") or ["func", "boundary", "exception"]
+
+    result = gea.spec_to_tc(spec_text, feature_name, test_types)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "種別", "優先度", "タイトル", "前提条件", "手順", "テストデータ", "根拠"]]
+        for tc in result.get("cases", []):
+            steps_text = " / ".join(f"{s['action']}→{s['expected']}" for s in tc["steps"])
+            rows.append([tc["id"], tc["type"], tc["priority"], tc["title"],
+                         tc["precondition"], steps_text, tc.get("test_data", ""), tc.get("authority", "")])
+        return _csv_response("testcases.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "spec_text": spec_text,
+        "feature_name": feature_name, "selected_types": test_types,
+        "test_type_choices": _TC_TYPE_CHOICES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/testra_result.html", ctx)
+    return render(request, "tools/testra.html", ctx)
+
+
+def _exploratory(request, service):
+    feature = request.POST.get("feature") or "ユーザー登録フォーム"
+    time_budget_min = int(request.POST.get("time_budget_min") or 120)
+    areas = request.POST.getlist("areas") or ["func", "boundary", "ux"]
+    risk_level = request.POST.get("risk_level") or "medium"
+
+    result = gea.exploratory_charters(feature, time_budget_min, areas, risk_level)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "ミッション", "領域", "時間(分)", "優先度", "フォーカス", "ヒント", "合否基準"]]
+        for ch in result.get("charters", []):
+            rows.append([ch["id"], ch["mission"], ch["area"], ch["duration_min"],
+                         ch["priority"], " / ".join(ch["focus"]),
+                         " / ".join(ch["hints"]), ch["oracle"]])
+        return _csv_response("exploratory_charters.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "feature": feature,
+        "time_budget_min": time_budget_min, "selected_areas": areas,
+        "risk_level": risk_level, "area_choices": _AREA_CHOICES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/exploratory_result.html", ctx)
+    return render(request, "tools/exploratory.html", ctx)
+
+
+# ── 12b. QA文書スイートジェネレータ（ISO 29119準拠） ──
+_DEFAULT_PHASES_EXEC = [
+    {"name": "結合テスト", "planned": 120, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+    {"name": "システムテスト", "planned": 300, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+    {"name": "回帰テスト", "planned": 80, "executed": 0, "passed": 0, "failed": 0, "blocked": 0},
+]
+
+_DOMAINS = {
+    "process": "テストプロセス標準化",
+    "metrics": "メトリクス・可視化",
+    "automation": "テスト自動化・CI",
+    "culture": "品質文化・人材育成",
+}
+
+
+def _qa_planning(request, service):
+    doc_type = request.POST.get("doc_type") or "test_plan"
+    project_name = request.POST.get("project_name") or ""
+    scope = request.POST.get("scope") or ""
+    start_date = request.POST.get("start_date") or ""
+    end_date = request.POST.get("end_date") or ""
+    entry_criteria = request.POST.get("entry_criteria") or ""
+    exit_criteria = request.POST.get("exit_criteria") or ""
+    risks = request.POST.get("risks") or ""
+    team_size = request.POST.get("team_size") or "2"
+
+    result = gec.qa_planning_generate(
+        doc_type, project_name, scope, start_date, end_date,
+        entry_criteria, exit_criteria, risks, team_size)
+
+    if request.POST.get("download") == "md":
+        resp = HttpResponse(result["markdown"],
+                            content_type="text/markdown; charset=utf-8")
+        resp["Content-Disposition"] = f"attachment; filename={result['doc_id']}.md"
+        return resp
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "doc_type": doc_type, "project_name": project_name,
+        "scope": scope, "start_date": start_date, "end_date": end_date,
+        "entry_criteria": entry_criteria, "exit_criteria": exit_criteria,
+        "team_size": team_size, "doc_types": gec.DOC_TYPES,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/qa_planning_result.html", ctx)
+    return render(request, "tools/qa_planning.html", ctx)
+
+
+def _project_tools(request, service):
+    project_name = request.POST.get("project_name") or ""
+    start_date = request.POST.get("start_date") or ""
+    end_date = request.POST.get("end_date") or ""
+    phases_text = request.POST.get("phases_text") or ""
+    risks_text = request.POST.get("risks_text") or ""
+
+    result = gec.project_tools_generate(project_name, start_date, end_date, phases_text, risks_text)
+
+    if request.POST.get("export") == "csv":
+        rows = [["WBS", "No", "タスク名", "開始", "終了", "日数", "担当"]]
+        for ph in result["wbs"]:
+            rows.append([ph["no"], ph["level"], ph["name"], ph["start"], ph["end"], ph["duration"], ph["owner"]])
+            for sub in ph["subtasks"]:
+                rows.append(["", sub["no"], sub["name"], sub["start"], sub["end"], sub["duration"], ""])
+        rows.append([])
+        rows.append(["リスクID", "リスク名", "カテゴリ", "影響度", "発生率", "優先度", "対策", "担当", "ステータス"])
+        for r in result["risks"]:
+            rows.append([r["id"], r["name"], r["category"], r["impact"], r["probability"], r["priority"], r["mitigation"], r["owner"], r["status"]])
+        return _csv_response("wbs_risk.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "project_name": project_name,
+        "start_date": start_date, "end_date": end_date, "risks_text": risks_text,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/project_tools_result.html", ctx)
+    return render(request, "tools/project_tools.html", ctx)
+
+
+def _quality_roadmap(request, service):
+    scores = {d: int(request.POST.get(d) or 1) for d in _DOMAINS}
+    horizon_months = request.POST.get("horizon_months") or "6"
+    goals_raw = request.POST.get("goals") or ""
+    goals = [g.strip() for g in goals_raw.splitlines() if g.strip()]
+
+    result = gec.quality_roadmap_generate(scores, goals, horizon_months)
+
+    if request.POST.get("export") == "csv":
+        rows = [["品質改善ロードマップ"]]
+        rows.append(["フェーズ", "アクションID", "領域", "アクション", "目安期間", "効果"])
+        for phase in result["roadmap"]:
+            for a in phase["actions"]:
+                rows.append([phase["phase"], a["id"], a["domain"], a["action"], a["timing"], a["effect"]])
+        rows.append([])
+        rows.append(["KPI", "現状", "目標", "期限"])
+        for k in result["kpis"]:
+            rows.append([k["kpi"], k["current"], k["target"], k["when"]])
+        return _csv_response("quality_roadmap.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "domains": _DOMAINS,
+        "scores": scores, "horizon_months": horizon_months, "goals": goals_raw,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/quality_roadmap_result.html", ctx)
+    return render(request, "tools/quality_roadmap.html", ctx)
+
+
+_EDU_SCALE = [(0, "未学習"), (1, "理解"), (2, "実践")]
+
+
+def _edu_assess(request, service):
+    target_cert = request.POST.get("target_cert") or "FL"
+    keys = gec.edu_item_keys()
+    if request.method == "POST":
+        responses = {k["name"]: int(request.POST.get(k["name"]) or 0) for k in keys}
+    else:
+        responses = {k["name"]: 0 for k in keys}
+
+    result = gec.edu_assess(responses, target_cert)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "target_cert": target_cert,
+        "istqb_topics": gec.ISTQB_TOPICS, "edu_scale": _EDU_SCALE,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/edu_assess_result.html", ctx)
+    return render(request, "tools/edu_assess.html", ctx)
+
+
+def _impl_tracker(request, service):
+    tasks_text = request.POST.get("tasks_text") or ""
+    project_name = request.POST.get("project_name") or ""
+
+    result = gec.impl_tracker_process(tasks_text, project_name)
+
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "タスク名", "担当者", "ステータス", "期日", "期日超過"]]
+        for t in result["tasks"]:
+            rows.append([t["id"], t["name"], t["owner"], t["status"], t["due"], "超過" if t["is_late"] else ""])
+        return _csv_response("impl_tracker.csv", rows)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "tasks_text": tasks_text, "project_name": project_name,
+        "default_tasks_text": "テスト計画書作成, QAリード, 完了, \nテスト環境構築, インフラ, 進行中, \nテストケース設計, QAチーム, 進行中, ",
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/impl_tracker_result.html", ctx)
+    return render(request, "tools/impl_tracker.html", ctx)
+
+
+def _parse_phases_post(request):
+    """POST からフェーズ行を読み取る（test_exec / test_outsource 共通）。"""
+    names = request.POST.getlist("phase_name")
+    planneds = request.POST.getlist("planned")
+    executeds = request.POST.getlist("executed")
+    passeds = request.POST.getlist("passed")
+    faileds = request.POST.getlist("failed")
+    blockeds = request.POST.getlist("blocked")
+    phases = []
+    for i, name in enumerate(names):
+        if not name:
+            continue
+        phases.append({
+            "name": name,
+            "planned": int(planneds[i] or 0) if i < len(planneds) else 0,
+            "executed": int(executeds[i] or 0) if i < len(executeds) else 0,
+            "passed": int(passeds[i] or 0) if i < len(passeds) else 0,
+            "failed": int(faileds[i] or 0) if i < len(faileds) else 0,
+            "blocked": int(blockeds[i] or 0) if i < len(blockeds) else 0,
+        })
+    return phases
+
+
+def _test_exec(request, service):
+    if request.method == "POST":
+        phases_data = _parse_phases_post(request)
+    else:
+        phases_data = None
+
+    result = gec.test_exec_dashboard(phases_data)
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result,
+        "default_phases": result["phases"] if phases_data else _DEFAULT_PHASES_EXEC,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/test_exec_result.html", ctx)
+    return render(request, "tools/test_exec.html", ctx)
+
+
+def _test_outsource(request, service):
+    project_name = request.POST.get("project_name") or ""
+    client_name = request.POST.get("client_name") or ""
+    defects_text = request.POST.get("defects_text") or ""
+
+    if request.method == "POST":
+        phases_data = _parse_phases_post(request)
+    else:
+        phases_data = None
+
+    result = gec.test_outsource_tracker(project_name, client_name, phases_data, defects_text)
+
+    if request.POST.get("download") == "md":
+        resp = HttpResponse(result["report_md"],
+                            content_type="text/markdown; charset=utf-8")
+        resp["Content-Disposition"] = "attachment; filename=test_summary_report.md"
+        return resp
+
+    ctx = _base_ctx(service)
+    ctx.update({
+        "result": result, "project_name": project_name, "client_name": client_name,
+        "defects_text": defects_text,
+        "default_phases": result["dashboard"]["phases"] if phases_data
+                         else _DEFAULT_PHASES_EXEC,
+    })
+    if request.htmx:
+        return render(request, "tools/_partials/test_outsource_result.html", ctx)
+    return render(request, "tools/test_outsource.html", ctx)
+
+
+# ── gen_engines_b: 静的解析・OSSリスク・負荷テスト・SAPシナリオ ──
+
+_SCOPE_CHOICES = [
+    ("happy_path", "ハッピーパス"),
+    ("regression", "回帰テスト"),
+    ("data_migration", "データ移行検証"),
+    ("integration", "統合テスト"),
+    ("performance", "性能テスト"),
+    ("authorization", "認可テスト"),
+]
+
+
+def _static_analysis(request, service):
+    code_text = request.POST.get("code_text") or ""
+    language = request.POST.get("language") or "python"
+    result = None
+    if request.method == "POST" and code_text.strip():
+        result = geb.static_code_analysis(code_text, language)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["ID", "重大度", "行", "カテゴリ", "メッセージ", "修正案"]]
+            for f in result.get("findings", []):
+                rows.append([f["id"], f["severity"], f.get("line", ""),
+                             f.get("category", ""), f["message"], f.get("fix", "")])
+            return _csv_response("static_analysis.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "code_text": code_text, "language": language})
+    if request.htmx:
+        return render(request, "tools/_partials/static_analysis_result.html", ctx)
+    return render(request, "tools/static_analysis.html", ctx)
+
+
+def _oss_risk(request, service):
+    dependency_text = request.POST.get("dependency_text") or ""
+    ecosystem = request.POST.get("ecosystem") or "python"
+    result = None
+    if request.method == "POST" and dependency_text.strip():
+        result = geb.oss_risk_calc(dependency_text, ecosystem)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["パッケージ", "バージョン", "ライセンス", "総合リスク", "ライセンスリスク", "保守リスク", "備考"]]
+            for p in result.get("packages", []):
+                rows.append([p["name"], p["version"], p["license"],
+                             p.get("overall_risk", ""), p.get("license_risk", ""),
+                             p.get("maintenance_risk", ""), p.get("notes", "")])
+            return _csv_response("oss_risk.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "dependency_text": dependency_text, "ecosystem": ecosystem})
+    if request.htmx:
+        return render(request, "tools/_partials/oss_risk_result.html", ctx)
+    return render(request, "tools/oss_risk.html", ctx)
+
+
+def _load_test(request, service):
+    system_type = request.POST.get("system_type") or "web"
+    protocol = request.POST.get("protocol") or "https"
+    concurrent_users = int(request.POST.get("concurrent_users") or 500)
+    sla_resp_ms = int(request.POST.get("sla_resp_ms") or 2000)
+    sla_tps = int(request.POST.get("sla_tps") or 100)
+    duration_min = int(request.POST.get("duration_min") or 30)
+    result = geb.load_test_gen(system_type, concurrent_users, sla_resp_ms, sla_tps, duration_min, protocol)
+    if request.POST.get("export") == "csv":
+        rows = [["ID", "種別", "シナリオ名", "ユーザー数", "ランプアップ(分)", "実行時間(分)", "目標TPS", "合否基準", "優先度"]]
+        for s in result.get("scenarios", []):
+            rows.append([s["id"], s["type"], s["name"], s["users"], s["ramp_up_min"],
+                         s["duration_min"], s["target_tps"], s["acceptance_criteria"], s["priority"]])
+        return _csv_response("load_test.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "system_type": system_type, "protocol": protocol,
+                "concurrent_users": concurrent_users, "sla_resp_ms": sla_resp_ms,
+                "sla_tps": sla_tps, "duration_min": duration_min})
+    if request.htmx:
+        return render(request, "tools/_partials/load_test_result.html", ctx)
+    return render(request, "tools/load_test.html", ctx)
+
+
+def _sap_verify(request, service):
+    module = request.POST.get("module") or "FI"
+    process = request.POST.get("process") or ""
+    selected_scope = request.POST.getlist("scope") or ["happy_path", "regression", "authorization"]
+    result = None
+    if request.method == "POST":
+        result = geb.sap_scenario_gen(module, process, selected_scope)
+        if request.POST.get("export") == "csv" and result:
+            rows = [["ID", "タイトル", "範囲", "Tコード", "優先度", "前提条件", "ステップ数"]]
+            for sc in result.get("scenarios", []):
+                rows.append([sc["id"], sc["title"], sc["scope_type"], sc["t_code"],
+                             sc["priority"], sc["precondition"], len(sc.get("steps", []))])
+            return _csv_response("sap_verify.csv", rows)
+    ctx = _base_ctx(service)
+    ctx.update({"result": result, "module": module, "process": process,
+                "selected_scope": selected_scope, "scope_choices": _SCOPE_CHOICES})
+    if request.htmx:
+        return render(request, "tools/_partials/sap_verify_result.html", ctx)
+    return render(request, "tools/sap_verify.html", ctx)
+
+
 HANDLERS = {
     "doc_verify": _doc_verify,
     "traceability": _traceability,
@@ -511,4 +970,29 @@ HANDLERS = {
     "viewpoint_kb": _viewpoint_kb,
     "maturity": _maturity,
     "nonfunc": _nonfunc,
+    # gen_engines_a: テストケース生成・探索的テスト（2ツール）
+    "testra": _testra,
+    "exploratory": _exploratory,
+    # gen_engines_c: 文書・計画・ロードマップ系（7ツール）
+    "qa_planning": _qa_planning,
+    "project_tools": _project_tools,
+    "quality_roadmap": _quality_roadmap,
+    "edu_assess": _edu_assess,
+    "impl_tracker": _impl_tracker,
+    "test_exec": _test_exec,
+    "test_outsource": _test_outsource,
+    # gen_engines_b: 静的解析・OSSリスク・負荷テスト・SAPシナリオ（4ツール）
+    "static_analysis": _static_analysis,
+    "oss_risk": _oss_risk,
+    "load_test": _load_test,
+    "sap_verify": _sap_verify,
+    # 汎用アセスメント（8ツールを単一エンジンで駆動）
+    "tpi_next": _assessment,
+    "qa4ai": _assessment,
+    "genai_qa": _assessment,
+    "vuln_web": _assessment,
+    "vuln_embedded": _assessment,
+    "embedded_verify": _assessment,
+    "consultant": _assessment,
+    "sec_training": _assessment,
 }

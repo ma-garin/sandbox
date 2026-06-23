@@ -1,0 +1,33 @@
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">完了 <strong>{{ result.done }}</strong>/{{ result.total }}</span>
+  <span class="score-chip {% if result.progress_pct == 100 %}ok{% endif %}">進捗率 <strong>{{ result.progress_pct }}</strong>%</span>
+  {% if result.blocked_count %}<span class="score-chip" style="background:#fdecea">ブロック <strong>{{ result.blocked_count }}</strong> 件</span>{% endif %}
+  {% if result.late_count %}<span class="score-chip" style="background:#fff3e0">期日超過 <strong>{{ result.late_count }}</strong> 件</span>{% endif %}
+</div>
+
+{% if result.risks %}
+<div class="vp-warn" style="margin-bottom:10px">
+  {% for r in result.risks %}<p>⚠️ {{ r }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>タスク名</th><th>担当者</th><th>ステータス</th><th>期日</th></tr></thead>
+  <tbody>
+    {% for t in result.tasks %}
+    <tr {% if t.is_late %}style="background:#fff8f8"{% endif %}>
+      <td class="muted">{{ t.id }}</td>
+      <td>{{ t.name }}</td>
+      <td>{{ t.owner }}</td>
+      <td>
+        {% if t.status == '完了' %}<span class="sev sev-Minor">完了</span>
+        {% elif t.status == 'ブロック' %}<span class="sev sev-Critical">ブロック</span>
+        {% elif t.status == '遅延' %}<span class="sev sev-Major">遅延</span>
+        {% elif t.status == '進行中' %}<span class="sev sev-Cosmetic">進行中</span>
+        {% else %}<span class="sev">未着手</span>{% endif %}
+      </td>
+      <td>{{ t.due }}{% if t.is_late %} <span style="color:#c62828;font-size:11px">超過</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

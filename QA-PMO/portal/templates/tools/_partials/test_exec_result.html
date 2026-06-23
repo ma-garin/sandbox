@@ -1,0 +1,47 @@
+<div class="mat-summary">
+  <div class="as-band band-{% if result.release_ok %}ok{% else %}bad{% endif %}">
+    <div class="as-band-label">リリース判定</div>
+    <div class="as-band-name" style="font-size:13px">{% if result.release_ok %}承認可能{% else %}要解決{% endif %}</div>
+    <div class="as-band-score">{{ result.overall_exec_rate }}<small>%</small></div>
+  </div>
+  <div class="mat-summary-body">
+    <div class="mat-score-row">
+      <span class="score-chip">消化率 <strong>{{ result.overall_exec_rate }}%</strong></span>
+      <span class="score-chip">合格率 <strong>{{ result.overall_pass_rate }}%</strong></span>
+      {% if result.total_failed %}<span class="score-chip" style="background:#fdecea">不合格 <strong>{{ result.total_failed }}</strong> 件</span>{% endif %}
+      {% if result.total_blocked %}<span class="score-chip" style="background:#fff3e0">ブロック <strong>{{ result.total_blocked }}</strong> 件</span>{% endif %}
+    </div>
+  </div>
+</div>
+
+<h4>終了基準チェック</h4>
+<table class="tool-table">
+  <thead><tr><th>基準</th><th>現状</th><th>判定</th></tr></thead>
+  <tbody>{% for c in result.exit_checks %}
+    <tr>
+      <td>{{ c.item }}</td>
+      <td>{{ c.current }}</td>
+      <td>{% if c.ok %}<span class="sev sev-Minor">✓ 充足</span>{% else %}<span class="sev sev-Major">✗ 未充足</span>{% endif %}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>
+
+<h4 style="margin-top:14px">フェーズ別進捗</h4>
+<table class="tool-table">
+  <thead><tr><th>フェーズ</th><th>計画</th><th>実行</th><th>合格</th><th>不合格</th><th>ブロック</th><th>消化率</th><th>合格率</th></tr></thead>
+  <tbody>{% for ph in result.phases %}
+    <tr>
+      <td>{{ ph.name }}</td>
+      <td>{{ ph.planned }}</td>
+      <td>{{ ph.executed }}</td>
+      <td>{{ ph.passed }}</td>
+      <td>{% if ph.failed %}<span style="color:#c62828">{{ ph.failed }}</span>{% else %}0{% endif %}</td>
+      <td>{% if ph.blocked %}<span style="color:#e65100">{{ ph.blocked }}</span>{% else %}0{% endif %}</td>
+      <td>
+        <div class="mat-bar"><span style="width:{{ ph.exec_rate }}%"></span></div>
+        <span class="mat-bar-val">{{ ph.exec_rate }}%</span>
+      </td>
+      <td>{{ ph.pass_rate }}%</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>

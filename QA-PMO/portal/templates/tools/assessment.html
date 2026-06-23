@@ -1,0 +1,42 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">{{ model.lead }}</p>
+<p class="muted" style="margin-top:-6px">準拠/出典: <strong>{{ model.standard }}</strong>　—　決定的アルゴリズムで再現（AIなし・完全再現可能）。</p>
+
+<div class="mat-scale-legend">
+  {% for val, label, desc in scale %}
+  <span class="mat-scale-item"><b>{{ val }}</b> {{ label }} — <span class="muted">{{ desc }}</span></span>
+  {% endfor %}
+</div>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#as-spin">
+  {% csrf_token %}
+  {% for area in areas_form %}
+  <fieldset class="mat-fieldset">
+    <legend>{{ area.name }} <span class="as-auth">{{ area.authority }}</span></legend>
+    {% for q in area.questions %}
+    <div class="mat-q">
+      <div class="mat-q-label">{{ q.label }}</div>
+      <div class="mat-q-opts">
+        {% for val, label, desc in scale %}
+        <label class="mat-radio">
+          <input type="radio" name="{{ q.name }}" value="{{ val }}" {% if q.value == val %}checked{% endif %}>
+          <span>{{ val }}<small>{{ label }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">診断する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">結果をCSV出力</button>
+    <span id="as-spin" class="htmx-indicator spin">診断中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% include "tools/_partials/assessment_result.html" %}
+</div>
+{% endblock %}

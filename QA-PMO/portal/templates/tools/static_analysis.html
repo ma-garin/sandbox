@@ -1,0 +1,33 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">ソースコードをペーストすると<strong>静的解析</strong>を実行。セキュリティ欠陥・複雑度・コードスメル・規約違反を検出し、品質スコアとグレードを算出します。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#sa-spin">
+  {% csrf_token %}
+  <div class="form-row" style="margin-bottom:10px">
+    <label class="lbl" style="flex:0 0 180px">言語
+      <select name="language" class="inp">
+        <option value="python" {% if language == 'python' %}selected{% endif %}>Python</option>
+        <option value="javascript" {% if language == 'javascript' %}selected{% endif %}>JavaScript</option>
+        <option value="typescript" {% if language == 'typescript' %}selected{% endif %}>TypeScript</option>
+        <option value="java" {% if language == 'java' %}selected{% endif %}>Java</option>
+        <option value="other" {% if language == 'other' %}selected{% endif %}>その他</option>
+      </select>
+    </label>
+  </div>
+  <label class="lbl">ソースコード
+    <textarea name="code_text" class="tool-ta" rows="14"
+      style="font-family:monospace;font-size:12px"
+      placeholder="ここにソースコードを貼り付けてください...">{{ code_text }}</textarea>
+  </label>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">静的解析を実行する</button>
+    <button class="btn-ghost" type="submit" name="export" value="csv">CSVエクスポート</button>
+    <span id="sa-spin" class="htmx-indicator spin">解析中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/static_analysis_result.html" %}{% endif %}
+</div>
+{% endblock %}

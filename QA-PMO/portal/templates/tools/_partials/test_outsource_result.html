@@ -1,0 +1,36 @@
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">{{ result.project_name }}</span>
+  <span class="muted">クライアント: {{ result.client_name }}</span>
+  <span class="score-chip {% if result.dashboard.release_ok %}ok{% endif %}">{{ result.dashboard.release_status }}</span>
+</div>
+
+<h4>フェーズ別進捗</h4>
+<table class="tool-table">
+  <thead><tr><th>フェーズ</th><th>計画</th><th>実行</th><th>合格</th><th>不合格</th><th>消化率</th><th>合格率</th></tr></thead>
+  <tbody>{% for ph in result.dashboard.phases %}
+    <tr>
+      <td>{{ ph.name }}</td>
+      <td>{{ ph.planned }}</td><td>{{ ph.executed }}</td><td>{{ ph.passed }}</td>
+      <td>{% if ph.failed %}<span style="color:#c62828">{{ ph.failed }}</span>{% else %}0{% endif %}</td>
+      <td><div class="mat-bar"><span style="width:{{ ph.exec_rate }}%"></span></div>{{ ph.exec_rate }}%</td>
+      <td>{{ ph.pass_rate }}%</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>
+
+{% if result.defects %}
+<h4 style="margin-top:14px">欠陥サマリー（{{ result.n_defects }}件）</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>タイトル</th><th>Severity</th><th>ステータス</th><th>検出フェーズ</th></tr></thead>
+  <tbody>{% for d in result.defects %}
+    <tr>
+      <td>{{ d.id }}</td><td>{{ d.title }}</td>
+      <td><span class="sev sev-{{ d.severity }}">{{ d.severity }}</span></td>
+      <td>{{ d.status }}</td><td>{{ d.phase }}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table>
+{% endif %}
+
+<h4 style="margin-top:14px">テストサマリーレポート</h4>
+<div class="code-block"><pre>{{ result.report_md }}</pre></div>

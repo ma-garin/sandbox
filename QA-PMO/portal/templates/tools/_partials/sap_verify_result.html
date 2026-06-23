@@ -1,0 +1,47 @@
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">モジュール: <strong>{{ result.module }}</strong></span>
+  <span class="score-chip ok">シナリオ <strong>{{ result.total }}</strong> 件</span>
+</div>
+
+{% for sc in result.scenarios %}
+<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r);padding:12px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span class="score-chip">{{ sc.id }}</span>
+    <strong style="flex:1">{{ sc.title }}</strong>
+    <span class="sev sev-Cosmetic" style="font-size:11px">{{ sc.scope_type }}</span>
+    <code style="font-size:12px;background:var(--bg2);padding:2px 6px;border-radius:4px">{{ sc.t_code }}</code>
+    <span class="sev sev-{% if sc.priority == 'High' %}Major{% elif sc.priority == 'Medium' %}Minor{% else %}Cosmetic{% endif %}">{{ sc.priority }}</span>
+  </div>
+  <div style="font-size:12px;color:var(--tx2);margin-bottom:8px">
+    <strong>前提条件:</strong> {{ sc.precondition }} ／ <strong>認可:</strong> {{ sc.authorization }}
+  </div>
+  <table class="tool-table" style="font-size:12px">
+    <thead><tr><th style="width:40px">No</th><th>操作</th><th>期待結果</th><th>Tコード</th></tr></thead>
+    <tbody>
+    {% for step in sc.steps %}
+      <tr>
+        <td class="muted">{{ step.no }}</td>
+        <td>{{ step.action }}</td>
+        <td class="muted">{{ step.expected }}</td>
+        <td><code style="font-size:11px">{{ step.t_code }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div style="font-size:11px;color:var(--tx2);margin-top:6px"><strong>テストデータ:</strong> {{ sc.test_data }}</div>
+</div>
+{% endfor %}
+
+{% if result.master_data_checklist %}
+<h4 style="margin-top:14px">マスタデータ確認リスト</h4>
+<ul style="margin:0;padding-left:20px;font-size:12px">
+  {% for item in result.master_data_checklist %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{% if result.transport_checklist %}
+<h4 style="margin-top:10px">トランスポート確認リスト</h4>
+<ul style="margin:0;padding-left:20px;font-size:12px">
+  {% for item in result.transport_checklist %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}

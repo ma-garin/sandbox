@@ -1,0 +1,49 @@
+{% extends "tools/_layout.html" %}
+{% block tool %}
+<p class="tool-desc">ISO/IEC 29119-3準拠の<strong>QA文書スイート</strong>をフォーム入力から自動生成します。テスト計画書・テスト戦略書・品質計画書・開始/終了基準書・サマリーレポートテンプレートに対応。</p>
+
+<form method="post" hx-post="." hx-target="#tool-result" hx-swap="innerHTML" hx-indicator="#qp-spin">
+  {% csrf_token %}
+  <div class="form-row" style="flex-wrap:wrap;gap:12px;margin-bottom:12px">
+    <label class="lbl" style="flex:0 0 200px">文書種別
+      <select name="doc_type" class="inp">
+        {% for k, v in doc_types.items %}
+        <option value="{{ k }}" {% if doc_type == k %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="lbl" style="flex:1 1 200px">プロジェクト名
+      <input type="text" name="project_name" class="inp" value="{{ project_name }}" placeholder="例: ECサイトリニューアル">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">開始予定日
+      <input type="date" name="start_date" class="inp" value="{{ start_date }}">
+    </label>
+    <label class="lbl" style="flex:0 0 140px">終了予定日
+      <input type="date" name="end_date" class="inp" value="{{ end_date }}">
+    </label>
+    <label class="lbl" style="flex:0 0 80px">体制人数
+      <input type="number" name="team_size" class="inp" value="{{ team_size }}" min="1" max="50" placeholder="2">
+    </label>
+  </div>
+  <div class="form-row" style="flex-direction:column;gap:8px">
+    <label class="lbl">テスト対象・スコープ
+      <textarea name="scope" class="tool-ta" rows="2" placeholder="例: 購入フロー（カート〜決済確認メール）、管理画面の商品登録・在庫管理">{{ scope }}</textarea>
+    </label>
+    <label class="lbl">開始基準（Entry Criteria）
+      <textarea name="entry_criteria" class="tool-ta" rows="2" placeholder="例: 対象機能の結合完了、テスト環境の構築完了">{{ entry_criteria }}</textarea>
+    </label>
+    <label class="lbl">終了基準（Exit Criteria）
+      <textarea name="exit_criteria" class="tool-ta" rows="2" placeholder="例: Critical/Major欠陥0件、消化率100%">{{ exit_criteria }}</textarea>
+    </label>
+  </div>
+  <div class="tool-actions">
+    <button class="btn-primary" type="submit">文書を生成する</button>
+    <button class="btn-ghost" type="submit" name="download" value="md">Markdownダウンロード</button>
+    <span id="qp-spin" class="htmx-indicator spin">生成中…</span>
+  </div>
+</form>
+
+<div id="tool-result">
+  {% if result %}{% include "tools/_partials/qa_planning_result.html" %}{% endif %}
+</div>
+{% endblock %}

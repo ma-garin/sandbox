@@ -1,0 +1,46 @@
+{% if result.error %}
+<div class="vp-warn"><p>⚠️ {{ result.error }}</p></div>
+{% else %}
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">機能: <strong>{{ result.session_report.feature }}</strong></span>
+  <span class="score-chip ok">チャーター <strong>{{ result.total_charters }}</strong> 件</span>
+  <span class="score-chip">総時間 <strong>{{ result.session_report.total_min }}</strong> 分</span>
+  <span class="score-chip">セッション数 <strong>{{ result.session_report.n_sessions }}</strong></span>
+</div>
+
+{% for ch in result.charters %}
+<div class="code-block" style="margin-bottom:12px;padding:12px 16px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <span class="score-chip">{{ ch.id }}</span>
+    <strong style="flex:1">{{ ch.mission }}</strong>
+    <span class="sev sev-Cosmetic">{{ ch.area }}</span>
+    <span class="muted">⏱ {{ ch.duration_min }}分</span>
+    <span class="sev sev-{% if ch.priority == '必須' %}Major{% else %}Minor{% endif %}">{{ ch.priority }}</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+    <div>
+      <div class="muted" style="font-weight:600;margin-bottom:4px">探索フォーカス</div>
+      <ul style="margin:0;padding-left:16px">
+        {% for f in ch.focus %}<li>{{ f }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div>
+      <div class="muted" style="font-weight:600;margin-bottom:4px">テストヒント</div>
+      <ul style="margin:0;padding-left:16px">
+        {% for h in ch.hints %}<li>{{ h }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:12px">
+    <span class="muted"><strong>合否基準（オラクル）:</strong> {{ ch.oracle }}</span>
+  </div>
+</div>
+{% endfor %}
+
+{% if result.session_report.debrief_guide %}
+<h4 style="margin-top:14px">デブリーフィングガイド</h4>
+<div class="code-block" style="font-size:12px">
+  <pre>{{ result.session_report.debrief_guide }}</pre>
+</div>
+{% endif %}
+{% endif %}

@@ -1,0 +1,48 @@
+{% if result.error %}
+<div class="vp-warn"><p>⚠️ {{ result.error }}</p></div>
+{% else %}
+<div class="mat-score-row" style="margin-bottom:10px">
+  <span class="score-chip">機能: <strong>{{ result.feature }}</strong></span>
+  <span class="score-chip ok">生成 <strong>{{ result.total }}</strong> 件</span>
+  {% for type_name, count in result.by_type.items %}
+  <span class="score-chip">{{ type_name }}: {{ count }}</span>
+  {% endfor %}
+</div>
+
+<table class="tool-table">
+  <thead>
+    <tr><th>ID</th><th>種別</th><th>優先度</th><th>タイトル</th><th>前提条件</th><th>根拠</th></tr>
+  </thead>
+  <tbody>
+  {% for tc in result.cases %}
+    <tr>
+      <td class="muted">{{ tc.id }}</td>
+      <td><span class="sev sev-Cosmetic">{{ tc.type }}</span></td>
+      <td><span class="sev sev-{% if tc.priority == 'High' %}Major{% elif tc.priority == 'Medium' %}Minor{% else %}Cosmetic{% endif %}">{{ tc.priority }}</span></td>
+      <td style="font-weight:500">{{ tc.title }}</td>
+      <td class="muted">{{ tc.precondition }}</td>
+      <td class="muted" style="font-size:11px">{{ tc.authority }}</td>
+    </tr>
+    <tr style="background:#f9fafb">
+      <td colspan="6" style="padding:6px 12px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px">
+          <div style="flex:2 1 300px">
+            <strong>手順:</strong>
+            <ol style="margin:4px 0 0 16px;padding:0">
+              {% for step in tc.steps %}
+              <li>{{ step.action }} → <em>{{ step.expected }}</em></li>
+              {% endfor %}
+            </ol>
+          </div>
+          {% if tc.test_data %}
+          <div style="flex:1 1 180px">
+            <strong>テストデータ:</strong><br><span class="muted">{{ tc.test_data }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}

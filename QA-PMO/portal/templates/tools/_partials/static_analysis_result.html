@@ -1,0 +1,44 @@
+<div class="mat-summary">
+  <div class="as-band band-{% if result.grade == 'A' or result.grade == 'B' %}ok{% elif result.grade == 'C' %}warn{% else %}bad{% endif %}">
+    <div class="as-band-label">品質グレード</div>
+    <div class="as-band-name" style="font-size:22px"><strong>{{ result.grade }}</strong></div>
+    <div class="as-band-score">{{ result.score }}<small>点</small></div>
+  </div>
+  <div class="mat-summary-body">
+    <div class="mat-score-row">
+      <span class="score-chip">言語: <strong>{{ result.language }}</strong></span>
+      <span class="score-chip">行数: <strong>{{ result.metrics.lines }}</strong></span>
+      <span class="score-chip">複雑度(推定): <strong>{{ result.metrics.complexity_estimate }}</strong></span>
+      <span class="score-chip">コメント率: <strong>{{ result.metrics.comment_ratio }}%</strong></span>
+      {% if result.summary.Critical %}<span class="score-chip" style="background:#fdecea">Critical: <strong>{{ result.summary.Critical }}</strong></span>{% endif %}
+      {% if result.summary.Major %}<span class="score-chip" style="background:#fff3e0">Major: <strong>{{ result.summary.Major }}</strong></span>{% endif %}
+      {% if result.summary.Minor %}<span class="score-chip">Minor: <strong>{{ result.summary.Minor }}</strong></span>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if result.findings %}
+<h4 style="margin-top:14px">検出項目（{{ result.findings|length }}件）</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>Severity</th><th>行</th><th>カテゴリ</th><th>内容</th><th>修正方針</th></tr></thead>
+  <tbody>
+  {% for f in result.findings %}
+    <tr>
+      <td class="muted">{{ f.id }}</td>
+      <td><span class="sev sev-{{ f.severity }}">{{ f.severity }}</span></td>
+      <td class="muted">{{ f.line }}</td>
+      <td><span style="font-size:11px">{{ f.category }}</span></td>
+      <td>
+        <div>{{ f.message }}</div>
+        {% if f.code %}<code style="font-size:11px;color:var(--tx2)">{{ f.code }}</code>{% endif %}
+      </td>
+      <td class="muted" style="font-size:12px">{{ f.fix }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="vp-warn" style="background:#e3f4ea;border-color:#1f7a4d">
+  <p>✅ 検出項目はありません。コード品質は良好です。</p>
+</div>
+{% endif %}

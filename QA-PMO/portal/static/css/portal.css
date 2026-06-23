@@ -294,3 +294,16 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--acc-l);c
 .nf-expected{color:var(--cos);font-size:11.5px}
 .nf-footer-note{font-size:11px;margin-top:20px;padding:10px 14px;background:var(--dv);border-radius:var(--r-s);border-left:3px solid var(--p-l)}
 @media(max-width:900px){.nf-char-grid{grid-template-columns:repeat(3,1fr)}.nf-params{flex-direction:column}}
+
+/* ── 汎用アセスメント（TPI/QA4AI/生成AI/脆弱性診断 等） ── */
+.as-band{flex-shrink:0;width:130px;border-radius:var(--r);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center;padding:12px 8px}
+.as-band.band-ok{background:#1f7a4d}.as-band.band-warn{background:#c8841a}.as-band.band-bad{background:#b8362b}
+.as-band-label{font-size:11px;opacity:.85}
+.as-band-name{font-size:15px;font-weight:700;margin:3px 0;line-height:1.25}
+.as-band-score{font-size:30px;font-weight:800;line-height:1}
+.as-band-score small{font-size:14px;font-weight:600}
+.as-auth{font-size:10px;font-weight:400;color:var(--tx2);margin-left:6px}
+.as-auth-cell{font-size:11px;color:var(--tx2)}
+.as-rec-q{font-size:13px;font-weight:600;margin:4px 0 2px}
+.as-rec-auth{font-size:10.5px;color:var(--tx2);margin-top:4px}
+.score-chip.ok{background:#e3f4ea;color:#1f7a4d}

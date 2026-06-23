@@ -1,0 +1,49 @@
+<div class="mat-score-row" style="margin-bottom:12px">
+  <span class="score-chip">シナリオ <strong>{{ result.total_scenarios }}</strong> 件</span>
+  <span class="score-chip">最大ユーザー <strong>{{ result.concurrent_users }}</strong></span>
+  <span class="score-chip">SLA <strong>{{ result.sla_resp_ms }}ms</strong></span>
+</div>
+
+<h4>テストシナリオ</h4>
+<table class="tool-table">
+  <thead><tr><th>ID</th><th>種別</th><th>シナリオ名</th><th>ユーザー数</th><th>ランプアップ</th><th>実行時間</th><th>目標TPS</th><th>合否基準</th><th>優先度</th></tr></thead>
+  <tbody>
+  {% for s in result.scenarios %}
+    <tr>
+      <td class="muted">{{ s.id }}</td>
+      <td><span class="sev sev-{% if s.type == 'スモーク' %}Cosmetic{% elif s.type == '負荷' %}Minor{% elif s.type == 'スパイク' %}Major{% else %}Critical{% endif %}">{{ s.type }}</span></td>
+      <td>{{ s.name }}</td>
+      <td>{{ s.users }}</td>
+      <td>{{ s.ramp_up_min }}分</td>
+      <td>{{ s.duration_min }}分</td>
+      <td>{{ s.target_tps }} TPS</td>
+      <td class="muted" style="font-size:11px">{{ s.acceptance_criteria }}</td>
+      <td><span class="sev sev-{% if s.priority == '必須' %}Major{% else %}Minor{% endif %}">{{ s.priority }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if result.sla_table %}
+<h4 style="margin-top:14px">SLA検証表</h4>
+<table class="tool-table">
+  <thead><tr><th>メトリクス</th><th>目標値</th><th>測定方法</th></tr></thead>
+  <tbody>
+  {% for row in result.sla_table %}
+    <tr><td>{{ row.metric }}</td><td><strong>{{ row.target }}</strong></td><td class="muted">{{ row.method }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if result.bottleneck_checklist %}
+<h4 style="margin-top:14px">ボトルネック確認リスト</h4>
+<ul style="margin:0;padding-left:20px;font-size:13px">
+  {% for item in result.bottleneck_checklist %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+{% if result.locust_script %}
+<h4 style="margin-top:14px">Locustスクリプト</h4>
+<div class="code-block"><pre style="font-size:11px">{{ result.locust_script }}</pre></div>
+{% endif %}

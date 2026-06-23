@@ -13,6 +13,7 @@
 
 ```
 skill-transfer/
+├── index.html       ← GitHub Pages 学習サイト本体（単一HTMLツール）
 ├── README.md
 ├── AGENTS.md
 └── CURRENT_STATE.md
@@ -25,8 +26,11 @@ skill-transfer/
 
 ## 使用技術・制約
 
-<!-- 例: Python 3.10+ / FastAPI / PostgreSQL -->
-- 未定
+- 単一HTMLファイル（CSS/JS外部分割禁止）
+- GitHub Pages でホスト
+- Yuki Design System（MD3 Light）準拠
+- vanilla JS のみ（フレームワーク不使用）
+- 進捗保存は localStorage
 
 ## 現在のタスク
 

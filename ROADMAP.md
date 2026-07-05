@@ -27,10 +27,10 @@
 | フェーズ | 内容 | 実装 | 状態 |
 |---|---|---|---|
 | P0 | 全50案選別＋DOM-06 QA Skills Pro 初版（PR #27） | 完了 | ✅ |
-| P1 | `002-tracegate` の仕様を `/qa-review` でセルフレビュー（DOM-06の試用を兼ねる） | Sonnet 1セッション | 準備完了 |
-| P2 | **INF-01 TraceGate** MVP実装（`002-tracegate/docs/tasks.md` T01〜T11） | Sonnet 4〜6セッション | 仕様・設計・タスク確定済み |
+| P1 | `002-tracegate` の仕様を `/qa-review` でセルフレビュー（DOM-06の試用を兼ねる） | Sonnet 1セッション | ✅ 完了（High1/Medium2検出→spec.md v1.1へ反映） |
+| P2 | **INF-01 TraceGate** MVP実装（`002-tracegate/docs/tasks.md` T01〜T11） | Sonnet 4〜6セッション | 着手可（T01から開始） |
 | P3 | **GT-15 AgentLint** MVP実装（`003-agentlint/docs/tasks.md` T01〜T08） | Sonnet 3〜4セッション | 仕様・設計・タスク確定済み |
-| P4 | DOM-06 v2（状態遷移・ペアワイズのreferences追加）＋実プロジェクト試用結果の反映 | Sonnet 2セッション | P1の結果待ち |
+| P4 | DOM-06 v2（状態遷移・ペアワイズのreferences追加）＋実プロジェクト試用結果の反映 | Sonnet 2セッション | 着手可（P1試用結果: `002-tracegate/docs/qa-review-spec-v1.0.md`） |
 | P5 | 次案の仕様策定（GT-11 PromptReg / INF-02 MutaJudge のどちらか） | 上位モデル | 未着手 |
 
 ### フェーズ間の依存

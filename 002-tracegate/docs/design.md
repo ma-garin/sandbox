@@ -1,7 +1,12 @@
 # design.md — TraceGate MVP 設計
 
-版: v1.0（2026-07-05確定）／ Sonnet実装セッションでの変更禁止。
+版: v1.1（2026-07-05確定）／ Sonnet実装セッションでの変更禁止。
 設計判断はすべてここで確定済み。実装時に選択を迫られたら「要確認」に記録して中断する。
+
+## 変更履歴
+
+- v1.1: `/qa-review`セルフレビュー（`docs/qa-review-spec-v1.0.md`）を反映。
+  extract.pyの例外捕捉を`OSError`全般に拡張（QA-001）、cli.pyにREQ-020（書込失敗時exit 2）を追加（QA-003）。
 
 ## 技術スタック（確定）
 
@@ -80,7 +85,13 @@ def find_coverage(files: Iterable[Path]) -> list[Coverage]: ...
 
 - `find_requirements`: ファイルパス昇順→行番号昇順に走査。行内の全REQ-IDについて、未登録IDなら登録（REQ-002）。タイトルは `line.replace(req_id, "").strip(TITLE_STRIP_CHARS).strip()`。同一行に複数IDがある場合は全IDを同じタイトルで登録する。
 - `find_coverage`: `COVERS_MARKER` を含む行のみ対象（REQ-006）。行内の全REQ-IDを `Coverage` にする。
-- 両関数とも: `UnicodeDecodeError` の場合は `print(f"warning: skipped (not utf-8): {path}", file=sys.stderr)` してスキップ（NFR-003）。
+- 両関数とも: 1ファイルにつき `open(path, encoding="utf-8")` で読む処理全体を
+  `except (OSError, UnicodeDecodeError) as exc:` で囲み、
+  `print(f"warning: skipped ({type(exc).__name__}): {path}", file=sys.stderr)` してスキップし、
+  次のファイルの処理を継続する（NFR-003・v1.1でOSError全般に対象拡張。
+  `UnicodeDecodeError` は `ValueError` のサブクラスで `OSError` のサブクラスではないため、
+  実装では両方を明示的にタプルで指定すること。`IsADirectoryError` / `PermissionError` は
+  `OSError` のサブクラスなのでこのタプルで捕捉される）。
 
 ### trace.py
 
@@ -117,7 +128,10 @@ def main(argv: list[str] | None = None) -> int: ...
 | `--version` | flag | − |
 
 - globは `glob.glob(pattern, recursive=True)` で展開し、テスト側は許可拡張子（REQ-018: `.py .ts .tsx .js .jsx .md`）でフィルタする。仕様側は拡張子フィルタなし。
-- 処理順: 展開 → 抽出 → 要件0件チェック（exit 2）→ 突合 → Markdown出力（常時）→ `--json`出力 → ゲート判定。
+- 処理順: 展開 → 抽出 → 要件0件チェック（exit 2）→ 突合 → Markdown出力（常時、`--output`指定時は同内容をファイルにも書込）→ `--json`出力 → ゲート判定。
+- `--output` / `--json` のファイル書き込みは `try/except OSError as exc:` で囲み、
+  失敗した場合は `print(f"error: failed to write {path}: {exc}", file=sys.stderr)` して
+  即座に終了コード2で返す（REQ-020・v1.1で追加。ゲート判定より前に評価する）。
 - ゲート判定: `fail = (divergence > max_divergence) or (orphans and not allow_orphans)` → exit 1、それ以外 exit 0。
 
 ## 出力例（確定・この書式でテストを書く）

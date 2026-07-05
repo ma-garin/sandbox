@@ -1,5 +1,8 @@
 # tasks.md — TraceGate MVP 実装タスク
 
+版: v1.1（spec.md/design.md v1.1に対応。`/qa-review`セルフレビュー反映によりT03・T08の
+テスト項目とT11の記載内容を更新。→ `docs/qa-review-spec-v1.0.md`）
+
 運用: 1セッション＝1タスク。上から順に実施。各タスクは「完了条件」を満たし
 「検証コマンド」が通ってから `feat(tracegate): T0N <内容>` でコミットする。
 spec.md / design.md と矛盾を見つけたら実装で埋めず、CURRENT_STATE.md の「要確認」に記録して中断。
@@ -22,13 +25,13 @@ spec.md / design.md と矛盾を見つけたら実装で埋めず、CURRENT_STAT
 
 ## T03: extract.find_requirements
 
-- REQ-001 / REQ-002 / REQ-003 / NFR-003 を実装
-- テスト（`tests/test_extract.py`、各docstringに@covers）: 基本抽出・重複IDは初出優先・タイトルの記号除去・同一行複数ID・非UTF-8スキップ（`tmp_path` にバイナリを書いて検証）
+- REQ-001 / REQ-002 / REQ-003 / NFR-003 を実装（design.md記載どおり `except (OSError, UnicodeDecodeError)` で読込全体を囲む）
+- テスト（`tests/test_extract.py`、各docstringに@covers）: 基本抽出・重複IDは初出優先・タイトルの記号除去・同一行複数ID・非UTF-8スキップ（`tmp_path` にバイナリを書いて検証）・**存在しないファイル/権限拒否ファイルを渡してもクラッシュせず警告を出してスキップすること（`tmp_path` にディレクトリを作りファイルパスとして渡す等でOSErrorを再現）**
 - 検証: `python -m pytest tests/test_extract.py -q`
 
 ## T04: extract.find_coverage
 
-- REQ-004 / REQ-005 / REQ-006 を実装
+- REQ-004 / REQ-005 / REQ-006 / NFR-003 を実装（ファイル読込部分はT03と同じ例外処理方針を適用）
 - テスト: `@covers` 行から複数ID抽出・行番号記録・`@covers` なし行のREQ-IDが無視されること
 - 検証: `python -m pytest tests/test_extract.py -q`
 
@@ -52,8 +55,8 @@ spec.md / design.md と矛盾を見つけたら実装で埋めず、CURRENT_STAT
 
 ## T08: cli.main
 
-- REQ-013〜REQ-019 を実装（引数定義・glob展開・拡張子フィルタ・処理順・終了コードはdesign.mdの表と記述どおり）
-- テスト（`tests/test_cli.py`）: `main([...])` の戻り値で exit 0 / 1（乖離超過）/ 1（orphan）/ 0（--allow-orphans）/ 2（要件0件）/ 0（--version）を検証。`capsys` で標準出力にマトリクスが出ることを確認
+- REQ-013〜REQ-020 を実装（引数定義・glob展開・拡張子フィルタ・処理順・終了コードはdesign.mdの表と記述どおり。REQ-020の書込失敗チェックはゲート判定より前に評価する）
+- テスト（`tests/test_cli.py`）: `main([...])` の戻り値で exit 0 / 1（乖離超過）/ 1（orphan）/ 0（--allow-orphans）/ 2（要件0件）/ 0（--version）/ **2（`--output` または `--json` に存在しないディレクトリ配下のパスを指定し書込失敗）** を検証。`capsys` で標準出力にマトリクスが出ることを確認
 - 検証: `python -m pytest tests/test_cli.py -q`
 
 ## T09: e2eフィクスチャテスト
@@ -70,6 +73,6 @@ spec.md / design.md と矛盾を見つけたら実装で埋めず、CURRENT_STAT
 
 ## T11: README＋GitHub Actions例＋状態更新
 
-- `README.md` に: 概要・使い方（コマンド例と出力例）・終了コード表・Actionsジョブ例（`python -m tracegate` を実行しexit codeでゲートする最小YAMLをコードブロックで掲載。ワークフローファイル自体は作らない）
+- `README.md` に: 概要・使い方（コマンド例と出力例）・終了コード表（0/1/2の3種、REQ-020のexit 2を含む）・Actionsジョブ例（`python -m tracegate` を実行しexit codeでゲートする最小YAMLをコードブロックで掲載。ワークフローファイル自体は作らない）・**NFR-002（性能目標）を記載し、「本MVPでは自動テスト対象外。手動計測を推奨」と明記する一文**
 - `CURRENT_STATE.md` を「MVP完了」に更新
 - 検証: `python -m pytest tests/ -q` が全緑のまま

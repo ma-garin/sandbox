@@ -37,4 +37,8 @@ NNN-short-description/
 |---|---|
 | `_template/` | 新規フォルダのひな形 |
 | `yuki-aidd-kit/` | AIDD開発キット（スキル・フック・テンプレート） |
+| `001-qa-skills-pro/` | QA監査Skillスイート（DOM-06 MVP・実装済み） |
+| `002-tracegate/` | 仕様・テスト整合性監査CLI（INF-01・Sonnet実装待ち） |
+| `003-agentlint/` | エージェント権限Lint（GT-15・Sonnet実装待ち） |
+| `ROADMAP.md` | QAポートフォリオ実装計画とSonnet実装セッションの運用ルール |
 | `AGENTS.md` | Codex用の全プロジェクト共通規約 |

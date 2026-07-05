@@ -28,6 +28,6 @@
 
 ## 次のタスク（最優先）
 
-- 実プロジェクト（sandbox内の既存プロジェクト等）の仕様書1本に `/qa-review` を試用し、指摘品質を確認する
+- **ROADMAP P1**: `002-tracegate/docs/spec.md` に `/qa-review` を試用し（DOM-06のドッグフーディング）、指摘品質を確認する。Critical/High指摘が出たら002の実装着手前に仕様策定者へ差し戻す
 - 試用結果を踏まえて ambiguity-patterns.md / チェックリストを改訂する
-- 次版候補: 状態遷移テスト・ペアワイズ法の references 追加、`yuki-aidd-kit/skills/` への統合判断
+- 次版候補（ROADMAP P4）: 状態遷移テスト・ペアワイズ法の references 追加、`yuki-aidd-kit/skills/` への統合判断

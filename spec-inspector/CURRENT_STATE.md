@@ -28,11 +28,21 @@ spec-inspector（QuintSpectレベルアップ版）
 - Node単体テスト13件パス（`tests/engine.test.mjs`）
 - 実ブラウザ(Chromium)でE2E検証済み（解析/トレース/履歴/設定、JSエラーなし）
 
+## 直近の完了タスク（第2弾: UX審査→業務品質化）
+
+- UX審査で検出した5問題を全解消（詳細: Artifact「spec-inspector UX審査レポート」）
+  - エクスポート3種（HTMLレポート/CSV/コメント付きMD）→ `src/report.js`
+  - Claude API 実接続（Sonnet 5 / Haiku 4.5、graceful degradation）→ `src/llm.js`
+  - レーダーラベル欠け修正 → `src/charts.js`
+  - severity/観点/文書フィルタ＋文書別スコア表 → `src/app.js`
+  - タブ件数バッジ＋空状態CTA＋サンプル3文書一括投入
+- 単体テスト25件パス（engine 13 + report/llm 12）、Chromium E2Eで全機能自動検証
+
 ## 次のタスク（最優先）
 
-- LLM（Claude API）補足解析の実接続（`src/llm.js` の enrichWithAI）
-- コメント付きファイル出力（問題箇所アノテーション）
-- 矛盾検知UIの複数ファイル導線強化（textareaだけでは2文書にならない）
+- AI補足の実APIキーでの実測・プロンプトチューニング（E2E未実測）
+- 指摘トリアージ（対応する/対応済み/対象外の状態管理）
+- 観点重みカスタマイズ／検出力エビデンス測定（既知欠陥セット）
 
 ## 未解決の判断待ち事項
 

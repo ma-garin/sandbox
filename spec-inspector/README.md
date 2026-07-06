@@ -34,7 +34,7 @@ python3 -m http.server 8000
 # 4. 2文書以上で「矛盾検知」「トレーサビリティ」タブが有効化
 ```
 
-![解析画面](docs/screenshot-analyze.png)
+![解析画面](docs/ux/v2-1-analyze.jpeg)
 
 ## 構成
 

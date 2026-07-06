@@ -75,15 +75,26 @@
         <label>解析エンジン</label>
         <select id="provider-select">
           <option value="rule">ルールベース（APIキー不要・既定）</option>
-          <option value="claude">Claude API 併用（AI補足・要APIキー）</option>
+          <option value="claude">ルールベース＋Claude AI補足（要APIキー）</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>AIモデル</label>
+        <select id="model-select">
+          <option value="claude-sonnet-5">Claude Sonnet 5（推奨）</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5（高速・低コスト）</option>
         </select>
       </div>
       <div class="setting-row">
         <label>APIキー（localStorageに保存）</label>
-        <input type="password" id="apikey-input" placeholder="sk-... （ハードコードしません）" />
+        <input type="password" id="apikey-input" placeholder="sk-ant-... （ハードコードしません）" />
         <button class="btn" id="save-key-btn">保存</button>
       </div>
-      <p class="hint">APIキーはこのブラウザの localStorage にのみ保存され、外部に送信されません（AI補足は未接続）。</p>
+      <p class="hint">
+        APIキーはこのブラウザの localStorage にのみ保存されます。AI補足を有効にした場合、文書は解析のために
+        Anthropic API へ直接送信されます（それ以外の外部送信はありません）。<br />
+        AIの指摘は「AI補足」タグ付きで表示され、再現性のあるスコア計算には影響しません。AI失敗時もルールベース結果はそのまま得られます。
+      </p>
     </section>
   </main>
 

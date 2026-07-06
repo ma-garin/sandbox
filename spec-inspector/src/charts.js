@@ -47,7 +47,9 @@ export function radarSVG(axes, { size = 320, prev = null } = {}) {
     return `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--accent)"/>`;
   }).join("");
 
-  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="観点スコアのレーダーチャート">
+  // 左右のラベル（「検証可能性」等の長い軸名）が切れないよう、viewBoxに水平マージンを持たせる
+  const mx = 56;
+  return `<svg viewBox="${-mx} -8 ${size + mx * 2} ${size + 16}" width="${size + mx * 2}" height="${size + 16}" style="max-width:100%;height:auto" role="img" aria-label="観点スコアのレーダーチャート">
     ${rings}${spokes}${prevPoly}${curPoly}${dots}${labels}
   </svg>`;
 }

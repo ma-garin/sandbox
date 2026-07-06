@@ -244,7 +244,7 @@ function renderFindingList() {
 }
 
 function exportHtml() {
-  const { overall, agg, counts, allFindings, targets, consistency, trace } = lastResult;
+  const { overall, agg, counts, allFindings, targets, consistency, trace, testdesign, ivv } = lastResult;
   const axes = VIEWPOINTS.map((v) => ({ label: v.label, value: agg[v.key] }));
   // レポートはCSS変数が使えないため、変数を実値に置換した独立SVGを埋め込む
   const radar = radarSVG(axes, {})
@@ -260,7 +260,7 @@ function exportHtml() {
     docNames: targets.map((t) => t.name),
     radarSvg: radar,
     generatedAt: new Date().toLocaleString("ja-JP"),
-    consistency, trace,
+    consistency, trace, testdesign, ivv,
   });
   download("インスペクションレポート.html", html, "text/html");
 }

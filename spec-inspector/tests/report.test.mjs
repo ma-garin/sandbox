@@ -78,6 +78,32 @@ test("HTMLエスケープされる", () => {
   assert.ok(!html.includes("<script>alert"), "XSS未対策");
 });
 
+console.log("report: buildHtmlReport 新セクション（G-12）");
+const baseReport = {
+  overall: 70, agg: { accuracy: 70, clarity: 70, visual: 70, depth: 70, reliability: 70, verifiability: 70 },
+  counts: { Critical: 0, High: 1, Medium: 0, Low: 0 }, findings: [finding()],
+  docNames: ["要件.md"], radarSvg: "", generatedAt: "now",
+};
+test("testdesign未指定なら従来出力（新セクションなし・後方互換）", () => {
+  const html = buildHtmlReport(baseReport);
+  assert.ok(!html.includes("テスト設計レディネス"));
+  assert.ok(!html.includes("IV&amp;V 第三者検証チェックリスト"));
+});
+test("testdesign指定でテスト設計セクションが入る", () => {
+  const html = buildHtmlReport({ ...baseReport, testdesign: {
+    candidates: [{ type: "boundary", doc: "要件.md", location: 2, evidence: "8文字以上" }],
+    counts: { decisionTable: 0, boundary: 1, state: 0 },
+  } });
+  assert.ok(html.includes("テスト設計レディネス") && html.includes("8文字以上") && html.includes("境界値分析"));
+});
+test("ivv指定でIV&Vセクションが入る", () => {
+  const html = buildHtmlReport({ ...baseReport, ivv: {
+    items: [{ id: "IVV-01", area: "要求", label: "識別子付与", ref: "IEEE 1012", status: "ng", evidence: "IDなし" }],
+    counts: { ok: 0, ng: 1, manual: 0 },
+  } });
+  assert.ok(html.includes("IV&amp;V 第三者検証") && html.includes("IVV-01") && html.includes("IDなし"));
+});
+
 console.log("report: buildVerificationPlanMarkdown");
 const ivvSample = {
   items: [

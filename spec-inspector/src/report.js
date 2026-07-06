@@ -51,7 +51,7 @@ export function buildAnnotatedMarkdown(docs, findings) {
 }
 
 // 自己完結HTMLレポート（配布用・印刷可）
-export function buildHtmlReport({ overall, agg, counts, findings, docNames, radarSvg, generatedAt, consistency = [], trace = null }) {
+export function buildHtmlReport({ overall, agg, counts, findings, docNames, radarSvg, generatedAt, consistency = [], trace = null, testdesign = null, ivv = null }) {
   const sevColor = { Critical: "#d64550", High: "#e8833a", Medium: "#c9a227", Low: "#7a8895" };
   const bars = VIEWPOINTS.map((v) => {
     const val = agg[v.key];
@@ -74,6 +74,20 @@ export function buildHtmlReport({ overall, agg, counts, findings, docNames, rada
     <table><thead><tr><th>ID</th><th>要件</th><th>設計</th><th>テスト</th><th>判定</th></tr></thead><tbody>
     ${trace.rows.map((r) => `<tr><td><b>${esc(r.id)}</b></td>${["requirement", "design", "test"].map((k) => `<td>${r.cell[k].length ? esc(r.cell[k].join(", ")) : '<span style="color:#d64550">—</span>'}</td>`).join("")}<td>${r.complete ? '<span style="color:#2c9c46">OK</span>' : `<span style="color:#d64550">${r.gaps.join("・")}</span>`}</td></tr>`).join("")}
     </tbody></table>` : "";
+  const tdLabel = { "decision-table": "デシジョンテーブル", boundary: "境界値分析", state: "状態遷移" };
+  const tdBlock = testdesign && testdesign.candidates && testdesign.candidates.length ? `
+    <h2>テスト設計レディネス（技法適用候補 ${testdesign.candidates.length}件）</h2>
+    <p class="meta">デシジョンテーブル ${testdesign.counts.decisionTable} ／ 境界値 ${testdesign.counts.boundary} ／ 状態遷移 ${testdesign.counts.state}</p>
+    <table><thead><tr><th>技法</th><th>箇所</th><th>該当記述</th></tr></thead><tbody>
+    ${testdesign.candidates.map((c) => `<tr><td>${tdLabel[c.type] || c.type}</td><td>${esc(c.doc || "")}${c.location ? ` L${c.location}` : ""}</td><td>${esc(c.evidence)}</td></tr>`).join("")}
+    </tbody></table>` : "";
+  const ivvStatus = { ok: '<span style="color:#2c9c46;font-weight:700">OK</span>', ng: '<span style="color:#d64550;font-weight:700">NG</span>', manual: '<span style="color:#667">手動確認</span>' };
+  const ivvBlock = ivv && ivv.items && ivv.items.length ? `
+    <h2>IV&amp;V 第三者検証チェックリスト</h2>
+    <p class="meta">OK ${ivv.counts.ok} ／ NG ${ivv.counts.ng} ／ 手動確認 ${ivv.counts.manual}</p>
+    <table><thead><tr><th>ID</th><th>領域</th><th>検証項目</th><th>判定</th><th>根拠</th></tr></thead><tbody>
+    ${ivv.items.map((it) => `<tr><td>${esc(it.id)}</td><td>${esc(it.area)}</td><td>${esc(it.label)}<div style="color:#667;font-size:11px">${esc(it.ref)}</div></td><td>${ivvStatus[it.status] || it.status}</td><td>${esc(it.evidence || (it.status === "manual" ? "レビュアーが確認" : ""))}</td></tr>`).join("")}
+    </tbody></table>` : "";
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>仕様書インスペクションレポート</title>
 <style>
 body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;max-width:960px;margin:0 auto;padding:32px;color:#1c2530;line-height:1.7}
@@ -92,6 +106,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid 
 <table><thead><tr><th>severity</th><th>観点</th><th>箇所</th><th>指摘・根拠・改善</th></tr></thead><tbody>${rows}</tbody></table>
 ${consistency.length ? `<h2>文書間の矛盾・不一致（${consistency.length}件）</h2><table><tbody>${consRows}</tbody></table>` : ""}
 ${traceBlock}
+${tdBlock}
+${ivvBlock}
 <p class="meta" style="margin-top:40px">本レポートの指摘はすべて根拠引用付き（evidence-only）。ISO/IEC 25010品質特性に基づく診断。</p>
 </body></html>`;
 }

@@ -75,24 +75,34 @@
         <label>解析エンジン</label>
         <select id="provider-select">
           <option value="rule">ルールベース（APIキー不要・既定）</option>
-          <option value="claude">ルールベース＋Claude AI補足（要APIキー）</option>
+          <option value="openai">ルールベース＋OpenAI AI補足（要APIキー）</option>
         </select>
       </div>
       <div class="setting-row">
         <label>AIモデル</label>
-        <select id="model-select">
-          <option value="claude-sonnet-5">Claude Sonnet 5（推奨）</option>
-          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5（高速・低コスト）</option>
-        </select>
+        <input type="text" id="model-input" list="model-list" placeholder="gpt-5-mini" />
+        <datalist id="model-list">
+          <option value="gpt-5-mini">推奨（コストと品質のバランス）</option>
+          <option value="gpt-5">最高品質</option>
+          <option value="gpt-4.1-mini">軽量・低コスト</option>
+        </datalist>
+      </div>
+      <div class="setting-row">
+        <label>Organization ID（任意）</label>
+        <input type="text" id="openai-org" placeholder="org-... （未設定なら省略）" />
+      </div>
+      <div class="setting-row">
+        <label>Project ID（任意）</label>
+        <input type="text" id="openai-project" placeholder="proj_... （未設定なら省略）" />
       </div>
       <div class="setting-row">
         <label>APIキー（localStorageに保存）</label>
-        <input type="password" id="apikey-input" placeholder="sk-ant-... （ハードコードしません）" />
-        <button class="btn" id="save-key-btn">保存</button>
+        <input type="password" id="openai-key" placeholder="sk-... （ハードコードしません）" />
+        <button class="btn" id="save-openai-btn">OpenAI設定を保存</button>
       </div>
       <p class="hint">
-        APIキーはこのブラウザの localStorage にのみ保存されます。AI補足を有効にした場合、文書は解析のために
-        Anthropic API へ直接送信されます（それ以外の外部送信はありません）。<br />
+        設定はすべてこのブラウザの localStorage にのみ保存されます。AI補足を有効にした場合、文書は解析のために
+        OpenAI API へ直接送信されます（それ以外の外部送信はありません）。<br />
         AIの指摘は「AI補足」タグ付きで表示され、再現性のあるスコア計算には影響しません。AI失敗時もルールベース結果はそのまま得られます。
       </p>
     </section>

@@ -5,7 +5,11 @@ import { buildTraceability, inferRole, ROLES } from "./traceability.js";
 import { parseFile } from "./parsers.js";
 import { addEntry, getHistory, clearHistory, latestDelta } from "./history.js";
 import { radarSVG, scoreBar } from "./charts.js";
-import { getProvider, setProvider, getApiKey, setApiKey, getModel, setModel, enrichWithAI } from "./llm.js";
+import {
+  getProvider, setProvider, getModel, setModel,
+  getOpenAIKey, setOpenAIKey, getOpenAIOrg, setOpenAIOrg,
+  getOpenAIProject, setOpenAIProject, enrichWithAI,
+} from "./llm.js";
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "./report.js";
 
 // ---- 状態（immutable運用: 置き換えで更新） --------------------------------
@@ -83,7 +87,7 @@ async function runAnalysis() {
 
   const btn = $("#analyze-btn");
   btn.disabled = true;
-  btn.textContent = getProvider() === "claude" ? "解析中…（AI補足あり）" : "解析中…";
+  btn.textContent = getProvider() === "openai" ? "解析中…（AI補足あり）" : "解析中…";
 
   try {
     // ルールベース解析（スコアの根拠。再現性を担保）
@@ -96,9 +100,7 @@ async function runAnalysis() {
     let allFindings = perDoc.flatMap((p) => p.result.findings.map((f) => ({ ...f, doc: p.result.name, source: "rule" })));
 
     // AI補足（有効時のみ・スコアには影響させない）
-    let aiInfo = { enabled: false, findings: [] };
-    aiInfo = await enrichWithAI(targets);
-    if (aiInfo.error) toast(aiInfo.error);
+    const aiInfo = await enrichWithAI(targets);
     if (aiInfo.findings.length) {
       const names = new Set(targets.map((t) => t.name));
       allFindings = [...allFindings, ...aiInfo.findings.map((f) => ({ ...f, doc: names.has(f.doc) ? f.doc : targets[0].name }))];
@@ -122,7 +124,9 @@ async function runAnalysis() {
     renderTrace();
     setTabBadge("consistency", consistency.length);
     setTabBadge("trace", trace.gapsCount);
-    toast(aiInfo.findings.length ? `解析完了（AI補足 ${aiInfo.findings.length}件を含む）` : "解析が完了しました");
+    // AIの警告は完了メッセージに統合（別トーストだと上書きされて読めないため）
+    const done = aiInfo.findings.length ? `解析完了（AI補足 ${aiInfo.findings.length}件を含む）` : "解析が完了しました";
+    toast(aiInfo.error ? `${done}／${aiInfo.error}` : done);
   } finally {
     btn.disabled = false;
     btn.textContent = "解析する";
@@ -342,11 +346,18 @@ $("#clear-history-btn").addEventListener("click", () => {
 
 // ---- 設定 ---------------------------------------------------------------
 $("#provider-select").value = getProvider();
-$("#apikey-input").value = getApiKey();
-$("#model-select").value = getModel();
+$("#model-input").value = getModel();
+$("#openai-org").value = getOpenAIOrg();
+$("#openai-project").value = getOpenAIProject();
+$("#openai-key").value = getOpenAIKey();
 $("#provider-select").addEventListener("change", (e) => { setProvider(e.target.value); toast("エンジンを変更しました"); });
-$("#model-select").addEventListener("change", (e) => { setModel(e.target.value); toast("モデルを変更しました"); });
-$("#save-key-btn").addEventListener("click", () => { setApiKey($("#apikey-input").value.trim()); toast("APIキーを保存しました"); });
+$("#model-input").addEventListener("change", (e) => { setModel(e.target.value); toast(`モデルを ${getModel()} に設定しました`); });
+$("#save-openai-btn").addEventListener("click", () => {
+  setOpenAIOrg($("#openai-org").value.trim());
+  setOpenAIProject($("#openai-project").value.trim());
+  setOpenAIKey($("#openai-key").value.trim());
+  toast("OpenAI設定を保存しました");
+});
 
 // ---- サンプル -----------------------------------------------------------
 // 3文書（要件・設計・テスト）を投入し、矛盾検知・トレーサビリティまで一気に体験できるデモ

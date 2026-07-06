@@ -2,7 +2,6 @@
 // 実行: node tests/report.test.mjs
 import assert from "node:assert";
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "../src/report.js";
-import { parseFindings, buildPrompt } from "../src/llm.js";
 
 let pass = 0, fail = 0;
 function test(name, fn) {
@@ -79,33 +78,8 @@ test("HTMLエスケープされる", () => {
   assert.ok(!html.includes("<script>alert"), "XSS未対策");
 });
 
-console.log("llm: parseFindings");
-test("正しいJSON配列をパースし整形する", () => {
-  const text = `以下が指摘です。\n[{"viewpoint":"depth","severity":"High","doc":"要件.md","message":"例外系が無い","evidence":"ログインできること","suggestion":"異常系を追記","expectedEffect":"抜け漏れ防止"}]`;
-  const f = parseFindings(text);
-  assert.strictEqual(f.length, 1);
-  assert.strictEqual(f[0].source, "ai");
-  assert.strictEqual(f[0].viewpoint, "depth");
-});
-test("不正な観点・severityの項目は除外", () => {
-  const text = `[{"viewpoint":"bogus","severity":"High","message":"x","evidence":"y"},{"viewpoint":"depth","severity":"URGENT","message":"x","evidence":"y"}]`;
-  assert.strictEqual(parseFindings(text).length, 0);
-});
-test("JSONでない応答は空配列", () => {
-  assert.strictEqual(parseFindings("すみません、指摘できません").length, 0);
-});
-test("10件を超える指摘は切り詰める", () => {
-  const items = Array.from({ length: 15 }, (_, i) => ({ viewpoint: "depth", severity: "Low", message: `m${i}`, evidence: "e" }));
-  assert.strictEqual(parseFindings(JSON.stringify(items)).length, 10);
-});
-
-console.log("llm: buildPrompt");
-test("文書名と本文がプロンプトに含まれ、上限で切られる", () => {
-  const p = buildPrompt([{ name: "要件.md", text: "REQ-001 ログイン。" }]);
-  assert.ok(p.includes("要件.md") && p.includes("REQ-001"));
-  const big = buildPrompt([{ name: "big.md", text: "あ".repeat(50000) }]);
-  assert.ok(big.length < 30000, `プロンプトが長すぎる: ${big.length}`);
-});
+// 注: 旧llmセクション（parseFindings/buildPrompt）は tests/prompts.test.mjs と
+// tests/llm.test.mjs に移管した。
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -50,7 +50,7 @@
   5. 要件トレースなし（REQ-等のIDが1つもない）
   - viewpointへのマップ: 1→verifiability、2・3→depth、4→verifiability、5→reliability
 - **受入基準**: `node tests/testdoc.test.mjs` 全パス（5ルール各正例/負例、全指摘にevidence＋suggestion）＋共通回帰
-- **依存**: なし ／ **状態**: 未着手
+- **依存**: なし ／ **状態**: 完了(2026-07-06)
 
 ## G-04 テスト設計書診断: findings合流
 

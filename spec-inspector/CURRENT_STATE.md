@@ -15,25 +15,28 @@ spec-inspector（QuintSpectレベルアップ版）
 
 ## 現在のフェーズ
 
-設計中（調査完了 → 実装方針の合意待ち）
+実装済みMVP完成（レビュー・拡張フェーズ）
 
 ## 直近の完了タスク
 
-- ディレクトリ作成（`spec-inspector/`）
-- 元QuintSpectの調査・完全理解 → `docs/RESEARCH.md` に記録
-- プロジェクト規約整備（README / AGENTS / 本ファイル）
+- ディレクトリ作成＋元QuintSpectの調査（`docs/RESEARCH.md`）
+- 6観点ルールベース解析エンジン（`src/engine.js`）
+- 文書間矛盾検知（`src/consistency.js`）／トレーサビリティ矩阵（`src/traceability.js`）
+- 入力パーサ text/md/docx/pdf（`src/parsers.js`、docxはネイティブAPIのみ）
+- 履歴・スコア比較（`src/history.js`）／LLMアダプタ骨組み（`src/llm.js`）
+- 依存なしSVGレーダー/スコアバー（`src/charts.js`）／UI（`index.html`/`src/app.js`/`css/style.css`）
+- Node単体テスト13件パス（`tests/engine.test.mjs`）
+- 実ブラウザ(Chromium)でE2E検証済み（解析/トレース/履歴/設定、JSエラーなし）
 
 ## 次のタスク（最優先）
 
-- レベルアップ版の実装方針を確定（ブラウザ完結クライアントサイドアプリ）
-- `index.html` の骨組み（設定/入力/結果タブ）と解析プロンプト設計
-- 5+1観点スコアリング＋レーダーチャート＋指摘一覧のMVP
+- LLM（Claude API）補足解析の実接続（`src/llm.js` の enrichWithAI）
+- コメント付きファイル出力（問題箇所アノテーション）
+- 矛盾検知UIの複数ファイル導線強化（textareaだけでは2文書にならない）
 
 ## 未解決の判断待ち事項
 
-- 利用するLLMプロバイダ（Claude API 既定でよいか）
-- 入力形式の対応範囲（テキスト貼付のみ／ファイルアップロード／どの形式まで）
-- MVPスコープ（単一文書解析のみ先行か、文書間矛盾検知まで含めるか）
+- 決定済み: MVPフル構成／ルールベース先行／Word・PDF対応
 
 ## 既知の問題・技術的負債
 

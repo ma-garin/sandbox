@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spec-inspector — AI仕様書インスペクション</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <div>
+        <h1>spec-inspector</h1>
+        <p class="tagline">6観点で仕様書を診断・スコアリング・改善提案（QuintSpectレベルアップ版）</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="analyze" role="tab">解析</button>
+      <button class="tab" data-tab="consistency" role="tab">矛盾検知</button>
+      <button class="tab" data-tab="trace" role="tab">トレーサビリティ</button>
+      <button class="tab" data-tab="history" role="tab">履歴</button>
+      <button class="tab" data-tab="settings" role="tab">設定</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 解析タブ -->
+    <section class="panel active" id="tab-analyze">
+      <div class="input-area">
+        <div class="input-head">
+          <h2>ドキュメント入力</h2>
+          <div class="input-actions">
+            <label class="btn file-btn">
+              ファイル追加 (.txt/.md/.docx/.pdf)
+              <input type="file" id="file-input" accept=".txt,.md,.markdown,.csv,.docx,.pdf" multiple hidden />
+            </label>
+            <button class="btn ghost" id="sample-btn">サンプル投入</button>
+            <button class="btn primary" id="analyze-btn">解析する</button>
+          </div>
+        </div>
+        <div id="doc-list" class="doc-list"></div>
+        <textarea id="doc-text" placeholder="ここに仕様書テキストを貼り付け、またはファイルを追加してください。&#10;複数ドキュメントを追加すると「矛盾検知」「トレーサビリティ」も利用できます。"></textarea>
+      </div>
+      <div id="result" class="result" hidden></div>
+    </section>
+
+    <!-- 矛盾検知タブ -->
+    <section class="panel" id="tab-consistency">
+      <h2>複数ドキュメント間の矛盾検知</h2>
+      <p class="hint">「解析」タブで2つ以上のドキュメントを追加してから解析すると、ここに文書間の不一致・矛盾を表示します。</p>
+      <div id="consistency-result"></div>
+    </section>
+
+    <!-- トレーサビリティタブ -->
+    <section class="panel" id="tab-trace">
+      <h2>要件↔設計↔テスト トレーサビリティ</h2>
+      <p class="hint">識別子（REQ-/FR-/NFR-/TC- 等）を横串に、役割ごとの対応と断絶箇所を表示します。</p>
+      <div id="trace-result"></div>
+    </section>
+
+    <!-- 履歴タブ -->
+    <section class="panel" id="tab-history">
+      <div class="input-head">
+        <h2>解析履歴</h2>
+        <button class="btn ghost danger" id="clear-history-btn">履歴をクリア</button>
+      </div>
+      <div id="history-result"></div>
+    </section>
+
+    <!-- 設定タブ -->
+    <section class="panel" id="tab-settings">
+      <h2>設定</h2>
+      <div class="setting-row">
+        <label>解析エンジン</label>
+        <select id="provider-select">
+          <option value="rule">ルールベース（APIキー不要・既定）</option>
+          <option value="claude">Claude API 併用（AI補足・要APIキー）</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>APIキー（localStorageに保存）</label>
+        <input type="password" id="apikey-input" placeholder="sk-... （ハードコードしません）" />
+        <button class="btn" id="save-key-btn">保存</button>
+      </div>
+      <p class="hint">APIキーはこのブラウザの localStorage にのみ保存され、外部に送信されません（AI補足は未接続）。</p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>ローカル完結・依存なし。診断はISO/IEC 25010観点、指摘はISTQB severityで分類。</span>
+  </footer>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

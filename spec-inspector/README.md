@@ -28,14 +28,43 @@ python3 -m http.server 8000
 
 ```bash
 # ブラウザで index.html を開く（またはローカルサーバ経由でアクセス）
-# 1. 設定画面でLLM APIキーを入力（localStorageに保存）
-# 2. ドキュメントを貼り付け／アップロード
-# 3. 「解析」を実行 → 5+1観点スコア・指摘一覧・改善提案を表示
+# 1.（任意）設定タブでエンジン/APIキーを選択。既定はルールベース（キー不要）
+# 2. 「サンプル投入」またはテキスト貼付／ファイル追加（.txt/.md/.docx/.pdf）
+# 3.「解析する」→ 6観点スコア・レーダー・指摘一覧（severity＋根拠＋改善案）を表示
+# 4. 2文書以上で「矛盾検知」「トレーサビリティ」タブが有効化
 ```
 
-> ステータス: 設計フェーズ。詳細は `CURRENT_STATE.md` を参照。
+![解析画面](docs/screenshot-analyze.png)
+
+## 構成
+
+```
+spec-inspector/
+├── index.html            # SPA（解析/矛盾検知/トレーサビリティ/履歴/設定）
+├── css/style.css
+├── src/
+│   ├── engine.js         # 6観点ルールベース解析（純粋関数）
+│   ├── consistency.js    # 文書間の不一致・矛盾検知
+│   ├── traceability.js   # 要件↔設計↔テスト 矩阵
+│   ├── parsers.js        # text/md/docx/pdf 抽出（docxはネイティブAPIのみ）
+│   ├── history.js        # localStorage履歴・スコア比較
+│   ├── llm.js            # LLMアダプタ（既定rule／claude接続は骨組み）
+│   ├── charts.js         # 依存なしSVGレーダー・スコアバー
+│   └── app.js            # UIオーケストレーション
+├── tests/engine.test.mjs # Node単体テスト（`node tests/engine.test.mjs`）
+└── docs/RESEARCH.md      # 元QuintSpect調査レポート
+```
+
+## テスト
+
+```bash
+node tests/engine.test.mjs   # エンジン/矛盾検知/トレーサビリティの単体テスト
+```
+
+> ステータス: MVP完成（実ブラウザE2E検証済み・単体テスト13件パス）。詳細は `CURRENT_STATE.md`。
 
 ## メモ
 
 - 元QuintSpectは正式版が2026-07-06提供開始（解析予約・履歴管理・通知を追加）。
 - 本プロジェクトは学習・検証目的（sandbox配下）。商用サービスの複製ではなく再設計版。
+- LLM解析（Claude API補足）は `src/llm.js` に接続口を用意。既定はキー不要のルールベース。

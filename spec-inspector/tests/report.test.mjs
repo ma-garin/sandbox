@@ -1,7 +1,7 @@
 // report.test.mjs — 出力（CSV/コメント付きMD/HTMLレポート）とLLM応答パースの単体テスト
 // 実行: node tests/report.test.mjs
 import assert from "node:assert";
-import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "../src/report.js";
+import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport, buildVerificationPlanMarkdown } from "../src/report.js";
 
 let pass = 0, fail = 0;
 function test(name, fn) {
@@ -78,8 +78,37 @@ test("HTMLエスケープされる", () => {
   assert.ok(!html.includes("<script>alert"), "XSS未対策");
 });
 
-// 注: 旧llmセクション（parseFindings/buildPrompt）は tests/prompts.test.mjs と
-// tests/llm.test.mjs に移管した。
+console.log("report: buildVerificationPlanMarkdown");
+const ivvSample = {
+  items: [
+    { id: "IVV-01", area: "要求", label: "識別子付与", ref: "IEEE 1012", status: "ok", evidence: "REQ-001" },
+    { id: "IVV-07", area: "設計", label: "設計トレース", ref: "IEEE 1012", status: "ng", evidence: "設計欠落 REQ-002" },
+    { id: "IVV-06", area: "要求", label: "ステークホルダ網羅", ref: "IEEE 1012", status: "manual" },
+  ],
+  counts: { ok: 1, ng: 1, manual: 1 },
+};
+test("全章見出しを含む", () => {
+  const md = buildVerificationPlanMarkdown({
+    docs: [{ name: "要件.md", role: "requirement" }], ivv: ivvSample,
+    trace: { ids: ["REQ-001", "REQ-002"], gapsCount: 1 }, consistency: [], findings: [finding()],
+    generatedAt: "2026/7/6",
+  });
+  for (const h of ["## 1. 目的と対象文書", "## 2. 検証観点", "## 3. 指摘サマリ", "## 4. 文書間整合", "## 5. 手動確認", "## 6. 是正が必要", "## 7. トレーサビリティ"]) {
+    assert.ok(md.includes(h), `見出し欠落: ${h}`);
+  }
+});
+test("NG項目と手動項目が列挙される", () => {
+  const md = buildVerificationPlanMarkdown({ docs: [], ivv: ivvSample, findings: [] });
+  assert.ok(md.includes("IVV-07") && md.includes("設計欠落 REQ-002"), "NG項目未記載");
+  assert.ok(md.includes("IVV-06") && md.includes("ステークホルダ網羅"), "手動項目未記載");
+});
+test("セル内のパイプは無害化される", () => {
+  const md = buildVerificationPlanMarkdown({
+    docs: [], findings: [],
+    ivv: { items: [{ id: "X", area: "a", label: "A|B", ref: "r", status: "ng", evidence: "e|f" }], counts: { ok: 0, ng: 1, manual: 0 } },
+  });
+  assert.ok(md.includes("A\\|B") && md.includes("e\\|f"), "パイプ未エスケープ");
+});
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

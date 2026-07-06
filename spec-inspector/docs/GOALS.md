@@ -82,7 +82,7 @@
 - **対象ファイル**: `src/report.js`、`tests/report.test.mjs`、`src/app.js`（出力ボタン1個）
 - **仕様**: `buildVerificationPlanMarkdown({docs, ivv, trace, consistency, scores, generatedAt})` → 章立て: 1.目的と対象文書 2.検証観点（チェックリスト結果） 3.指摘サマリ（severity別件数） 4.文書間整合の検証結果 5.手動確認が必要な項目 6.トレーサビリティ状況。IV&Vタブにダウンロードボタン追加
 - **受入基準**: report.test.mjsに追加したテストが全パス（全章見出しを含む・ng項目とmanual項目が列挙される）＋E2Eでダウンロード発火＋共通回帰
-- **依存**: G-05 ／ **状態**: 未着手
+- **依存**: G-05 ／ **状態**: 完了(2026-07-06)
 
 ## G-08 テスト設計レディネスのAI強化
 

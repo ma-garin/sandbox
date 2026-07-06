@@ -99,3 +99,69 @@ ${traceBlock}
 function esc(s) {
   return String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 }
+
+// IV&V結果と解析結果から検証計画書ドラフト（Markdown）を生成
+// { docs, ivv, trace, consistency, scores, findings, generatedAt }
+export function buildVerificationPlanMarkdown({ docs = [], ivv = { items: [], counts: {} }, trace = null, consistency = [], scores = {}, findings = [], generatedAt = "" }) {
+  const sevCount = ["Critical", "High", "Medium", "Low"].map((s) => `${s} ${findings.filter((f) => f.severity === s).length}`).join(" / ");
+  const ngItems = ivv.items.filter((i) => i.status === "ng");
+  const manualItems = ivv.items.filter((i) => i.status === "manual");
+
+  const lines = [];
+  lines.push(`# 検証計画書（ドラフト）`);
+  lines.push("");
+  lines.push(`生成日時: ${generatedAt}　／　作成: spec-inspector（IV&V支援）`);
+  lines.push("");
+  lines.push(`## 1. 目的と対象文書`);
+  lines.push(`本計画は、発注者・受注者から独立した第三者検証（IV&V）の観点で対象文書を検証するためのものである。`);
+  lines.push("");
+  docs.forEach((d) => lines.push(`- ${d.name}（役割: ${d.role || "-"}）`));
+  lines.push("");
+  lines.push(`## 2. 検証観点（IV&Vチェックリスト結果）`);
+  lines.push(`自動判定: OK ${ivv.counts.ok ?? 0} ／ NG ${ivv.counts.ng ?? 0} ／ 手動確認 ${ivv.counts.manual ?? 0}`);
+  lines.push("");
+  lines.push(`| ID | 領域 | 検証項目 | 判定 | 根拠 |`);
+  lines.push(`| --- | --- | --- | --- | --- |`);
+  ivv.items.forEach((it) => {
+    const st = it.status === "ok" ? "OK" : it.status === "ng" ? "**NG**" : "手動確認";
+    lines.push(`| ${it.id} | ${it.area} | ${mdCell(it.label)} | ${st} | ${mdCell(it.evidence || (it.status === "manual" ? "レビュアーが確認" : ""))} |`);
+  });
+  lines.push("");
+  lines.push(`## 3. 指摘サマリ`);
+  lines.push(`検出指摘 ${findings.length} 件（${sevCount}）`);
+  lines.push("");
+  lines.push(`## 4. 文書間整合の検証結果`);
+  if (consistency.length) {
+    consistency.forEach((c) => lines.push(`- [${c.severity}] ${mdCell(c.message)}`));
+  } else {
+    lines.push(`- 文書間の不一致・矛盾は検出されなかった（または単一文書）。`);
+  }
+  lines.push("");
+  lines.push(`## 5. 手動確認が必要な項目`);
+  if (manualItems.length) {
+    manualItems.forEach((it) => lines.push(`- [ ] ${it.id} ${mdCell(it.label)}（${it.ref}）`));
+  } else {
+    lines.push(`- なし`);
+  }
+  lines.push("");
+  lines.push(`## 6. 是正が必要な項目（NG）`);
+  if (ngItems.length) {
+    ngItems.forEach((it) => lines.push(`- [ ] ${it.id} ${mdCell(it.label)} — ${mdCell(it.evidence || "")}`));
+  } else {
+    lines.push(`- なし`);
+  }
+  lines.push("");
+  lines.push(`## 7. トレーサビリティ状況`);
+  if (trace && trace.ids && trace.ids.length) {
+    lines.push(`識別子 ${trace.ids.length} 件 ／ トレース断絶 ${trace.gapsCount} 件`);
+  } else {
+    lines.push(`要件識別子が検出されなかったため、トレーサビリティは評価できない。`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+// Markdownテーブルのセル内でパイプ・改行を無害化
+function mdCell(s) {
+  return String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+}

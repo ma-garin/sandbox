@@ -10,7 +10,7 @@ import {
   getOpenAIKey, setOpenAIKey, getOpenAIOrg, setOpenAIOrg,
   getOpenAIProject, setOpenAIProject, enrichWithAI,
 } from "./llm.js";
-import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "./report.js";
+import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport, buildVerificationPlanMarkdown } from "./report.js";
 import { analyzeTestDesignReadiness } from "./testdesign.js";
 import { analyzeTestDocQuality } from "./testdoc.js";
 import { runIVV } from "./ivv.js";
@@ -387,6 +387,7 @@ function renderIVV() {
   const el = $("#ivv-result");
   const { ivv, targets } = lastResult;
   if (!ivv || !targets.length) { el.innerHTML = emptyWithCta("解析するとIV&V第三者検証チェックリストを表示します。"); bindCta(el); return; }
+  $("#export-vplan-btn").hidden = false;
   const checks = loadIvvChecks();
   const c = ivv.counts;
   const summary = `<p class="hint">自動判定: OK <b>${c.ok}</b> ／ NG <b class="ivv-ng">${c.ng}</b> ／ 手動確認 <b>${c.manual}</b></p>`;
@@ -427,6 +428,17 @@ $("#clear-history-btn").addEventListener("click", () => {
   clearHistory();
   renderHistory();
   toast("履歴をクリアしました");
+});
+
+// IV&V 検証計画書ドラフト出力
+$("#export-vplan-btn").addEventListener("click", () => {
+  if (!lastResult) { toast("先に解析を実行してください"); return; }
+  const md = buildVerificationPlanMarkdown({
+    docs: lastResult.targets, ivv: lastResult.ivv, trace: lastResult.trace,
+    consistency: lastResult.consistency, scores: lastResult.agg, findings: lastResult.allFindings,
+    generatedAt: new Date().toLocaleString("ja-JP"),
+  });
+  download("検証計画書ドラフト.md", md, "text/markdown");
 });
 
 // ---- 設定 ---------------------------------------------------------------

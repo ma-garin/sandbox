@@ -13,6 +13,7 @@ import {
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "./report.js";
 import { analyzeTestDesignReadiness } from "./testdesign.js";
 import { analyzeTestDocQuality } from "./testdoc.js";
+import { runIVV } from "./ivv.js";
 
 // ---- 状態（immutable運用: 置き換えで更新） --------------------------------
 let docs = []; // [{name, text, role}]
@@ -118,8 +119,9 @@ async function runAnalysis() {
     const consistency = targets.length >= 2 ? detectInconsistencies(targets) : [];
     const trace = buildTraceability(targets);
     const testdesign = analyzeTestDesignReadiness(targets);
+    const ivv = runIVV(targets, { trace, consistency, findings: allFindings, scores: agg });
 
-    lastResult = { perDoc, agg, overall, allFindings, counts, targets, consistency, trace, testdesign, aiCount: aiInfo.findings.length };
+    lastResult = { perDoc, agg, overall, allFindings, counts, targets, consistency, trace, testdesign, ivv, aiCount: aiInfo.findings.length };
 
     addEntry({
       id: "r" + Date.now(), at: new Date().toISOString(),
@@ -132,9 +134,11 @@ async function runAnalysis() {
     renderConsistency();
     renderTrace();
     renderTestDesign();
+    renderIVV();
     setTabBadge("consistency", consistency.length);
     setTabBadge("trace", trace.gapsCount);
     setTabBadge("testdesign", testdesign.candidates.length);
+    setTabBadge("ivv", ivv.counts.ng);
     // AIの警告は完了メッセージに統合（別トーストだと上書きされて読めないため）
     const done = aiInfo.findings.length ? `解析完了（AI補足 ${aiInfo.findings.length}件を含む）` : "解析が完了しました";
     toast(aiInfo.error ? `${done}／${aiInfo.error}` : done);
@@ -365,6 +369,43 @@ function renderTestDesign() {
     const draft = testdesign.candidates[Number(b.dataset.i)].draft;
     navigator.clipboard?.writeText(draft).then(() => toast("下書きをコピーしました"), () => toast("コピーに失敗しました"));
   }));
+}
+
+// ---- IV&V 第三者検証 -----------------------------------------------------
+const IVV_STORE = "spec-inspector.ivv.v1";
+function loadIvvChecks() {
+  try { return JSON.parse(localStorage.getItem(IVV_STORE) || "{}"); } catch { return {}; }
+}
+function saveIvvCheck(id, checked) {
+  const cur = loadIvvChecks();
+  const next = { ...cur, [id]: checked }; // immutable
+  localStorage.setItem(IVV_STORE, JSON.stringify(next));
+}
+const IVV_STATUS = { ok: '<span class="ivv-ok">OK</span>', ng: '<span class="ivv-ng">NG</span>', manual: '<span class="ivv-manual">手動確認</span>' };
+
+function renderIVV() {
+  const el = $("#ivv-result");
+  const { ivv, targets } = lastResult;
+  if (!ivv || !targets.length) { el.innerHTML = emptyWithCta("解析するとIV&V第三者検証チェックリストを表示します。"); bindCta(el); return; }
+  const checks = loadIvvChecks();
+  const c = ivv.counts;
+  const summary = `<p class="hint">自動判定: OK <b>${c.ok}</b> ／ NG <b class="ivv-ng">${c.ng}</b> ／ 手動確認 <b>${c.manual}</b></p>`;
+  const rows = ivv.items.map((it) => {
+    const manualBox = it.status === "manual"
+      ? `<input type="checkbox" class="ivv-check" data-id="${it.id}" ${checks[it.id] ? "checked" : ""} aria-label="${esc(it.label)}を確認済みにする" />`
+      : "";
+    return `<tr>
+      <td>${it.id}</td>
+      <td>${esc(it.area)}</td>
+      <td>${esc(it.label)}<div class="ivv-ref">${esc(it.ref)}</div></td>
+      <td>${IVV_STATUS[it.status]}${manualBox}</td>
+      <td>${it.evidence ? esc(it.evidence) : (it.status === "manual" ? "レビュアーが確認" : "")}</td>
+    </tr>`;
+  }).join("");
+  el.innerHTML = summary + `<div class="tbl-wrap"><table class="matrix">
+    <thead><tr><th>ID</th><th>領域</th><th>検証項目</th><th>判定</th><th>根拠</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+  el.querySelectorAll(".ivv-check").forEach((cb) => cb.addEventListener("change", () => saveIvvCheck(cb.dataset.id, cb.checked)));
 }
 
 // ---- 履歴 ---------------------------------------------------------------

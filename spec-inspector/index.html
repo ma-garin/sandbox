@@ -20,6 +20,7 @@
       <button class="tab" data-tab="consistency" role="tab">矛盾検知</button>
       <button class="tab" data-tab="trace" role="tab">トレーサビリティ</button>
       <button class="tab" data-tab="testdesign" role="tab">テスト設計</button>
+      <button class="tab" data-tab="ivv" role="tab">IV&amp;V</button>
       <button class="tab" data-tab="history" role="tab">履歴</button>
       <button class="tab" data-tab="settings" role="tab">設定</button>
     </nav>
@@ -65,6 +66,16 @@
       <h2>テスト設計レディネス</h2>
       <p class="hint">仕様からデシジョンテーブル・境界値分析・状態遷移テストの適用候補を検出し、テストの下書き骨子を提示します。上流レビュー段階でテスト設計の抜けを可視化します。</p>
       <div id="testdesign-result"></div>
+    </section>
+
+    <!-- IV&Vタブ -->
+    <section class="panel" id="tab-ivv">
+      <div class="input-head">
+        <h2>IV&amp;V 第三者検証チェックリスト</h2>
+        <button class="btn" id="export-vplan-btn" hidden>📋 検証計画書ドラフト (MD)</button>
+      </div>
+      <p class="hint">発注者・受注者から独立した第三者検証（IV&amp;V）の観点を、IEEE 1012 / ISO・IEC・IEEE 29119 を参考にチェックリスト化。自動判定できる項目はルール解析結果から ok/ng を判定し、判定できない項目は手動確認します。</p>
+      <div id="ivv-result"></div>
     </section>
 
     <!-- 履歴タブ -->

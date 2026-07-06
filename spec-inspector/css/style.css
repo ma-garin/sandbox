@@ -130,6 +130,11 @@ button:disabled { opacity: .6; cursor: wait; }
 .td-draft summary { cursor: pointer; font-size: 13px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
 .td-copy { padding: 2px 10px; font-size: 12px; }
 .td-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.ivv-ok { color: hsl(140 55% 40%); font-weight: 700; }
+.ivv-ng { color: var(--crit); font-weight: 700; }
+.ivv-manual { color: var(--muted); font-weight: 600; }
+.ivv-ref { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.ivv-check { margin-left: 8px; vertical-align: middle; }
 .finding {
   background: var(--panel); border: 1px solid var(--border); border-left-width: 4px;
   border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;

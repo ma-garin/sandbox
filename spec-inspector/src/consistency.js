@@ -9,7 +9,8 @@
 
 import { ID_PATTERN } from "./engine.js";
 
-const NUM_UNIT = /([0-9０-９]+(?:\.[0-9０-９]+)?)\s*(秒|ms|ミリ秒|分|時間|件|%|％|人|回|MB|GB|KB|文字|桁)/g;
+// 数値＋単位。testdesign.js（境界値候補検出）でも再利用するためexportする。
+export const NUM_UNIT = /([0-9０-９]+(?:\.[0-9０-９]+)?)\s*(秒|ms|ミリ秒|分|時間|件|%|％|人|回|MB|GB|KB|文字|桁)/g;
 
 function toHalf(s) {
   return s.replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));

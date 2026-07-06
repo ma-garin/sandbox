@@ -58,7 +58,7 @@
 - **対象ファイル**: `src/app.js`
 - **仕様**: `runAnalysis`内で `targets.filter(t=>t.role==="test")` に `analyzeTestDocQuality` を適用し `allFindings` に合流（doc名付与）。フィルタ・CSV・コメント付きMD・HTMLレポートは既存パイプラインで自動的に処理される
 - **受入基準**: E2E: サンプル3文書解析→テスト仕様書.md由来のtestdoc指摘が一覧に表示され、要件定義書.mdには出ない。CSVエクスポートに含まれる。JSエラーゼロ。共通回帰＋testdocテスト全パス
-- **依存**: G-03 ／ **状態**: 未着手
+- **依存**: G-03 ／ **状態**: 完了(2026-07-06)
 
 ## G-05 IV&V: チェックリスト＋自動判定
 

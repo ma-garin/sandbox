@@ -12,6 +12,7 @@ import {
 } from "./llm.js";
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "./report.js";
 import { analyzeTestDesignReadiness } from "./testdesign.js";
+import { analyzeTestDocQuality } from "./testdoc.js";
 
 // ---- 状態（immutable運用: 置き換えで更新） --------------------------------
 let docs = []; // [{name, text, role}]
@@ -99,6 +100,12 @@ async function runAnalysis() {
     }
     const overall = Math.round(VIEWPOINTS.reduce((s, v) => s + agg[v.key], 0) / VIEWPOINTS.length);
     let allFindings = perDoc.flatMap((p) => p.result.findings.map((f) => ({ ...f, doc: p.result.name, source: "rule" })));
+
+    // テスト設計書診断: role=test の文書にのみ専用ルールを適用して合流
+    const testDocFindings = targets
+      .filter((d) => d.role === "test")
+      .flatMap((d) => analyzeTestDocQuality(d.text, d.name).map((f) => ({ ...f, source: "rule" })));
+    allFindings = [...allFindings, ...testDocFindings];
 
     // AI補足（有効時のみ・スコアには影響させない）
     const aiInfo = await enrichWithAI(targets);

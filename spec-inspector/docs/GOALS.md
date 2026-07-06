@@ -66,7 +66,7 @@
 - **対象ファイル**: `src/ivv.js`（新規）、`tests/ivv.test.mjs`（新規）
 - **仕様**: `IVV_CHECKLIST`: 15〜20項目 `{id:"IVV-NN", area:"要求|設計|テスト|管理", label, ref, auto}`。autoは`(docs, ruleResults)=>{status:"ok"|"ng", evidence}`の関数またはnull（null=手動確認項目）。`runIVV(docs, ruleResults)` → `Object.freeze({items:[{...item, status:"ok"|"ng"|"manual", evidence?}], counts})`。自動判定できる例: 要求へのID付番（trace結果流用）、受入基準の存在、版管理欄、文書間矛盾の有無（consistency結果流用）
 - **受入基準**: `node tests/ivv.test.mjs` 全パス（auto項目がサンプル文書でok/ng判定される、auto:nullは必ずstatus:"manual"、ng判定はevidence必須）＋共通回帰
-- **依存**: なし ／ **状態**: 未着手
+- **依存**: なし ／ **状態**: 完了(2026-07-06)
 
 ## G-06 IV&V: タブUI＋手動チェック永続化
 

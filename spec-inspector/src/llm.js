@@ -8,6 +8,7 @@
 //   失敗時もルールベース結果は必ず得られる（graceful degradation）
 
 import { buildAnalysisMessages, parseAIFindings } from "./prompts/index.js";
+import { buildTestDesignPrompt } from "./prompts/features.js";
 import { buildOpenAIRequest, callOpenAI } from "./providers/openai.js";
 
 const PROVIDER_STORE = "spec-inspector.provider.v1";      // "rule" | "openai"
@@ -89,4 +90,52 @@ export async function enrichWithAI(docs, { fetchImpl = fetch, timeoutMs = 90000 
       : `AI補足に失敗: ${uniq}。ルールベース結果のみ表示します`;
   }
   return result;
+}
+
+// テスト設計候補のAI強化応答 {"candidates":[...]} をパースする
+const TD_TYPES = new Set(["decision-table", "boundary", "state"]);
+export function parseTestDesignCandidates(text) {
+  const src = String(text ?? "");
+  const s = src.indexOf("{");
+  const e = src.lastIndexOf("}");
+  if (s === -1 || e <= s) return { ok: false, candidates: [], error: "応答からJSONを抽出できませんでした" };
+  let arr;
+  try {
+    const obj = JSON.parse(src.slice(s, e + 1));
+    arr = Array.isArray(obj.candidates) ? obj.candidates : null;
+  } catch {
+    return { ok: false, candidates: [], error: "JSON解析に失敗しました" };
+  }
+  if (!arr) return { ok: false, candidates: [], error: "candidates配列がありません" };
+  const candidates = arr
+    .filter((c) => c && typeof c === "object" && c.valid !== false)
+    .filter((c) => TD_TYPES.has(c.type) && c.evidence)
+    .slice(0, 12)
+    .map((c) => Object.freeze({
+      type: c.type,
+      doc: String(c.doc || ""),
+      evidence: String(c.evidence),
+      conditions: Array.isArray(c.conditions) ? c.conditions.map(String) : [],
+      reason: String(c.reason || ""),
+      location: 0,
+      source: "ai",
+    }));
+  return { ok: true, candidates };
+}
+
+// テスト設計レディネスのAI強化。ルール候補を精緻化し、見落としを補う。
+// → { enabled, candidates, error? }（enrichWithAIと同じ縮退契約）
+export async function enrichTestDesign(candidates, docs, { fetchImpl = fetch, timeoutMs = 90000 } = {}) {
+  if (getProvider() !== "openai") return { enabled: false, candidates: [] };
+  const apiKey = getOpenAIKey();
+  if (!apiKey) return { enabled: false, error: "APIキー未設定のためテスト設計のAI補足をスキップしました", candidates: [] };
+
+  const system = "あなたはテスト設計技法（デシジョンテーブル・境界値分析・状態遷移テスト）の専門家です。指定されたJSON形式のみで回答してください。";
+  const user = buildTestDesignPrompt(candidates, docs);
+  const req = buildOpenAIRequest({ apiKey, org: getOpenAIOrg(), project: getOpenAIProject(), model: getModel(), system, user });
+  const res = await callOpenAI(req, { fetchImpl, timeoutMs });
+  if (!res.ok) return { enabled: true, candidates: [], error: `テスト設計のAI補足に失敗: ${res.error}` };
+  const parsed = parseTestDesignCandidates(res.text);
+  if (!parsed.ok) return { enabled: true, candidates: [], error: `テスト設計のAI補足: ${parsed.error}` };
+  return { enabled: true, candidates: parsed.candidates };
 }

@@ -90,7 +90,7 @@
 - **対象ファイル**: `src/llm.js`、`src/app.js`、`tests/llm.test.mjs`
 - **仕様**: `enrichTestDesign(candidates, docs, {fetchImpl})` を llm.js に追加（enrichWithAIと同じ契約: 失敗時 `{enabled, candidates:[], error?}`、AI由来候補は `source:"ai"`）。応答契約 `{"candidates":[...]}` のパーサ（valid=falseの候補は除外）。UIはAI候補に「AI補足」タグ
 - **受入基準**: llm.test.mjsに追加したモックテスト全パス（正常系/失敗時縮退/valid:false除外）＋E2E（route stub）でAI候補表示＋共通回帰
-- **依存**: G-01, G-02 ／ **状態**: 未着手
+- **依存**: G-01, G-02 ／ **状態**: 完了(2026-07-06)
 
 ## G-09 指摘トリアージ
 

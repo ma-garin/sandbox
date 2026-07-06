@@ -14,6 +14,7 @@ import { buildOpenAIRequest, extractText, describeError, callOpenAI, OPENAI_URL 
 import {
   getProvider, setProvider, getModel, setModel,
   getOpenAIKey, setOpenAIKey, setOpenAIOrg, setOpenAIProject, enrichWithAI,
+  enrichTestDesign, parseTestDesignCandidates,
 } from "../src/llm.js";
 
 let pass = 0, fail = 0;
@@ -153,6 +154,49 @@ await test("重複findingsはmessage+evidenceで排除", async () => {
   const dup = JSON.stringify({ findings: [aiFinding, { ...aiFinding }] });
   const r = await enrichWithAI(docs, { fetchImpl: async () => okResponse(dup) });
   assert.strictEqual(r.findings.length, 1);
+});
+
+console.log("llm: parseTestDesignCandidates（G-08）");
+await test("valid:falseの候補を除外し、type/evidenceで検証", () => {
+  const text = JSON.stringify({ candidates: [
+    { type: "boundary", valid: true, doc: "a.md", evidence: "8文字以上", conditions: [], reason: "桁数境界" },
+    { type: "boundary", valid: false, doc: "a.md", evidence: "無効候補" },
+    { type: "bogus", valid: true, evidence: "x" },
+    { type: "state", valid: true, evidence: "" },
+  ] });
+  const r = parseTestDesignCandidates(text);
+  assert.ok(r.ok);
+  assert.strictEqual(r.candidates.length, 1);
+  assert.strictEqual(r.candidates[0].source, "ai");
+  assert.strictEqual(r.candidates[0].reason, "桁数境界");
+});
+await test("非JSONは ok:false", () => {
+  assert.ok(!parseTestDesignCandidates("no json here").ok);
+});
+
+console.log("llm: enrichTestDesign（graceful degradation）");
+const tdDocs = [{ name: "a.md", text: "パスワードは8文字以上。", role: "requirement" }];
+const tdCands = [{ type: "boundary", doc: "a.md", location: 1, evidence: "8文字以上" }];
+await test("provider=ruleは短絡", async () => {
+  setProvider("rule");
+  const r = await enrichTestDesign(tdCands, tdDocs, { fetchImpl: async () => okResponse("") });
+  assert.deepStrictEqual(r, { enabled: false, candidates: [] });
+});
+await test("キー未設定はスキップ", async () => {
+  setProvider("openai"); setOpenAIKey("");
+  const r = await enrichTestDesign(tdCands, tdDocs, { fetchImpl: async () => okResponse("") });
+  assert.ok(!r.enabled && r.error.includes("APIキー未設定"));
+});
+await test("正常系: AI候補がsource:aiで返る", async () => {
+  setProvider("openai"); setOpenAIKey("sk-test");
+  const body = JSON.stringify({ candidates: [{ type: "state", valid: true, doc: "a.md", evidence: "承認待ち→承認済み", reason: "状態遷移あり" }] });
+  const r = await enrichTestDesign(tdCands, tdDocs, { fetchImpl: async () => okResponse(body) });
+  assert.ok(r.enabled && r.candidates.length === 1 && r.candidates[0].source === "ai");
+});
+await test("API失敗時は candidates空・error付き（ルール候補は呼び出し側で維持）", async () => {
+  setProvider("openai"); setOpenAIKey("sk-test");
+  const r = await enrichTestDesign(tdCands, tdDocs, { fetchImpl: async () => errResponse(500) });
+  assert.ok(r.enabled && r.candidates.length === 0 && r.error);
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

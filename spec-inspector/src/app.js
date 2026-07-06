@@ -8,7 +8,7 @@ import { radarSVG, scoreBar } from "./charts.js";
 import {
   getProvider, setProvider, getModel, setModel,
   getOpenAIKey, setOpenAIKey, getOpenAIOrg, setOpenAIOrg,
-  getOpenAIProject, setOpenAIProject, enrichWithAI,
+  getOpenAIProject, setOpenAIProject, enrichWithAI, enrichTestDesign,
 } from "./llm.js";
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport, buildVerificationPlanMarkdown } from "./report.js";
 import { analyzeTestDesignReadiness } from "./testdesign.js";
@@ -118,7 +118,21 @@ async function runAnalysis() {
     const counts = SEVERITY.reduce((o, s) => ((o[s] = allFindings.filter((f) => f.severity === s).length), o), {});
     const consistency = targets.length >= 2 ? detectInconsistencies(targets) : [];
     const trace = buildTraceability(targets);
-    const testdesign = analyzeTestDesignReadiness(targets);
+    let testdesign = analyzeTestDesignReadiness(targets);
+    // テスト設計レディネスのAI強化（有効時のみ・失敗してもルール候補は維持）
+    const tdAI = await enrichTestDesign(testdesign.candidates, targets);
+    if (tdAI.error) toast(tdAI.error);
+    if (tdAI.candidates.length) {
+      const merged = [...testdesign.candidates, ...tdAI.candidates];
+      testdesign = {
+        candidates: merged,
+        counts: {
+          decisionTable: merged.filter((c) => c.type === "decision-table").length,
+          boundary: merged.filter((c) => c.type === "boundary").length,
+          state: merged.filter((c) => c.type === "state").length,
+        },
+      };
+    }
     const ivv = runIVV(targets, { trace, consistency, findings: allFindings, scores: agg });
 
     lastResult = { perDoc, agg, overall, allFindings, counts, targets, consistency, trace, testdesign, ivv, aiCount: aiInfo.findings.length };
@@ -351,19 +365,25 @@ function renderTestDesign() {
   }
   const c = testdesign.counts;
   const summary = `<p class="hint">候補 ${testdesign.candidates.length} 件（デシジョンテーブル ${c.decisionTable} ／ 境界値 ${c.boundary} ／ 状態遷移 ${c.state}）</p>`;
-  el.innerHTML = summary + testdesign.candidates.map((cand, i) => `
+  el.innerHTML = summary + testdesign.candidates.map((cand, i) => {
+    const draftBlock = cand.draft
+      ? `<details class="td-draft">
+        <summary>テスト下書きを表示 <button class="btn ghost td-copy" data-i="${i}" type="button">コピー</button></summary>
+        <pre class="td-pre">${esc(cand.draft)}</pre>
+      </details>`
+      : (cand.reason ? `<div class="suggestion"><b>AIの根拠:</b> ${esc(cand.reason)}${cand.conditions?.length ? `（条件: ${esc(cand.conditions.join(" / "))}）` : ""}</div>` : "");
+    return `
     <div class="finding">
       <div class="finding-head">
         <span class="vp-tag">${TD_LABEL[cand.type] || cand.type}</span>
+        ${cand.source === "ai" ? `<span class="ai-tag">AI補足</span>` : ""}
         <span class="finding-msg">適用候補</span>
         <span class="loc">${esc(cand.doc || "")}${cand.location ? " · L" + cand.location : ""}</span>
       </div>
       <div class="evidence">${esc(cand.evidence)}</div>
-      <details class="td-draft">
-        <summary>テスト下書きを表示 <button class="btn ghost td-copy" data-i="${i}" type="button">コピー</button></summary>
-        <pre class="td-pre" id="td-pre-${i}">${esc(cand.draft)}</pre>
-      </details>
-    </div>`).join("");
+      ${draftBlock}
+    </div>`;
+  }).join("");
   el.querySelectorAll(".td-copy").forEach((b) => b.addEventListener("click", (ev) => {
     ev.preventDefault();
     const draft = testdesign.candidates[Number(b.dataset.i)].draft;

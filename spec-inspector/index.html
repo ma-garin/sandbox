@@ -19,6 +19,7 @@
       <button class="tab active" data-tab="analyze" role="tab">解析</button>
       <button class="tab" data-tab="consistency" role="tab">矛盾検知</button>
       <button class="tab" data-tab="trace" role="tab">トレーサビリティ</button>
+      <button class="tab" data-tab="testdesign" role="tab">テスト設計</button>
       <button class="tab" data-tab="history" role="tab">履歴</button>
       <button class="tab" data-tab="settings" role="tab">設定</button>
     </nav>
@@ -57,6 +58,13 @@
       <h2>要件↔設計↔テスト トレーサビリティ</h2>
       <p class="hint">識別子（REQ-/FR-/NFR-/TC- 等）を横串に、役割ごとの対応と断絶箇所を表示します。</p>
       <div id="trace-result"></div>
+    </section>
+
+    <!-- テスト設計タブ -->
+    <section class="panel" id="tab-testdesign">
+      <h2>テスト設計レディネス</h2>
+      <p class="hint">仕様からデシジョンテーブル・境界値分析・状態遷移テストの適用候補を検出し、テストの下書き骨子を提示します。上流レビュー段階でテスト設計の抜けを可視化します。</p>
+      <div id="testdesign-result"></div>
     </section>
 
     <!-- 履歴タブ -->

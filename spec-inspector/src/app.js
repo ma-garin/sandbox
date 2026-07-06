@@ -11,6 +11,7 @@ import {
   getOpenAIProject, setOpenAIProject, enrichWithAI,
 } from "./llm.js";
 import { buildCsv, buildAnnotatedMarkdown, buildHtmlReport } from "./report.js";
+import { analyzeTestDesignReadiness } from "./testdesign.js";
 
 // ---- 状態（immutable運用: 置き換えで更新） --------------------------------
 let docs = []; // [{name, text, role}]
@@ -109,8 +110,9 @@ async function runAnalysis() {
     const counts = SEVERITY.reduce((o, s) => ((o[s] = allFindings.filter((f) => f.severity === s).length), o), {});
     const consistency = targets.length >= 2 ? detectInconsistencies(targets) : [];
     const trace = buildTraceability(targets);
+    const testdesign = analyzeTestDesignReadiness(targets);
 
-    lastResult = { perDoc, agg, overall, allFindings, counts, targets, consistency, trace, aiCount: aiInfo.findings.length };
+    lastResult = { perDoc, agg, overall, allFindings, counts, targets, consistency, trace, testdesign, aiCount: aiInfo.findings.length };
 
     addEntry({
       id: "r" + Date.now(), at: new Date().toISOString(),
@@ -122,8 +124,10 @@ async function runAnalysis() {
     renderResult();
     renderConsistency();
     renderTrace();
+    renderTestDesign();
     setTabBadge("consistency", consistency.length);
     setTabBadge("trace", trace.gapsCount);
+    setTabBadge("testdesign", testdesign.candidates.length);
     // AIの警告は完了メッセージに統合（別トーストだと上書きされて読めないため）
     const done = aiInfo.findings.length ? `解析完了（AI補足 ${aiInfo.findings.length}件を含む）` : "解析が完了しました";
     toast(aiInfo.error ? `${done}／${aiInfo.error}` : done);
@@ -321,6 +325,39 @@ function renderTrace() {
       <thead><tr><th>ID</th>${ROLES.map((r) => `<th>${r.label}</th>`).join("")}<th>判定</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
+}
+
+// ---- テスト設計レディネス ------------------------------------------------
+const TD_LABEL = { "decision-table": "デシジョンテーブル", boundary: "境界値分析", state: "状態遷移" };
+
+function renderTestDesign() {
+  const el = $("#testdesign-result");
+  const { testdesign, targets } = lastResult;
+  if (!testdesign || !testdesign.candidates.length) {
+    if (!targets.length) { el.innerHTML = emptyWithCta("解析するとテスト技法の適用候補を表示します。"); bindCta(el); return; }
+    el.innerHTML = `<div class="empty">テスト技法の適用候補は検出されませんでした（条件分岐・数値境界・状態遷移の記述が見当たりません）。</div>`;
+    return;
+  }
+  const c = testdesign.counts;
+  const summary = `<p class="hint">候補 ${testdesign.candidates.length} 件（デシジョンテーブル ${c.decisionTable} ／ 境界値 ${c.boundary} ／ 状態遷移 ${c.state}）</p>`;
+  el.innerHTML = summary + testdesign.candidates.map((cand, i) => `
+    <div class="finding">
+      <div class="finding-head">
+        <span class="vp-tag">${TD_LABEL[cand.type] || cand.type}</span>
+        <span class="finding-msg">適用候補</span>
+        <span class="loc">${esc(cand.doc || "")}${cand.location ? " · L" + cand.location : ""}</span>
+      </div>
+      <div class="evidence">${esc(cand.evidence)}</div>
+      <details class="td-draft">
+        <summary>テスト下書きを表示 <button class="btn ghost td-copy" data-i="${i}" type="button">コピー</button></summary>
+        <pre class="td-pre" id="td-pre-${i}">${esc(cand.draft)}</pre>
+      </details>
+    </div>`).join("");
+  el.querySelectorAll(".td-copy").forEach((b) => b.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const draft = testdesign.candidates[Number(b.dataset.i)].draft;
+    navigator.clipboard?.writeText(draft).then(() => toast("下書きをコピーしました"), () => toast("コピーに失敗しました"));
+  }));
 }
 
 // ---- 履歴 ---------------------------------------------------------------

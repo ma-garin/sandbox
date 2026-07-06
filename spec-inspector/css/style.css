@@ -126,6 +126,10 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .ai-note { font-size: 12px; color: var(--accent); font-weight: 600; }
 table.matrix.perdoc { margin-top: 14px; font-size: 12px; }
 button:disabled { opacity: .6; cursor: wait; }
+.td-draft { margin-top: 8px; }
+.td-draft summary { cursor: pointer; font-size: 13px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.td-copy { padding: 2px 10px; font-size: 12px; }
+.td-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .finding {
   background: var(--panel); border: 1px solid var(--border); border-left-width: 4px;
   border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;

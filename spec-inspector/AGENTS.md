@@ -18,11 +18,28 @@ spec-inspector/
 ├── AGENTS.md            # 本ファイル
 ├── CURRENT_STATE.md     # フェーズ・次タスク
 ├── docs/
-│   └── RESEARCH.md      # 元QuintSpectの調査レポート
-├── index.html           # （予定）UIエントリ
-├── src/                 # （予定）解析ロジック・プロンプト
-└── tests/               # （予定）検証
+│   ├── RESEARCH.md      # 元QuintSpectの調査レポート
+│   ├── GOALS.md         # 改善バックログ（/goalコマンドで1件ずつ実行）
+│   └── ux/              # スクリーンショット
+├── index.html           # UIエントリ（解析/矛盾検知/トレーサビリティ/履歴/設定）
+├── css/style.css
+├── src/
+│   ├── engine.js        # 6観点ルールベース解析
+│   ├── consistency.js   # 文書間矛盾検知
+│   ├── traceability.js  # 要件↔設計↔テスト矩阵
+│   ├── testdesign.js    # （G-01予定）テスト設計レディネス
+│   ├── parsers.js / history.js / charts.js / report.js / app.js
+│   ├── llm.js           # AI補足オーケストレーション（OpenAI・既定gpt-5-mini）
+│   ├── providers/openai.js  # リクエスト構築・応答抽出（fetch注入でモック可）
+│   └── prompts/         # 内部プロンプトパック（契約・観点指示・few-shot・チャンク）
+└── tests/               # node tests/*.mjs（engine/report/prompts/llm）
 ```
+
+## AI設定（OpenAI）
+
+- localStorage: `spec-inspector.openai.{key,org,project,model}.v1`／provider（rule|openai）
+- 実APIの実行・キー設定は**別環境**で行う（このリポジトリにキーを置かない）
+- 開発時の検証は fetchモック（tests/llm.test.mjs）と route stub のE2Eで行い、実APIは呼ばない
 
 ## 対象外ファイル
 

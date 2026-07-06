@@ -38,11 +38,20 @@ spec-inspector（QuintSpectレベルアップ版）
   - タブ件数バッジ＋空状態CTA＋サンプル3文書一括投入
 - 単体テスト25件パス（engine 13 + report/llm 12）、Chromium E2Eで全機能自動検証
 
+## 直近の完了タスク（第3弾: OpenAI移行＋プロンプト基盤＋/goal整備）
+
+- AIプロバイダをOpenAI APIへ移行（org/project/key設定、既定gpt-5-mini、JSONモード、
+  fetchモックで全経路オフライン検証。実API実行は別環境で後日）
+- 内部プロンプトパック `src/prompts/`（観点別指示・few-shot 8例・JSON契約・チャンク分割。
+  few-shot自己整合の機械検証付き）
+- `/goal` コマンド（`yuki-aidd-kit/claude-code/commands/goal.md`）と
+  受入基準付きバックログ `docs/GOALS.md`（G-01〜G-13）を整備
+- テスト56件パス（engine 13 / report 7 / prompts 20 / llm 16）＋route stubブラウザE2E
+
 ## 次のタスク（最優先）
 
-- AI補足の実APIキーでの実測・プロンプトチューニング（E2E未実測）
-- 指摘トリアージ（対応する/対応済み/対象外の状態管理）
-- 観点重みカスタマイズ／検出力エビデンス測定（既知欠陥セット）
+- `/goal` で GOALS.md を順次実行（推奨順: G-01→G-02→G-03→…。実行者: Sonnet）
+- 別環境でorg/project/keyを設定し、G-13手順書に沿って実APIのE2E＋プロンプト実測チューニング
 
 ## 未解決の判断待ち事項
 

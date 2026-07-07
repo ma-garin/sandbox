@@ -1,5 +1,5 @@
 // app.js — UIオーケストレーション
-import { analyzeDocument, VIEWPOINTS, SEVERITY } from "./engine.js";
+import { analyzeDocument, VIEWPOINTS, SEVERITY, weightedOverall } from "./engine.js";
 import { detectInconsistencies } from "./consistency.js";
 import { buildTraceability, inferRole, ROLES } from "./traceability.js";
 import { parseFile } from "./parsers.js";
@@ -41,6 +41,24 @@ function setTriage(key, status) {
   localStorage.setItem(TRIAGE_STORE, JSON.stringify(next));
 }
 function triageOf(f) { return loadTriage()[findingKey(f)] || "open"; }
+
+// ---- 観点重み（総合スコアの重み付け） -------------------------------------
+const WEIGHTS_STORE = "spec-inspector.weights.v1";
+function loadWeights() {
+  try {
+    const w = JSON.parse(localStorage.getItem(WEIGHTS_STORE) || "null");
+    return w && typeof w === "object" ? w : null;
+  } catch { return null; }
+}
+function saveWeights(weights) {
+  localStorage.setItem(WEIGHTS_STORE, JSON.stringify(weights));
+}
+function currentWeights() {
+  const stored = loadWeights() || {};
+  const w = {};
+  for (const v of VIEWPOINTS) w[v.key] = Number(stored[v.key]) || 1;
+  return w;
+}
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -118,7 +136,7 @@ async function runAnalysis() {
     for (const v of VIEWPOINTS) {
       agg[v.key] = Math.round(perDoc.reduce((s, p) => s + p.result.scores[v.key], 0) / perDoc.length);
     }
-    const overall = Math.round(VIEWPOINTS.reduce((s, v) => s + agg[v.key], 0) / VIEWPOINTS.length);
+    const overall = weightedOverall(agg, currentWeights());
     let allFindings = perDoc.flatMap((p) => p.result.findings.map((f) => ({ ...f, doc: p.result.name, source: "rule" })));
 
     // テスト設計書診断: role=test の文書にのみ専用ルールを適用して合流
@@ -514,6 +532,33 @@ $("#save-openai-btn").addEventListener("click", () => {
   setOpenAIProject($("#openai-project").value.trim());
   setOpenAIKey($("#openai-key").value.trim());
   toast("OpenAI設定を保存しました");
+});
+
+// 観点重みスライダ
+function renderWeightRows() {
+  const w = currentWeights();
+  $("#weight-rows").innerHTML = VIEWPOINTS.map((v) => `
+    <div class="setting-row weight-row">
+      <label>${v.label}</label>
+      <input type="range" class="weight-slider" data-key="${v.key}" min="0.5" max="2" step="0.1" value="${w[v.key]}" />
+      <span class="weight-val" id="wv-${v.key}">${w[v.key].toFixed(1)}</span>
+    </div>`).join("");
+  $$(".weight-slider").forEach((sl) => sl.addEventListener("input", () => {
+    const cur = currentWeights();
+    const next = { ...cur, [sl.dataset.key]: Number(sl.value) }; // immutable
+    saveWeights(next);
+    $(`#wv-${sl.dataset.key}`).textContent = Number(sl.value).toFixed(1);
+    // 解析済みなら総合スコアを即時再計算して反映
+    if (lastResult) { lastResult = { ...lastResult, overall: weightedOverall(lastResult.agg, next) }; renderResult(); }
+  }));
+}
+renderWeightRows();
+$("#reset-weights-btn").addEventListener("click", () => {
+  const eq = {}; VIEWPOINTS.forEach((v) => (eq[v.key] = 1));
+  saveWeights(eq);
+  renderWeightRows();
+  if (lastResult) { lastResult = { ...lastResult, overall: weightedOverall(lastResult.agg, eq) }; renderResult(); }
+  toast("重みを既定に戻しました");
 });
 
 // ---- サンプル -----------------------------------------------------------

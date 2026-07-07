@@ -19,6 +19,21 @@ export const VIEWPOINTS = [
 ];
 
 export const SEVERITY = ["Critical", "High", "Medium", "Low"];
+
+// 観点別スコアから総合スコアを算出。weights未指定（またはすべて等値）なら単純平均。
+// 観点別スコア自体は変えず、総合の重み付けだけを変える（レーダーは不変）。
+export function weightedOverall(scores, weights = null) {
+  const keys = VIEWPOINTS.map((v) => v.key);
+  const simple = () => Math.round(keys.reduce((s, k) => s + (scores[k] ?? 0), 0) / keys.length);
+  if (!weights) return simple();
+  let wsum = 0, sum = 0;
+  for (const k of keys) {
+    const w = Number(weights[k]);
+    const ww = Number.isFinite(w) && w >= 0 ? w : 1;
+    wsum += ww; sum += ww * (scores[k] ?? 0);
+  }
+  return wsum > 0 ? Math.round(sum / wsum) : simple();
+}
 const SEVERITY_WEIGHT = { Critical: 12, High: 7, Medium: 4, Low: 2 };
 
 // ---- 辞書 ----------------------------------------------------------------

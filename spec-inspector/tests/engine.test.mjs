@@ -1,7 +1,7 @@
 // engine.test.mjs — ルールエンジン・矛盾検知・トレーサビリティの単体テスト
 // 実行: node tests/engine.test.mjs
 import assert from "node:assert";
-import { analyzeDocument, VIEWPOINTS } from "../src/engine.js";
+import { analyzeDocument, VIEWPOINTS, weightedOverall } from "../src/engine.js";
 import { detectInconsistencies } from "../src/consistency.js";
 import { buildTraceability, inferRole } from "../src/traceability.js";
 
@@ -109,6 +109,25 @@ test("トレーサビリティ矩阵で断絶を検出", () => {
   const req2 = tr.rows.find((r) => r.id === "REQ-002");
   assert.ok(!req2.complete, "REQ-002は断絶のはず");
   assert.ok(req2.gaps.includes("設計欠落"));
+});
+
+console.log("engine: weightedOverall（G-10）");
+const evenScores = { accuracy: 60, clarity: 90, visual: 90, depth: 60, reliability: 90, verifiability: 90 };
+test("weights未指定・等重みは単純平均と一致", () => {
+  const simple = Math.round(VIEWPOINTS.reduce((s, v) => s + evenScores[v.key], 0) / VIEWPOINTS.length);
+  assert.strictEqual(weightedOverall(evenScores), simple);
+  const eq = {}; VIEWPOINTS.forEach((v) => (eq[v.key] = 1));
+  assert.strictEqual(weightedOverall(evenScores, eq), simple);
+});
+test("重み変更で総合が変わる（低スコア観点を重視すると下がる）", () => {
+  const base = weightedOverall(evenScores);
+  const w = { accuracy: 2, clarity: 1, visual: 1, depth: 2, reliability: 1, verifiability: 1 };
+  const weighted = weightedOverall(evenScores, w);
+  assert.ok(weighted < base, `重視で下がるはず: base=${base} weighted=${weighted}`);
+});
+test("重み全0や不正値でも単純平均にフォールバック", () => {
+  const zero = {}; VIEWPOINTS.forEach((v) => (zero[v.key] = 0));
+  assert.strictEqual(weightedOverall(evenScores, zero), weightedOverall(evenScores));
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

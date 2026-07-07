@@ -141,6 +141,9 @@ button:disabled { opacity: .6; cursor: wait; }
 .finding.triage-wontfix { opacity: .55; }
 .finding.triage-done .triage-sel { border-color: hsl(140 50% 45%); }
 .finding-head .loc { margin-left: 10px; }
+.weight-row label { min-width: 120px; }
+.weight-slider { flex: 1; max-width: 260px; }
+.weight-val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 32px; }
 .finding {
   background: var(--panel); border: 1px solid var(--border); border-left-width: 4px;
   border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;

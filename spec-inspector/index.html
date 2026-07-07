@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spec-inspector — AI仕様書インスペクション</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <div>
+        <h1>spec-inspector</h1>
+        <p class="tagline">6観点で仕様書を診断・スコアリング・改善提案（QuintSpectレベルアップ版）</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="analyze" role="tab">解析</button>
+      <button class="tab" data-tab="consistency" role="tab">矛盾検知</button>
+      <button class="tab" data-tab="trace" role="tab">トレーサビリティ</button>
+      <button class="tab" data-tab="testdesign" role="tab">テスト設計</button>
+      <button class="tab" data-tab="ivv" role="tab">IV&amp;V</button>
+      <button class="tab" data-tab="history" role="tab">履歴</button>
+      <button class="tab" data-tab="admin" role="tab">管理</button>
+      <button class="tab" data-tab="settings" role="tab">設定</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 解析タブ -->
+    <section class="panel active" id="tab-analyze">
+      <div class="input-area">
+        <div class="input-head">
+          <h2>ドキュメント入力</h2>
+          <div class="input-actions">
+            <label class="btn file-btn">
+              ファイル追加 (.txt/.md/.docx/.pdf)
+              <input type="file" id="file-input" accept=".txt,.md,.markdown,.csv,.docx,.pdf" multiple hidden />
+            </label>
+            <button class="btn ghost" id="sample-btn">サンプル投入</button>
+            <button class="btn primary" id="analyze-btn">解析する</button>
+          </div>
+        </div>
+        <div id="doc-list" class="doc-list"></div>
+        <textarea id="doc-text" placeholder="ここに仕様書テキストを貼り付け、またはファイルを追加してください。&#10;複数ドキュメントを追加すると「矛盾検知」「トレーサビリティ」も利用できます。"></textarea>
+      </div>
+      <div id="result" class="result" hidden></div>
+    </section>
+
+    <!-- 矛盾検知タブ -->
+    <section class="panel" id="tab-consistency">
+      <h2>複数ドキュメント間の矛盾検知</h2>
+      <p class="hint">「解析」タブで2つ以上のドキュメントを追加してから解析すると、ここに文書間の不一致・矛盾を表示します。</p>
+      <div id="consistency-result"></div>
+    </section>
+
+    <!-- トレーサビリティタブ -->
+    <section class="panel" id="tab-trace">
+      <h2>要件↔設計↔テスト トレーサビリティ</h2>
+      <p class="hint">識別子（REQ-/FR-/NFR-/TC- 等）を横串に、役割ごとの対応と断絶箇所を表示します。</p>
+      <div id="trace-result"></div>
+    </section>
+
+    <!-- テスト設計タブ -->
+    <section class="panel" id="tab-testdesign">
+      <h2>テスト設計レディネス</h2>
+      <p class="hint">仕様からデシジョンテーブル・境界値分析・状態遷移テストの適用候補を検出し、テストの下書き骨子を提示します。上流レビュー段階でテスト設計の抜けを可視化します。</p>
+      <div id="testdesign-result"></div>
+    </section>
+
+    <!-- IV&Vタブ -->
+    <section class="panel" id="tab-ivv">
+      <div class="input-head">
+        <h2>IV&amp;V 第三者検証チェックリスト</h2>
+        <button class="btn" id="export-vplan-btn" hidden>📋 検証計画書ドラフト (MD)</button>
+      </div>
+      <p class="hint">発注者・受注者から独立した第三者検証（IV&amp;V）の観点を、IEEE 1012 / ISO・IEC・IEEE 29119 を参考にチェックリスト化。自動判定できる項目はルール解析結果から ok/ng を判定し、判定できない項目は手動確認します。</p>
+      <div id="ivv-result"></div>
+    </section>
+
+    <!-- 履歴タブ -->
+    <section class="panel" id="tab-history">
+      <div class="input-head">
+        <h2>解析履歴</h2>
+        <button class="btn ghost danger" id="clear-history-btn">履歴をクリア</button>
+      </div>
+      <div id="history-result"></div>
+    </section>
+
+    <!-- 管理タブ（内部プロンプト・ルール辞書・IV&V項目のCRUD） -->
+    <section class="panel" id="tab-admin">
+      <div class="input-head">
+        <h2>管理（内部プロンプト・ルール・IV&amp;V項目の確認と編集）</h2>
+        <div class="input-actions">
+          <button class="btn" id="admin-export">設定をエクスポート (JSON)</button>
+          <label class="btn file-btn">設定をインポート<input type="file" id="admin-import" accept=".json" hidden /></label>
+          <button class="btn ghost danger" id="admin-reset-all">すべて既定に戻す</button>
+        </div>
+      </div>
+      <p class="hint">ここでの変更はこのブラウザに保存され、次回の解析から反映されます。既定値はコードに保持され、いつでもリセットできます。エクスポートしたJSONでチーム共有・Git管理も可能です。</p>
+      <div class="admin-nav">
+        <button class="admin-subtab active" data-admin="dict">ルール辞書</button>
+        <button class="admin-subtab" data-admin="prompts">内部プロンプト</button>
+        <button class="admin-subtab" data-admin="ivv">IV&amp;V項目</button>
+      </div>
+      <div id="admin-body"></div>
+    </section>
+
+    <!-- 設定タブ -->
+    <section class="panel" id="tab-settings">
+      <h2>設定</h2>
+      <div class="setting-row">
+        <label>解析エンジン</label>
+        <select id="provider-select">
+          <option value="rule">ルールベース（APIキー不要・既定）</option>
+          <option value="openai">ルールベース＋OpenAI AI補足（要APIキー）</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>AIモデル</label>
+        <input type="text" id="model-input" list="model-list" placeholder="gpt-5-mini" />
+        <datalist id="model-list">
+          <option value="gpt-5-mini">推奨（コストと品質のバランス）</option>
+          <option value="gpt-5">最高品質</option>
+          <option value="gpt-4.1-mini">軽量・低コスト</option>
+        </datalist>
+      </div>
+      <div class="setting-row">
+        <label>Organization ID（任意）</label>
+        <input type="text" id="openai-org" placeholder="org-... （未設定なら省略）" />
+      </div>
+      <div class="setting-row">
+        <label>Project ID（任意）</label>
+        <input type="text" id="openai-project" placeholder="proj_... （未設定なら省略）" />
+      </div>
+      <div class="setting-row">
+        <label>APIキー（localStorageに保存）</label>
+        <input type="password" id="openai-key" placeholder="sk-... （ハードコードしません）" />
+        <button class="btn" id="save-openai-btn">OpenAI設定を保存</button>
+      </div>
+      <p class="hint">
+        設定はすべてこのブラウザの localStorage にのみ保存されます。AI補足を有効にした場合、文書は解析のために
+        OpenAI API へ直接送信されます（それ以外の外部送信はありません）。<br />
+        AIの指摘は「AI補足」タグ付きで表示され、再現性のあるスコア計算には影響しません。AI失敗時もルールベース結果はそのまま得られます。
+      </p>
+
+      <h2 style="margin-top:32px">観点の重み（総合スコアの重み付け）</h2>
+      <p class="hint">組織の重視度に合わせて各観点の重みを調整できます。観点別スコアとレーダーは変わらず、総合スコアの加重平均のみ変化します。既定はすべて1.0（等重み）。</p>
+      <div id="weight-rows"></div>
+      <button class="btn" id="reset-weights-btn">重みを既定（等重み）に戻す</button>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>ローカル完結・依存なし。診断はISO/IEC 25010観点、指摘はISTQB severityで分類。</span>
+  </footer>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

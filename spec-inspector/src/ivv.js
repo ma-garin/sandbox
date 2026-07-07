@@ -101,22 +101,56 @@ export const IVV_CHECKLIST = [
   },
 ];
 
+// ---- チェックリストのメタ上書き（管理タブから label/ref/area/enabled を編集・追加） ----
+const IVV_STORE = "spec-inspector.ivvmeta.v1";
+// 既定メタ（自動判定ロジックはコード側でidに紐付くため、編集できるのは表示用メタのみ）
+export const DEFAULT_IVV_META = IVV_CHECKLIST.map((i) =>
+  Object.freeze({ id: i.id, area: i.area, label: i.label, ref: i.ref, enabled: true }));
+
+function loadIvvOverrides() {
+  try {
+    if (typeof localStorage === "undefined") return null;
+    const v = JSON.parse(localStorage.getItem(IVV_STORE) || "null");
+    return Array.isArray(v) ? v : null;
+  } catch { return null; }
+}
+// 有効なメタ一覧（上書きがあればそれ、なければ既定）
+export function getIvvMeta() {
+  return loadIvvOverrides() || DEFAULT_IVV_META.map((m) => ({ ...m }));
+}
+export function setIvvMeta(list) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(IVV_STORE, JSON.stringify(list));
+}
+export function resetIvvMeta() {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(IVV_STORE);
+}
+export function isIvvCustomized() {
+  return loadIvvOverrides() !== null;
+}
+
 // docs: [{name,text,role}], ruleResults: {trace, consistency, findings, scores}
 // → { items:[{...item, status:"ok"|"ng"|"manual", evidence?}], counts }
 export function runIVV(docs, ruleResults = {}) {
-  const items = IVV_CHECKLIST.map((item) => {
-    if (typeof item.auto !== "function") {
-      return Object.freeze({ id: item.id, area: item.area, label: item.label, ref: item.ref, status: "manual" });
-    }
-    let res;
-    try {
-      res = item.auto(docs, ruleResults) || ng("判定不能");
-    } catch {
-      res = ng("判定処理でエラー");
-    }
-    const out = { id: item.id, area: item.area, label: item.label, ref: item.ref, status: res.status };
-    if (res.evidence) out.evidence = res.evidence;
-    return Object.freeze(out);
+  const meta = getIvvMeta();
+  const autoById = new Map(IVV_CHECKLIST.map((i) => [i.id, i.auto]));
+  const items = meta
+    .filter((m) => m.enabled !== false)
+    .map((m) => {
+      const auto = autoById.get(m.id); // ユーザー追加項目(idが既定に無い)は手動扱い
+      if (typeof auto !== "function") {
+        return Object.freeze({ id: m.id, area: m.area, label: m.label, ref: m.ref, status: "manual" });
+      }
+      let res;
+      try {
+        res = auto(docs, ruleResults) || ng("判定不能");
+      } catch {
+        res = ng("判定処理でエラー");
+      }
+      const out = { id: m.id, area: m.area, label: m.label, ref: m.ref, status: res.status };
+      if (res.evidence) out.evidence = res.evidence;
+      return Object.freeze(out);
   });
   const counts = {
     ok: items.filter((i) => i.status === "ok").length,

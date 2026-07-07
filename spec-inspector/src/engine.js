@@ -36,33 +36,63 @@ export function weightedOverall(scores, weights = null) {
 }
 const SEVERITY_WEIGHT = { Critical: 12, High: 7, Medium: 4, Low: 2 };
 
-// ---- 辞書 ----------------------------------------------------------------
+// ---- 辞書（管理タブから上書き可能。既定はここ、上書きはlocalStorage） --------
 
-// 曖昧語（正確性・検証可能性を損なう）
-const VAGUE_WORDS = [
-  "適切に", "適宜", "随時", "必要に応じて", "可能な限り", "なるべく", "極力",
-  "速やかに", "すみやかに", "原則", "基本的に", "柔軟に", "臨機応変", "等々",
-  "その他", "など", "等", "だいたい", "おおむね", "概ね", "ある程度",
-  "十分に", "十分な", "適切な", "適度な", "しっかり", "きちんと", "うまく",
-];
+// 既定辞書（従来ハードコードしていた値の正）
+export const DEFAULT_DICT = Object.freeze({
+  // 曖昧語（正確性・検証可能性を損なう）
+  vagueWords: [
+    "適切に", "適宜", "随時", "必要に応じて", "可能な限り", "なるべく", "極力",
+    "速やかに", "すみやかに", "原則", "基本的に", "柔軟に", "臨機応変", "等々",
+    "その他", "など", "等", "だいたい", "おおむね", "概ね", "ある程度",
+    "十分に", "十分な", "適切な", "適度な", "しっかり", "きちんと", "うまく",
+  ],
+  // 未確定・仮置き語
+  tbdWords: ["TBD", "TODO", "未定", "検討中", "後日", "別途検討", "要検討", "???", "×××"],
+  // 検証不能な意図表現（検証可能性）
+  intentWords: ["目指す", "努める", "配慮する", "意識する", "考慮する", "望ましい", "推奨する"],
+  // 網羅性チェック用カテゴリ（深層性）
+  depthCategories: [
+    { key: "前提条件", words: ["前提", "事前条件", "前提条件"] },
+    { key: "制約", words: ["制約", "制限事項", "制限"] },
+    { key: "例外・異常系", words: ["例外", "異常系", "エラー", "失敗時", "異常時"] },
+    { key: "非機能", words: ["性能", "パフォーマンス", "可用性", "セキュリティ", "応答時間", "スループット", "同時接続"] },
+    { key: "受入基準", words: ["受入基準", "受け入れ基準", "完了条件", "合格基準", "検収"] },
+  ],
+  // 信頼性キーワード
+  reliabilityMarkers: ["参照", "準拠", "根拠", "出典", "規格", "標準", "ISO", "IEC", "JIS", "ガイドライン"],
+});
 
-// 未確定・仮置き語
-const TBD_WORDS = ["TBD", "TODO", "未定", "検討中", "後日", "別途検討", "要検討", "???", "×××"];
+const DICT_STORE = "spec-inspector.dict.v1";
+function loadDictOverrides() {
+  try {
+    if (typeof localStorage === "undefined") return {};
+    return JSON.parse(localStorage.getItem(DICT_STORE) || "{}");
+  } catch { return {}; }
+}
+// 有効な辞書（既定＋上書き）。セクション単位で上書きする。
+export function getDict() {
+  const o = loadDictOverrides();
+  const out = {};
+  for (const k of Object.keys(DEFAULT_DICT)) out[k] = k in o ? o[k] : DEFAULT_DICT[k];
+  return out;
+}
+export function setDict(section, value) {
+  if (!(section in DEFAULT_DICT)) throw new Error(`未知の辞書セクション: ${section}`);
+  if (typeof localStorage === "undefined") return;
+  const o = { ...loadDictOverrides(), [section]: value };
+  localStorage.setItem(DICT_STORE, JSON.stringify(o));
+}
+export function resetDict(section) {
+  if (typeof localStorage === "undefined") return;
+  if (!section) { localStorage.removeItem(DICT_STORE); return; }
+  const o = { ...loadDictOverrides() }; delete o[section];
+  localStorage.setItem(DICT_STORE, JSON.stringify(o));
+}
+export function isDictCustomized() {
+  return Object.keys(loadDictOverrides()).length > 0;
+}
 
-// 検証不能な意図表現（検証可能性）
-const INTENT_WORDS = ["目指す", "努める", "配慮する", "意識する", "考慮する", "望ましい", "推奨する"];
-
-// 網羅性チェック用カテゴリ（深層性）
-const DEPTH_CATEGORIES = [
-  { key: "前提条件", words: ["前提", "事前条件", "前提条件"] },
-  { key: "制約",     words: ["制約", "制限事項", "制限"] },
-  { key: "例外・異常系", words: ["例外", "異常系", "エラー", "失敗時", "異常時"] },
-  { key: "非機能",   words: ["性能", "パフォーマンス", "可用性", "セキュリティ", "応答時間", "スループット", "同時接続"] },
-  { key: "受入基準", words: ["受入基準", "受け入れ基準", "完了条件", "合格基準", "検収"] },
-];
-
-// 信頼性キーワード
-const RELIABILITY_MARKERS = ["参照", "準拠", "根拠", "出典", "規格", "標準", "ISO", "IEC", "JIS", "ガイドライン"];
 // トレーサビリティID（信頼性・トレーサビリティ）
 export const ID_PATTERN = /\b((?:REQ|FR|NFR|UC|SC|BR|TC|TR|DS|FS)[-_]?\d{1,4})\b/g;
 
@@ -120,8 +150,9 @@ function scoreFrom(findings, sizeUnits) {
 
 function checkAccuracy(text, lines, sentences) {
   const f = [];
+  const dict = getDict();
   // 曖昧語
-  const vague = countMatches(text, VAGUE_WORDS);
+  const vague = countMatches(text, dict.vagueWords);
   for (const h of vague.hits) {
     const ln = lineOf(text, h.index);
     f.push(mkFinding("accuracy", "High", `曖昧語「${h.word}」により実装者ごとに解釈が分かれる`,
@@ -129,7 +160,7 @@ function checkAccuracy(text, lines, sentences) {
       `「${h.word}」を具体的な条件・数値・手順に置き換える`, "手戻り・仕様解釈違いの防止"));
   }
   // 未確定語
-  const tbd = countMatches(text, TBD_WORDS);
+  const tbd = countMatches(text, dict.tbdWords);
   for (const h of tbd.hits) {
     const ln = lineOf(text, h.index);
     f.push(mkFinding("accuracy", "Critical", `未確定記述「${h.word}」が残存`,
@@ -211,7 +242,7 @@ function checkVisual(text, lines) {
 
 function checkDepth(text, lines) {
   const f = [];
-  for (const cat of DEPTH_CATEGORIES) {
+  for (const cat of getDict().depthCategories) {
     const { n } = countMatches(text, cat.words);
     if (n === 0) {
       f.push(mkFinding("depth", "High", `「${cat.key}」に関する記述が見当たらない`,
@@ -230,7 +261,7 @@ function checkDepth(text, lines) {
 
 function checkReliability(text, lines) {
   const f = [];
-  const { n: relN } = countMatches(text, RELIABILITY_MARKERS);
+  const { n: relN } = countMatches(text, getDict().reliabilityMarkers);
   if (relN === 0) {
     f.push(mkFinding("reliability", "Medium", "根拠・出典・準拠規格への参照が無い",
       "（根拠記述なし）", 0, "参照元・準拠規格・関連文書を明記する", "記述の裏付け・追跡性の確保"));
@@ -252,7 +283,7 @@ function checkReliability(text, lines) {
 function checkVerifiability(text, lines, sentences) {
   const f = [];
   // 検証不能な意図表現
-  const intent = countMatches(text, INTENT_WORDS);
+  const intent = countMatches(text, getDict().intentWords);
   for (const h of intent.hits) {
     const ln = lineOf(text, h.index);
     f.push(mkFinding("verifiability", "High", `「${h.word}」は検証（合否判定）できない意図表現`,

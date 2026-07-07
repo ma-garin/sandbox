@@ -1,5 +1,9 @@
 // app.js — UIオーケストレーション
-import { analyzeDocument, VIEWPOINTS, SEVERITY, weightedOverall } from "./engine.js";
+import { analyzeDocument, VIEWPOINTS, SEVERITY, weightedOverall,
+  getDict, setDict, resetDict, DEFAULT_DICT } from "./engine.js";
+import { getPrompts, setPrompts, resetPrompts, DEFAULT_PROMPTS } from "./prompts/config.js";
+import { getIvvMeta, setIvvMeta, resetIvvMeta, DEFAULT_IVV_META } from "./ivv.js";
+import { exportAdminConfig, importAdminConfig, resetAllAdminConfig } from "./adminstore.js";
 import { detectInconsistencies } from "./consistency.js";
 import { buildTraceability, inferRole, ROLES } from "./traceability.js";
 import { parseFile } from "./parsers.js";
@@ -74,6 +78,7 @@ function switchTab(name) {
   $$(".panel").forEach((x) => x.classList.remove("active"));
   $(`#tab-${name}`).classList.add("active");
   if (name === "history") renderHistory();
+  if (name === "admin") renderAdmin();
 }
 $$(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -518,6 +523,168 @@ $("#export-vplan-btn").addEventListener("click", () => {
   });
   download("検証計画書ドラフト.md", md, "text/markdown");
 });
+
+// ---- 管理（内部プロンプト・ルール辞書・IV&V項目のCRUD） -------------------
+let adminSub = "dict";
+const DICT_LABEL = {
+  vagueWords: "曖昧語（正確性）", tbdWords: "未確定・仮置き語（正確性）",
+  intentWords: "検証不能な意図表現（検証可能性）", reliabilityMarkers: "信頼性キーワード",
+};
+const linesToArr = (s) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+const arrToLines = (a) => (a || []).join("\n");
+
+function renderAdmin() {
+  $$(".admin-subtab").forEach((b) => b.classList.toggle("active", b.dataset.admin === adminSub));
+  const body = $("#admin-body");
+  if (adminSub === "dict") body.innerHTML = adminDictHtml();
+  else if (adminSub === "prompts") body.innerHTML = adminPromptsHtml();
+  else body.innerHTML = adminIvvHtml();
+  bindAdminBody();
+}
+
+function adminDictHtml() {
+  const d = getDict();
+  const listBlocks = Object.keys(DICT_LABEL).map((k) => `
+    <div class="admin-field">
+      <label>${DICT_LABEL[k]}<span class="admin-hint">1行に1語</span></label>
+      <textarea class="admin-list" data-dict="${k}" rows="5">${esc(arrToLines(d[k]))}</textarea>
+    </div>`).join("");
+  const depth = d.depthCategories.map((c) => `${c.key} = ${c.words.join(", ")}`).join("\n");
+  return `<p class="hint">曖昧語などの検出辞書を編集します。追加・削除は行の増減で行います。</p>
+    ${listBlocks}
+    <div class="admin-field">
+      <label>網羅性カテゴリ（深層性）<span class="admin-hint">「カテゴリ名 = 語1, 語2」を1行に1件</span></label>
+      <textarea class="admin-depth" data-dict="depthCategories" rows="6">${esc(depth)}</textarea>
+    </div>
+    <div class="admin-actions">
+      <button class="btn primary" id="admin-save-dict">辞書を保存</button>
+      <button class="btn ghost" id="admin-reset-dict">辞書を既定に戻す</button>
+    </div>`;
+}
+
+function adminPromptsHtml() {
+  const p = getPrompts();
+  const vpBlocks = VIEWPOINTS.map((v) => {
+    const vi = p.viewpointInstructions[v.key] || { focus: "", avoid: "" };
+    return `<div class="admin-vp">
+      <h4>${v.label}（${v.key}）</h4>
+      <label>着眼（focus）</label>
+      <textarea class="admin-vp-focus" data-key="${v.key}" rows="2">${esc(vi.focus)}</textarea>
+      <label>対象外（avoid・ルール検出済み）</label>
+      <textarea class="admin-vp-avoid" data-key="${v.key}" rows="2">${esc(vi.avoid)}</textarea>
+    </div>`;
+  }).join("");
+  const roleBlocks = ["requirement", "design", "test"].map((r) => `
+    <label>role: ${r}</label>
+    <textarea class="admin-role" data-role="${r}" rows="2">${esc(p.roleHints[r] || "")}</textarea>`).join("");
+  return `<p class="hint">AI補足で使う内部プロンプトを編集します（provider=openai時に反映）。JSON出力契約は壊さないよう注意してください。</p>
+    <div class="admin-field"><label>ペルソナ（persona）</label>
+      <textarea id="admin-persona" rows="3">${esc(p.persona)}</textarea></div>
+    <div class="admin-field"><label>観点別指示</label>${vpBlocks}</div>
+    <div class="admin-field"><label>文書role別ヒント</label>${roleBlocks}</div>
+    <div class="admin-field"><label>出力契約（contractText）<span class="admin-hint">「JSON」の語と{"findings":[…]}形式は必須</span></label>
+      <textarea id="admin-contract" rows="8">${esc(p.contractText)}</textarea></div>
+    <div class="admin-actions">
+      <button class="btn primary" id="admin-save-prompts">プロンプトを保存</button>
+      <button class="btn ghost" id="admin-reset-prompts">プロンプトを既定に戻す</button>
+    </div>`;
+}
+
+function adminIvvHtml() {
+  const meta = getIvvMeta();
+  const rows = meta.map((m, i) => `<tr>
+    <td>${esc(m.id)}</td>
+    <td><input class="ivv-edit" data-i="${i}" data-f="area" value="${esc(m.area)}" /></td>
+    <td><input class="ivv-edit ivv-edit-label" data-i="${i}" data-f="label" value="${esc(m.label)}" /></td>
+    <td><input class="ivv-edit" data-i="${i}" data-f="ref" value="${esc(m.ref)}" /></td>
+    <td style="text-align:center"><input type="checkbox" class="ivv-edit-enabled" data-i="${i}" ${m.enabled !== false ? "checked" : ""} /></td>
+    <td><button class="btn ghost danger ivv-del" data-i="${i}" type="button" title="削除">×</button></td>
+  </tr>`).join("");
+  return `<p class="hint">IV&amp;Vチェックリストの表示メタ（領域・項目名・参照規格・有効/無効）を編集できます。自動判定ロジックは既定17項目のIDに紐付きます。独自項目を追加すると手動確認項目になります。</p>
+    <div class="tbl-wrap"><table class="matrix">
+      <thead><tr><th>ID</th><th>領域</th><th>検証項目</th><th>参照</th><th>有効</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="admin-actions">
+      <button class="btn" id="admin-ivv-add">独自項目を追加</button>
+      <button class="btn primary" id="admin-save-ivv">IV&amp;V項目を保存</button>
+      <button class="btn ghost" id="admin-reset-ivv">IV&amp;Vを既定に戻す</button>
+    </div>`;
+}
+
+function bindAdminBody() {
+  // 辞書
+  $("#admin-save-dict")?.addEventListener("click", () => {
+    $$(".admin-list").forEach((ta) => setDict(ta.dataset.dict, linesToArr(ta.value)));
+    const depthTa = $(".admin-depth");
+    if (depthTa) {
+      const cats = linesToArr(depthTa.value).map((line) => {
+        const [key, rhs = ""] = line.split("=");
+        return { key: key.trim(), words: rhs.split(",").map((w) => w.trim()).filter(Boolean) };
+      }).filter((c) => c.key);
+      setDict("depthCategories", cats);
+    }
+    toast("辞書を保存しました（次回解析から反映）");
+  });
+  $("#admin-reset-dict")?.addEventListener("click", () => { resetDict(); renderAdmin(); toast("辞書を既定に戻しました"); });
+
+  // プロンプト
+  $("#admin-save-prompts")?.addEventListener("click", () => {
+    setPrompts("persona", $("#admin-persona").value);
+    setPrompts("contractText", $("#admin-contract").value);
+    const vi = {};
+    VIEWPOINTS.forEach((v) => {
+      vi[v.key] = {
+        label: v.label,
+        focus: $(`.admin-vp-focus[data-key="${v.key}"]`).value,
+        avoid: $(`.admin-vp-avoid[data-key="${v.key}"]`).value,
+      };
+    });
+    setPrompts("viewpointInstructions", vi);
+    const rh = {};
+    $$(".admin-role").forEach((ta) => (rh[ta.dataset.role] = ta.value));
+    setPrompts("roleHints", rh);
+    toast("プロンプトを保存しました（provider=openai時に反映）");
+  });
+  $("#admin-reset-prompts")?.addEventListener("click", () => { resetPrompts(); renderAdmin(); toast("プロンプトを既定に戻しました"); });
+
+  // IV&V
+  const collectIvv = () => $$("#admin-body tbody tr").map((tr) => ({
+    id: tr.children[0].textContent.trim(),
+    area: tr.querySelector('.ivv-edit[data-f="area"]').value,
+    label: tr.querySelector('.ivv-edit[data-f="label"]').value,
+    ref: tr.querySelector('.ivv-edit[data-f="ref"]').value,
+    enabled: tr.querySelector(".ivv-edit-enabled").checked,
+  }));
+  $("#admin-ivv-add")?.addEventListener("click", () => {
+    const meta = getIvvMeta();
+    const n = meta.filter((m) => m.id.startsWith("IVV-U")).length + 1;
+    setIvvMeta([...meta, { id: `IVV-U${n}`, area: "独自", label: "新しい確認項目", ref: "社内規程", enabled: true }]);
+    renderAdmin();
+  });
+  $("#admin-save-ivv")?.addEventListener("click", () => { setIvvMeta(collectIvv()); toast("IV&V項目を保存しました"); });
+  $("#admin-reset-ivv")?.addEventListener("click", () => { resetIvvMeta(); renderAdmin(); toast("IV&Vを既定に戻しました"); });
+  $$(".ivv-del").forEach((b) => b.addEventListener("click", () => {
+    const cur = collectIvv();
+    setIvvMeta(cur.filter((_, i) => i !== Number(b.dataset.i)));
+    renderAdmin();
+  }));
+}
+
+$$(".admin-subtab").forEach((b) => b.addEventListener("click", () => { adminSub = b.dataset.admin; renderAdmin(); }));
+$("#admin-export").addEventListener("click", () => download("spec-inspector-config.json", exportAdminConfig(), "application/json"));
+$("#admin-import").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const applied = importAdminConfig(await file.text());
+    renderAdmin();
+    toast(`設定を取り込みました（${applied.join(", ")}）`);
+  } catch (err) {
+    toast(`インポート失敗: ${err.message}`);
+  }
+  e.target.value = "";
+});
+$("#admin-reset-all").addEventListener("click", () => { resetAllAdminConfig(); renderAdmin(); toast("すべて既定に戻しました"); });
 
 // ---- 設定 ---------------------------------------------------------------
 $("#provider-select").value = getProvider();

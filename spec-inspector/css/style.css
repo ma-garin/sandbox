@@ -144,6 +144,19 @@ button:disabled { opacity: .6; cursor: wait; }
 .weight-row label { min-width: 120px; }
 .weight-slider { flex: 1; max-width: 260px; }
 .weight-val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 32px; }
+.admin-nav { display: flex; gap: 4px; margin: 12px 0 16px; border-bottom: 1px solid var(--border); }
+.admin-subtab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.admin-subtab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.admin-field { margin-bottom: 18px; }
+.admin-field > label { display: block; font-weight: 600; margin-bottom: 6px; }
+.admin-hint { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 8px; }
+.admin-field textarea, #admin-persona, #admin-contract { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--ink); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.6; }
+.admin-vp { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.admin-vp h4 { margin: 0 0 6px; font-size: 13px; }
+.admin-vp label, .admin-field .admin-role + label { font-size: 12px; color: var(--muted); display: block; margin: 4px 0 2px; }
+.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.ivv-edit { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--ink); font-size: 12px; }
+.ivv-edit-label { min-width: 200px; }
 .finding {
   background: var(--panel); border: 1px solid var(--border); border-left-width: 4px;
   border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;

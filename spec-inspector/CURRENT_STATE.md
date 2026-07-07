@@ -50,6 +50,13 @@ spec-inspector（QuintSpectレベルアップ版）
 - テスト103件パス（engine16/report14/prompts20/llm22/testdesign14/testdoc9/ivv8）
   ＋benchmark＋各機能のブラウザE2E（JSエラーなし）
 
+## 直近の完了タスク（第5弾: 管理画面/CRUD）
+
+- G-14 設定ストア基盤: 内部プロンプト・ルール辞書・IV&VメタをlocalStorage上書き可能化
+  （engine.js/prompts/config.js/ivv.js/adminstore.js、既定値は現行同一で回帰維持）
+- G-15 管理タブ: ルール辞書・内部プロンプト・IV&V項目のCRUD＋JSON入出力＋既定リセット
+- テスト116件パス（＋config 13件）＋benchmark＋管理CRUDのブラウザE2E
+
 ## 次のタスク（最優先）
 
 - 別環境でorg/project/keyを設定し、`docs/AI-E2E.md` に沿って実APIのE2E＋

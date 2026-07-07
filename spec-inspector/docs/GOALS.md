@@ -134,10 +134,28 @@
 
 ---
 
+## 追加ゴール（管理画面）
+
+### G-14 設定ストア基盤（辞書・プロンプト・IV&Vメタの上書き）
+
+- **目的**: 内部プロンプトと根拠データを管理画面から編集可能にする土台
+- **対象**: `src/engine.js`（DEFAULT_DICT＋get/set/resetDict）、`src/prompts/config.js`（新規）、
+  `src/prompts/index.js`、`src/ivv.js`（get/setIvvMeta）、`src/adminstore.js`（新規・集約入出力）、`tests/config.test.mjs`
+- **受入基準**: `node tests/config.test.mjs` 全パス＋既存全スイート＋benchmark緑（既定値は現行同一で回帰維持）
+- **状態**: 完了(2026-07-07)
+
+### G-15 管理タブ（CRUD UI）
+
+- **目的**: ルール辞書・内部プロンプト・IV&V項目を画面から確認/追加/編集/削除、JSON入出力、既定リセット
+- **対象**: `index.html`（管理タブ）、`src/app.js`（renderAdmin）、`css/style.css`
+- **受入基準**: E2Eで 辞書追加語が解析に反映／persona編集保存／IV&V無効化・独自項目追加が結果反映／
+  エクスポートに全セクション＋カスタム／全リセットでストアクリア、JSエラーなし
+- **状態**: 完了(2026-07-07)
+
 ## 全ゴール完了（2026-07-07）
 
-G-01〜G-13 をすべて実装・検証・コミット済み。テスト: engine/report/prompts/llm/
-testdesign/testdoc/ivv の各スイート＋benchmark（検出力recall 100%）が全緑。
+G-01〜G-15 をすべて実装・検証・コミット済み。テスト: engine/report/prompts/llm/
+testdesign/testdoc/ivv/config の各スイート（計116件）＋benchmark（検出力recall 100%）が全緑。
 残る人手作業は G-13 手順書（`docs/AI-E2E.md`）に沿った**別環境での実APIキーE2E**のみ。
 
 ## 実行順の推奨（実施済み）

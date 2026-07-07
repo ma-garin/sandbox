@@ -22,6 +22,7 @@
       <button class="tab" data-tab="testdesign" role="tab">テスト設計</button>
       <button class="tab" data-tab="ivv" role="tab">IV&amp;V</button>
       <button class="tab" data-tab="history" role="tab">履歴</button>
+      <button class="tab" data-tab="admin" role="tab">管理</button>
       <button class="tab" data-tab="settings" role="tab">設定</button>
     </nav>
   </header>
@@ -85,6 +86,25 @@
         <button class="btn ghost danger" id="clear-history-btn">履歴をクリア</button>
       </div>
       <div id="history-result"></div>
+    </section>
+
+    <!-- 管理タブ（内部プロンプト・ルール辞書・IV&V項目のCRUD） -->
+    <section class="panel" id="tab-admin">
+      <div class="input-head">
+        <h2>管理（内部プロンプト・ルール・IV&amp;V項目の確認と編集）</h2>
+        <div class="input-actions">
+          <button class="btn" id="admin-export">設定をエクスポート (JSON)</button>
+          <label class="btn file-btn">設定をインポート<input type="file" id="admin-import" accept=".json" hidden /></label>
+          <button class="btn ghost danger" id="admin-reset-all">すべて既定に戻す</button>
+        </div>
+      </div>
+      <p class="hint">ここでの変更はこのブラウザに保存され、次回の解析から反映されます。既定値はコードに保持され、いつでもリセットできます。エクスポートしたJSONでチーム共有・Git管理も可能です。</p>
+      <div class="admin-nav">
+        <button class="admin-subtab active" data-admin="dict">ルール辞書</button>
+        <button class="admin-subtab" data-admin="prompts">内部プロンプト</button>
+        <button class="admin-subtab" data-admin="ivv">IV&amp;V項目</button>
+      </div>
+      <div id="admin-body"></div>
     </section>
 
     <!-- 設定タブ -->

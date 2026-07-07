@@ -26,6 +26,11 @@ test("カンマ・引用符・改行をエスケープ", () => {
   const csv = buildCsv([finding({ message: 'a,"b"\nc' })]);
   assert.ok(csv.includes('"a,""b""\nc"'), `escape失敗: ${csv}`);
 });
+test("対応状態列を出力する（triage未指定は未対応）", () => {
+  const csv = buildCsv([finding(), finding({ triage: "対応済み" })]);
+  assert.ok(csv.split("\n")[0].includes("対応状態"), "ヘッダに対応状態なし");
+  assert.ok(csv.includes("未対応") && csv.includes("対応済み"), "状態値が出ていない");
+});
 
 console.log("report: buildAnnotatedMarkdown");
 test("該当行の直後にコメントが挿入される", () => {

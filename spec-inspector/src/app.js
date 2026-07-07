@@ -22,6 +22,25 @@ let lastResult = null;
 let filterSev = new Set(SEVERITY);
 let filterVp = "all";
 let filterDoc = "all";
+let filterOpenOnly = false;
+
+// ---- 指摘トリアージ（対応状態の永続化） -----------------------------------
+const TRIAGE_STORE = "spec-inspector.triage.v1";
+const TRIAGE_LABEL = { open: "未対応", done: "対応済み", wontfix: "対象外" };
+function findingKey(f) {
+  const s = `${f.doc || ""}|${f.viewpoint}|${f.message}|${f.evidence}`;
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return "k" + h.toString(36);
+}
+function loadTriage() {
+  try { return JSON.parse(localStorage.getItem(TRIAGE_STORE) || "{}"); } catch { return {}; }
+}
+function setTriage(key, status) {
+  const next = { ...loadTriage(), [key]: status }; // immutable
+  localStorage.setItem(TRIAGE_STORE, JSON.stringify(next));
+}
+function triageOf(f) { return loadTriage()[findingKey(f)] || "open"; }
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -143,7 +162,7 @@ async function runAnalysis() {
     });
 
     // フィルタをリセットして描画
-    filterSev = new Set(SEVERITY); filterVp = "all"; filterDoc = "all";
+    filterSev = new Set(SEVERITY); filterVp = "all"; filterDoc = "all"; filterOpenOnly = false;
     renderResult();
     renderConsistency();
     renderTrace();
@@ -206,6 +225,7 @@ function renderResult() {
           <span class="sev-filters">${SEVERITY.map((s) => `<button class="sev-toggle ${s} on" data-sev="${s}">${s} ${lastResult.counts[s]}</button>`).join("")}</span>
           <select id="vp-filter" aria-label="観点で絞り込み"><option value="all">全観点</option>${VIEWPOINTS.map((v) => `<option value="${v.key}">${v.label}</option>`).join("")}</select>
           ${lastResult.targets.length >= 2 ? `<select id="doc-filter" aria-label="文書で絞り込み"><option value="all">全文書</option>${lastResult.targets.map((t) => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join("")}</select>` : ""}
+          <button class="sev-toggle" id="open-only" type="button" aria-pressed="false">未対応のみ</button>
         </div>
       </div>
       <div id="finding-list"></div>
@@ -220,10 +240,19 @@ function renderResult() {
   }));
   $("#vp-filter").addEventListener("change", (e) => { filterVp = e.target.value; renderFindingList(); });
   $("#doc-filter")?.addEventListener("change", (e) => { filterDoc = e.target.value; renderFindingList(); });
+  $("#open-only").addEventListener("click", (e) => {
+    filterOpenOnly = !filterOpenOnly;
+    e.currentTarget.classList.toggle("on", filterOpenOnly);
+    e.currentTarget.setAttribute("aria-pressed", String(filterOpenOnly));
+    renderFindingList();
+  });
 
-  // エクスポート
+  // エクスポート（CSVには対応状態列を含める）
   $("#export-html").addEventListener("click", exportHtml);
-  $("#export-csv").addEventListener("click", () => download("指摘一覧.csv", buildCsv(lastResult.allFindings), "text/csv"));
+  $("#export-csv").addEventListener("click", () => {
+    const withTriage = lastResult.allFindings.map((f) => ({ ...f, triage: TRIAGE_LABEL[triageOf(f)] }));
+    download("指摘一覧.csv", buildCsv(withTriage), "text/csv");
+  });
   $("#export-md").addEventListener("click", () =>
     download("コメント付き文書.md", buildAnnotatedMarkdown(lastResult.targets, lastResult.allFindings), "text/markdown"));
 
@@ -235,26 +264,37 @@ function renderFindingList() {
   const filtered = allFindings.filter((f) =>
     filterSev.has(f.severity) &&
     (filterVp === "all" || f.viewpoint === filterVp) &&
-    (filterDoc === "all" || f.doc === filterDoc)
+    (filterDoc === "all" || f.doc === filterDoc) &&
+    (!filterOpenOnly || triageOf(f) === "open")
   );
   const el = $("#finding-list");
   if (!filtered.length) {
     el.innerHTML = `<div class="empty">${allFindings.length ? "フィルタ条件に一致する指摘はありません" : "指摘は見つかりませんでした 🎉"}</div>`;
     return;
   }
-  el.innerHTML = `<p class="hint">${filtered.length} / ${allFindings.length} 件を表示</p>` + filtered.map((f) => `
-    <div class="finding ${f.severity}">
+  el.innerHTML = `<p class="hint">${filtered.length} / ${allFindings.length} 件を表示</p>` + filtered.map((f) => {
+    const key = findingKey(f);
+    const st = triageOf(f);
+    const opt = (v) => `<option value="${v}" ${st === v ? "selected" : ""}>${TRIAGE_LABEL[v]}</option>`;
+    return `
+    <div class="finding ${f.severity} triage-${st}">
       <div class="finding-head">
         <span class="sev-tag ${f.severity}">${f.severity}</span>
         <span class="vp-tag">${VIEWPOINTS.find((v) => v.key === f.viewpoint)?.label || f.viewpoint}</span>
         ${f.source === "ai" ? `<span class="ai-tag">AI補足</span>` : ""}
         <span class="finding-msg">${esc(f.message)}</span>
+        <select class="triage-sel" data-key="${key}" aria-label="対応状態">${opt("open")}${opt("done")}${opt("wontfix")}</select>
         <span class="loc">${esc(f.doc || "")}${f.location ? " · L" + f.location : ""}</span>
       </div>
       <div class="evidence">${esc(f.evidence)}</div>
       <div class="suggestion"><b>改善:</b> ${esc(f.suggestion)}</div>
       <div class="effect">期待効果: ${esc(f.expectedEffect)}</div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+  el.querySelectorAll(".triage-sel").forEach((sel) => sel.addEventListener("change", () => {
+    setTriage(sel.dataset.key, sel.value);
+    renderFindingList();
+  }));
 }
 
 function exportHtml() {

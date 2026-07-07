@@ -13,11 +13,12 @@ function csvEscape(s) {
 }
 
 // 指摘一覧をCSV化（BOM付き: Excelでの文字化け防止）
+// findingに triage（対応状態ラベル）があれば「対応状態」列を出力する。
 export function buildCsv(findings) {
-  const header = ["severity", "観点", "文書", "行", "指摘", "根拠", "改善案", "期待効果"];
+  const header = ["severity", "観点", "文書", "行", "指摘", "根拠", "改善案", "期待効果", "対応状態"];
   const rows = findings.map((f) => [
     f.severity, vpLabel(f.viewpoint), f.doc || "", f.location || "",
-    f.message, f.evidence, f.suggestion, f.expectedEffect,
+    f.message, f.evidence, f.suggestion, f.expectedEffect, f.triage || "未対応",
   ].map(csvEscape).join(","));
   return "﻿" + [header.join(","), ...rows].join("\n");
 }

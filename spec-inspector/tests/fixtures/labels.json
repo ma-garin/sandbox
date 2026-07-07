@@ -1,0 +1,45 @@
+{
+  "_note": "既知欠陥入りfixtureの正解ラベル。各ラベルは engine.js が検出すべき欠陥。matchは viewpoint一致 かつ token が finding.message または finding.evidence に含まれることで判定する。",
+  "fixtures": [
+    {
+      "file": "req-defective.md",
+      "labels": [
+        { "id": "R1", "viewpoint": "accuracy", "token": "TBD", "desc": "未確定記述" },
+        { "id": "R2", "viewpoint": "accuracy", "token": "適切に", "desc": "曖昧語" },
+        { "id": "R3", "viewpoint": "accuracy", "token": "必要に応じて", "desc": "曖昧語" },
+        { "id": "R4", "viewpoint": "clarity", "token": "一文が長い", "desc": "長文" },
+        { "id": "R5", "viewpoint": "clarity", "token": "二重否定", "desc": "二重否定" },
+        { "id": "R6", "viewpoint": "verifiability", "token": "配慮", "desc": "検証不能な意図表現" },
+        { "id": "R7", "viewpoint": "verifiability", "token": "目指す", "desc": "検証不能な意図表現" },
+        { "id": "R8", "viewpoint": "reliability", "token": "識別子", "desc": "トレースID欠落" }
+      ]
+    },
+    {
+      "file": "design-defective.md",
+      "labels": [
+        { "id": "D1", "viewpoint": "accuracy", "token": "未定", "desc": "未確定記述" },
+        { "id": "D2", "viewpoint": "accuracy", "token": "適宜", "desc": "曖昧語" },
+        { "id": "D3", "viewpoint": "accuracy", "token": "柔軟に", "desc": "曖昧語" },
+        { "id": "D4", "viewpoint": "accuracy", "token": "なるべく", "desc": "曖昧語" },
+        { "id": "D5", "viewpoint": "accuracy", "token": "速やかに", "desc": "曖昧語" },
+        { "id": "D6", "viewpoint": "clarity", "token": "読点", "desc": "読点過多" },
+        { "id": "D7", "viewpoint": "verifiability", "token": "配慮", "desc": "検証不能な意図表現" },
+        { "id": "D8", "viewpoint": "depth", "token": "例外・異常系", "desc": "異常系記述の欠落" }
+      ]
+    },
+    {
+      "file": "misc-defective.md",
+      "labels": [
+        { "id": "M1", "viewpoint": "accuracy", "token": "TODO", "desc": "未確定記述" },
+        { "id": "M2", "viewpoint": "accuracy", "token": "速やかに", "desc": "曖昧語" },
+        { "id": "M3", "viewpoint": "accuracy", "token": "原則", "desc": "曖昧語" },
+        { "id": "M4", "viewpoint": "accuracy", "token": "基本的に", "desc": "曖昧語" },
+        { "id": "M5", "viewpoint": "accuracy", "token": "極力", "desc": "曖昧語" },
+        { "id": "M6", "viewpoint": "clarity", "token": "指示語", "desc": "指示語過多" },
+        { "id": "M7", "viewpoint": "clarity", "token": "二重否定", "desc": "二重否定" },
+        { "id": "M8", "viewpoint": "verifiability", "token": "望ましい", "desc": "検証不能な意図表現" },
+        { "id": "M9", "viewpoint": "depth", "token": "非機能", "desc": "非機能記述の欠落" }
+      ]
+    }
+  ]
+}

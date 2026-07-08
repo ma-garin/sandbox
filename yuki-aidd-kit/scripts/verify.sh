@@ -13,7 +13,7 @@ check "CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 check "settings.json" "$CLAUDE_DIR/settings.json"
 
 echo "[スキル]"
-for s in single-html-tool sdd-ecc-workflow qa-review-standards personal-pwa streamlit-rag-app code-doc-search design-system nfr-standards done-gate test-automation agent-eval retro; do
+for s in single-html-tool sdd-ecc-workflow qa-review-standards personal-pwa streamlit-rag-app code-doc-search design-system nfr-standards done-gate test-automation agent-eval retro browser-use; do
   check "$s" "$CLAUDE_DIR/skills/$s/SKILL.md"
 done
 

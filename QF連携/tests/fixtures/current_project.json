@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "name": "サンプルプロジェクト",
+  "label_pass": "合格",
+  "label_fail": "不合格",
+  "label_skip": "",
+  "label_cut": "対象外",
+  "label_block": "ブロック",
+  "label_na": "対象外(N/A)",
+  "label_qa": "質疑応答"
+}

@@ -79,6 +79,15 @@
   .dp .dp-title { font-weight: 600; }
   .dp .dp-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .empty { color: var(--muted); font-size: 13px; }
+  .blindspots { border-left: 3px solid var(--danger); background: #fdf6f6; border-radius: 0 8px 8px 0; padding: 8px 12px; margin: 10px 0; font-size: 12.5px; }
+  .blindspots b { color: var(--danger); }
+  .blindspots .bs-chip { display: inline-block; background: #fbe9e9; border: 1px solid #edc9c9; border-radius: 6px; padding: 1px 8px; margin: 2px 3px 0 0; }
+  .aicase { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+  .aicase .ac-id { font-weight: 700; font-size: 12px; color: var(--primary); }
+  .aicase .ac-title { font-weight: 600; }
+  .aicase .ac-row { font-size: 12.5px; margin-top: 3px; }
+  .aicase .ac-k { color: var(--muted); }
+  .aicase ol { margin: 4px 0 4px 18px; padding: 0; font-size: 12.5px; }
   footer { max-width: 1100px; margin: 0 auto; padding: 8px 24px 40px; color: var(--muted); font-size: 11.5px; }
 </style>
 </head>
@@ -122,15 +131,19 @@
     <div class="row" style="justify-content:space-between;align-items:flex-end;">
       <h2 style="margin:0;">③ テスト観点表</h2>
       <div class="row">
+        <button class="ghost" id="pwBtn">Playwright雛形</button>
+        <button class="ghost" id="pyBtn">pytest雛形</button>
         <button class="ghost" id="copyBtn">CSVをコピー</button>
         <button class="primary" id="csvBtn">CSVダウンロード</button>
       </div>
     </div>
     <div class="kpis" style="margin-top:14px;">
       <div class="kpi"><div class="n" id="kpiTotal">0</div><div class="l">テスト観点</div></div>
+      <div class="kpi"><div class="n" id="kpiRate">0%</div><div class="l">観点カテゴリ網羅率</div></div>
       <div class="kpi"><div class="n" id="kpiCats">0</div><div class="l">カバーした観点カテゴリ</div></div>
       <div class="kpi"><div class="n" id="kpiDefects">0</div><div class="l">関連する欠陥パターン</div></div>
     </div>
+    <div id="blindspots" class="blindspots" style="display:none;"></div>
     <div class="cov" id="coverage"></div>
     <div class="table-wrap" style="margin-top:12px;">
       <table>
@@ -148,6 +161,25 @@
       <div id="defects"></div>
     </details>
   </section>
+
+  <section class="card" id="aiCard" style="display:none;">
+    <div class="row" style="justify-content:space-between;align-items:flex-end;">
+      <h2 style="margin:0;">⑤ テストケースへ具体化（任意・AI）</h2>
+      <button class="primary" id="aiExpandBtn">AIで具体化</button>
+    </div>
+    <p class="hint" style="margin-top:8px;">
+      観点を前提条件・手順・データ・期待結果に展開します（Claude API利用）。APIキーはこのブラウザの
+      localStorage にのみ保存され、外部送信されません。未設定なら決定的な観点表のまま利用できます。
+    </p>
+    <div class="row" style="margin-top:8px;">
+      <input type="password" id="apiKey" placeholder="sk-ant-... （localStorageに保存）"
+        style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;" />
+      <button class="ghost" id="saveKeyBtn">保存</button>
+      <button class="ghost" id="clearKeyBtn">消去</button>
+    </div>
+    <div id="aiStatus" class="hint" style="margin-top:8px;"></div>
+    <div id="aiCases" style="margin-top:12px;"></div>
+  </section>
 </main>
 
 <footer>
@@ -158,6 +190,8 @@
 <script src="viewpoints.js"></script>
 <script src="analyzer.js"></script>
 <script src="engine.js"></script>
+<script src="scaffold.js"></script>
+<script src="llm.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

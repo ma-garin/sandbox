@@ -6,19 +6,24 @@
   "use strict";
   const V = window.VIEWPOINTS, ANALYZER = window.ANALYZER, ENGINE = window.ENGINE;
 
+  const SCAFFOLD = window.SCAFFOLD, LLM = window.LLM;
   const $ = (id) => document.getElementById(id);
   const el = {
     spec: $("spec"), analyzeBtn: $("analyzeBtn"), clearBtn: $("clearBtn"),
     detectedCard: $("detectedCard"), fieldChips: $("fieldChips"),
     flagChips: $("flagChips"), industryChips: $("industryChips"), regenBtn: $("regenBtn"),
     resultCard: $("resultCard"), tbody: $("tbody"), coverage: $("coverage"),
-    kpiTotal: $("kpiTotal"), kpiCats: $("kpiCats"), kpiDefects: $("kpiDefects"),
-    csvBtn: $("csvBtn"), copyBtn: $("copyBtn"),
+    kpiTotal: $("kpiTotal"), kpiRate: $("kpiRate"), kpiCats: $("kpiCats"), kpiDefects: $("kpiDefects"),
+    blindspots: $("blindspots"),
+    csvBtn: $("csvBtn"), copyBtn: $("copyBtn"), pwBtn: $("pwBtn"), pyBtn: $("pyBtn"),
     defectsCard: $("defectsCard"), defects: $("defects"), dpCount: $("dpCount"),
+    aiCard: $("aiCard"), aiExpandBtn: $("aiExpandBtn"), apiKey: $("apiKey"),
+    saveKeyBtn: $("saveKeyBtn"), clearKeyBtn: $("clearKeyBtn"),
+    aiStatus: $("aiStatus"), aiCases: $("aiCases"),
   };
 
   // 判定状態（チップの ON/OFF を保持）
-  let state = { feature: "対象機能", fields: {}, flags: {}, industry: null, lastCSV: "" };
+  let state = { feature: "対象機能", fields: {}, flags: {}, industry: null, lastCSV: "", lastRows: [] };
 
   const SAMPLES = {
     ec: "会員登録・ログイン機能\nユーザーはメールアドレスとパスワードで会員登録する。氏名・生年月日・電話番号を入力。\n決済はクレジットカードで金額を請求し、ECサイトのカート・在庫と連携する。クーポンの適用も行う。",
@@ -109,11 +114,25 @@
   function generate() {
     const g = ENGINE.generate(currentSpec());
     const defects = ENGINE.relatedDefects(g.rows);
+    const hasAI = !!(state.flags.ai && state.flags.ai.on);
+    const cov = ENGINE.coverageReport(g.rows, hasAI);
     state.lastCSV = ENGINE.toCSV(g.rows);
+    state.lastRows = g.rows;
 
     el.kpiTotal.textContent = g.total;
+    el.kpiRate.textContent = cov.rate + "%";
     el.kpiCats.textContent = g.coverage.length;
     el.kpiDefects.textContent = defects.length;
+
+    // 盲点（未カバーの観点カテゴリ）— 第三者検証の中立レビュー価値
+    if (cov.missing.length) {
+      el.blindspots.style.display = "";
+      el.blindspots.innerHTML = "<b>盲点: " + cov.missing.length + "カテゴリ未カバー</b>（全" +
+        cov.total + "カテゴリ中）— " +
+        cov.missing.map((m) => '<span class="bs-chip">' + escapeHtml(m.cat_name) + "</span>").join("");
+    } else {
+      el.blindspots.style.display = "none";
+    }
 
     // カバレッジバー
     const max = g.coverage.reduce((m, c) => Math.max(m, c.count), 1);
@@ -160,6 +179,9 @@
 
     el.resultCard.style.display = "";
     el.defectsCard.style.display = defects.length ? "" : "none";
+    el.aiCard.style.display = "";
+    el.aiCases.innerHTML = "";
+    el.aiStatus.textContent = "";
   }
 
   function escapeHtml(s) {
@@ -168,8 +190,27 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  function download(filename, text) {
-    const blob = new Blob(["﻿" + text], { type: "text/csv;charset=utf-8;" });
+  function renderCases(cases) {
+    el.aiCases.innerHTML = "";
+    (cases || []).forEach((c) => {
+      const div = document.createElement("div");
+      div.className = "aicase";
+      const steps = (c.steps || []).map((s) => "<li>" + escapeHtml(s) + "</li>").join("");
+      div.innerHTML =
+        '<span class="ac-id">' + escapeHtml(c.id || "") + "</span> " +
+        '<span class="ac-title">' + escapeHtml(c.title || "") + "</span>" +
+        '<div class="ac-row"><span class="ac-k">前提:</span> ' + escapeHtml(c.precondition || "—") + "</div>" +
+        '<div class="ac-row"><span class="ac-k">手順:</span></div><ol>' + steps + "</ol>" +
+        '<div class="ac-row"><span class="ac-k">データ:</span> ' + escapeHtml(c.data || "—") + "</div>" +
+        '<div class="ac-row"><span class="ac-k">期待結果:</span> ' + escapeHtml(c.expected || "—") + "</div>";
+      el.aiCases.appendChild(div);
+    });
+  }
+
+  function download(filename, text, mime) {
+    const type = (mime || "text/csv") + ";charset=utf-8;";
+    const prefix = mime ? "" : "﻿"; // CSVのみBOM付与（Excel対策）
+    const blob = new Blob([prefix + text], { type: type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = filename;
@@ -187,6 +228,39 @@
   });
   el.csvBtn.addEventListener("click", () => {
     if (state.lastCSV) download("test-viewpoints.csv", state.lastCSV);
+  });
+  el.pwBtn.addEventListener("click", () => {
+    if (state.lastRows.length) download("e2e.spec.ts", SCAFFOLD.toPlaywright(state.feature, state.lastRows), "text/plain");
+  });
+  el.pyBtn.addEventListener("click", () => {
+    if (state.lastRows.length) download("test_viewpoints.py", SCAFFOLD.toPytest(state.feature, state.lastRows), "text/plain");
+  });
+  // APIキー管理
+  el.saveKeyBtn.addEventListener("click", () => {
+    LLM.setKey(el.apiKey.value);
+    el.apiKey.value = "";
+    el.aiStatus.textContent = LLM.hasKey() ? "APIキーを保存しました。" : "APIキーが空です。";
+  });
+  el.clearKeyBtn.addEventListener("click", () => {
+    LLM.clearKey(); el.apiKey.value = "";
+    el.aiStatus.textContent = "APIキーを消去しました。";
+  });
+  // AIでテストケースへ具体化
+  el.aiExpandBtn.addEventListener("click", async () => {
+    if (!state.lastRows.length) return;
+    if (!LLM.hasKey()) { el.aiStatus.textContent = "先にAPIキーを保存してください。"; return; }
+    el.aiExpandBtn.disabled = true;
+    el.aiStatus.textContent = "AIがテストケースを生成中… (" + LLM.MODEL + ")";
+    el.aiCases.innerHTML = "";
+    try {
+      const cases = await LLM.expandToTestCases(state.feature, state.lastRows);
+      renderCases(cases);
+      el.aiStatus.textContent = cases.length + "件のテストケースを生成しました。";
+    } catch (e) {
+      el.aiStatus.textContent = "生成に失敗: " + (e && e.message ? e.message : e) + "（決定的な観点表はそのまま利用できます）";
+    } finally {
+      el.aiExpandBtn.disabled = false;
+    }
   });
   el.copyBtn.addEventListener("click", () => {
     if (!state.lastCSV) return;

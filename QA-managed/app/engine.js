@@ -80,6 +80,28 @@
     };
   }
 
+  // 観点カテゴリ網羅率＋盲点（未カバーのカテゴリ）を算出。
+  // 分母=全観点カテゴリ（AI特性ありなら20、なければ非AIの12）。
+  // 第三者検証の価値である「何を"テストしていない"か」を可視化する。
+  function coverageReport(rows, hasAI) {
+    const AI_PREFIX = "C-AI-";
+    const allCats = Object.keys(V.CATEGORIES);
+    const denomCats = hasAI ? allCats : allCats.filter((c) => c.indexOf(AI_PREFIX) !== 0);
+    const covered = new Set(rows.map((r) => r.cat));
+    const coveredInScope = denomCats.filter((c) => covered.has(c));
+    const missing = denomCats
+      .filter((c) => !covered.has(c))
+      .map((c) => ({ cat: c, cat_name: V.CATEGORIES[c] }));
+    const total = denomCats.length;
+    const rate = total ? Math.round((coveredInScope.length / total) * 100) : 0;
+    return {
+      total: total,
+      covered: coveredInScope.length,
+      rate: rate,
+      missing: missing,
+    };
+  }
+
   // カテゴリ別のカバレッジ集計（観点数）
   function coverage(rows) {
     const map = {};
@@ -112,5 +134,5 @@
     return lines.join("\r\n");
   }
 
-  return { generate, coverage, relatedDefects, toCSV };
+  return { generate, coverage, coverageReport, relatedDefects, toCSV };
 });

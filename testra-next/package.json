@@ -1,0 +1,19 @@
+{
+  "name": "testra-next",
+  "version": "0.1.0",
+  "description": "ドキュメント/URL/apk からテストレポートまでを一気通貫で自動化するテストパイプライン（オンプレ/クラウド/CLI）",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "testra": "cli/testra.mjs"
+  },
+  "scripts": {
+    "cli": "node cli/testra.mjs",
+    "demo": "node cli/testra.mjs run samples/login-spec.md --name ログイン --out out",
+    "test": "node --test tests/*.test.mjs",
+    "web": "node -e \"require('http').createServer((q,s)=>{}).listen()\" 2>/dev/null || python3 -m http.server 8000 --directory ."
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

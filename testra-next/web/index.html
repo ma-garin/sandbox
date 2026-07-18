@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TESTRA-Next — 一気通貫テストパイプライン</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">▚</span>
+      <div>
+        <h1>TESTRA-Next</h1>
+        <p class="tagline">ドキュメント → フィーチャー分析 → 設計 → ケース → スクリプト → 実行 → QF連携 → レポート</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="run">実行</button>
+      <button class="tab" data-tab="report">レポート</button>
+      <button class="tab" data-tab="settings">設定</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 実行タブ -->
+    <section id="tab-run" class="panel active">
+      <div class="two-col">
+        <div class="col-input">
+          <label class="field">
+            <span>プロジェクト名</span>
+            <input id="name" type="text" value="ログイン" />
+          </label>
+          <label class="field">
+            <span>仕様書テキスト（またはURL取得結果を貼付）</span>
+            <textarea id="spec" rows="14" spellcheck="false"></textarea>
+          </label>
+          <label class="field">
+            <span>仕様書URL（任意・取得ボタンで本文抽出）</span>
+            <div class="row">
+              <input id="url" type="url" placeholder="https://example.com/spec" />
+              <button id="fetch-url" class="btn ghost">取得</button>
+            </div>
+          </label>
+          <details class="field">
+            <summary>APKメタ（任意 / モバイル対象）</summary>
+            <input id="apk-pkg" type="text" placeholder="package 例: com.example.app" />
+            <input id="apk-perms" type="text" placeholder="権限 カンマ区切り 例: CAMERA,LOCATION" />
+          </details>
+          <div class="actions">
+            <button id="run" class="btn primary">パイプライン実行</button>
+            <button id="sample" class="btn ghost">サンプル投入</button>
+          </div>
+          <p id="status" class="status"></p>
+        </div>
+
+        <div class="col-flow">
+          <h2>パイプライン</h2>
+          <ol id="flow" class="flow"></ol>
+        </div>
+      </div>
+
+      <div id="stages" class="stages"></div>
+    </section>
+
+    <!-- レポートタブ -->
+    <section id="tab-report" class="panel">
+      <div class="report-actions">
+        <button id="dl-md" class="btn ghost">report.md</button>
+        <button id="dl-csv" class="btn ghost">testcases.csv</button>
+        <button id="dl-qf" class="btn ghost">qualityforward.json</button>
+        <button id="dl-json" class="btn ghost">run.json</button>
+      </div>
+      <article id="report" class="report">まだ実行されていません。</article>
+    </section>
+
+    <!-- 設定タブ -->
+    <section id="tab-settings" class="panel">
+      <div class="card">
+        <h2>AIエンジン</h2>
+        <p class="muted">既定はルールベース（キー不要・決定論）。OpenAI選択時のみキーを使用。キーは localStorage に保存され送信のみに使用。</p>
+        <label class="field"><span>プロバイダ</span>
+          <select id="cfg-provider">
+            <option value="rule">rule（既定・キー不要）</option>
+            <option value="openai">openai</option>
+          </select>
+        </label>
+        <label class="field"><span>APIキー</span><input id="cfg-key" type="password" placeholder="sk-..." /></label>
+        <label class="field"><span>モデル</span><input id="cfg-model" type="text" placeholder="gpt-5-mini" /></label>
+      </div>
+      <div class="card">
+        <h2>Quality Forward 連携</h2>
+        <p class="muted">既定は dry-run（送信せずペイロード生成のみ）。実連携は Base URL と APIトークンを設定。</p>
+        <label class="field"><span>Base URL</span><input id="cfg-qf-url" type="url" placeholder="https://cloud.veriserve.co.jp" /></label>
+        <label class="field"><span>API Token</span><input id="cfg-qf-token" type="password" /></label>
+        <label class="check"><input id="cfg-qf-live" type="checkbox" /> 実連携を有効化（オフ=dry-run）</label>
+      </div>
+      <button id="save-settings" class="btn primary">設定を保存</button>
+      <span id="settings-status" class="status"></span>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

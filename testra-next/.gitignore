@@ -1,0 +1,12 @@
+# このフォルダ固有の除外設定
+
+# パイプライン生成物
+out/
+
+# Node.js
+node_modules/
+
+# 共通
+.env
+.env.*
+!.env.example

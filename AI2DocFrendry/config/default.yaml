@@ -1,0 +1,77 @@
+# AI2DocFrendry 既定設定
+# 数値の根拠は docs/RESEARCH.md を参照。通説ではなく実証データに基づく（WBS G-6）。
+
+ingest:
+  exclude:
+    - "~$*"
+    - ".DS_Store"
+    - ".git/"
+    - "node_modules/"
+    - "__pycache__/"
+  extensions:
+    - .docx
+    - .xlsx
+    - .xlsm
+    - .pptx
+    - .pdf
+    - .html
+    - .htm
+    - .csv
+    - .tsv
+    - .md
+    - .markdown
+    - .txt
+
+extract:
+  # 抽出率がこれ未満なら「ほぼ画像」とみなし Critical（FR-11）
+  min_extraction_rate: 0.15
+  # 20列を超える表は警告。LLMは表を縦に読むのが苦手
+  # （50行x5列=0.81 に対し 5行x50列=0.43 / MMTU）
+  wide_table_columns: 20
+
+structure:
+  # 全ページの何割に出現したらヘッダ・フッタとみなすか
+  repeated_noise_ratio: 0.8
+
+chunk:
+  # 見出し境界で分割する。semantic chunking は行わない
+  # （精度差1.65pt に対し計算時間が最大54,000倍 / ADR-05）
+  boundary_heading_levels: 3
+  max_tokens: 800
+  # オーバーラップは文書種別で切り替える（ADR-06）
+  #   表あり: 0%->25% で +9.8pt（ICSE-SEIP '26）
+  #   表なし: 20%超で precision -40%（Amiri & Bockltiz 2025）
+  overlap_ratio_with_table: 0.25
+  overlap_ratio_plain: 0.02
+  # 表は行単位でチャンクし各行にヘッダを反復（ADR-07 / 3GPP 21,824表）
+  table_row_chunking: true
+  repeat_table_header: true
+  # 各チャンク先頭に文書名・更新日・見出しパスを前置
+  # （Contextual Retrieval: 検索失敗率 -35%）
+  context_prefix: true
+
+diagnosis:
+  # Semantic Noise はモデルが強くなっても解決しない。
+  # Formatting Noise はモデル進化とともに影響が減る（OHRBench）。
+  weight_semantic: 0.75
+  weight_formatting: 0.25
+  grade_thresholds:
+    A: 85
+    B: 70
+    C: 50
+  # Critical が1件でもあれば無条件でD（安全側）
+  critical_forces_d: true
+  # 最終更新からこの年数を超えたら陳腐化候補
+  stale_years: 3
+
+restructure:
+  enabled: true
+  # 層2（ローカルLLM）。未導入なら自動的に層1のみで動作する（FR-28）
+  llm:
+    enabled: false
+    endpoint: http://127.0.0.1:11434
+    model: ""
+
+security:
+  # 既定で外部通信を行わない（NFR-10）
+  allow_network: false

@@ -11,9 +11,19 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+// 日付を設定し、その日のデータ読み込み（非同期）完了を待ってから体重を入力する。
+async function setDate(page: Page, date: string) {
+  await page.fill('#f-date', date);
+  await page.waitForFunction(
+    (d) => document.querySelector('#f-date')?.getAttribute('data-loaded') === d,
+    date,
+    { timeout: 10000 },
+  );
+}
+
 async function saveWeight(page: Page, date: string, weight: string) {
   await page.locator('nav.bottom [data-tab="record"]').click();
-  await page.fill('#f-date', date);
+  await setDate(page, date);
   await page.fill('#f-weight', weight);
   await page.locator('#f-save').click();
   await expect(page.locator('#toast')).toContainText('保存しました');
@@ -76,8 +86,7 @@ test('AC-04 オフライン: 一度起動後、オフラインでも再読込で
 test('スタンプの選択トグル', async ({ page }) => {
   await page.locator('nav.bottom [data-tab="record"]').click();
   // 日付を先に確定（日付変更はその日のデータを読み込みスタンプをリセットするため）
-  await page.fill('#f-date', '2026-07-21');
-  await page.waitForTimeout(200);
+  await setDate(page, '2026-07-21');
   const stamp = page.locator('[data-stamp="exercise"]');
   await stamp.click();
   await expect(stamp).toHaveAttribute('aria-pressed', 'true');

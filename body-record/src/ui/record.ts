@@ -160,6 +160,7 @@ function wireForm(ctx: AppContext): void {
   };
 
   const loadDate = async (date: string) => {
+    dateEl.dataset.loaded = ''; // 読み込み中マーク（非同期ロードが入力を上書きしないよう完了を検知可能に）
     const rec = await getByDate(date);
     selectedStamps = new Set(rec?.stamps ?? []);
     weightEl.value = rec ? String(rec.weightKg) : ctx.records.length ? String(ctx.records[ctx.records.length - 1].weightKg) : '';
@@ -172,6 +173,7 @@ function wireForm(ctx: AppContext): void {
     const del = $<HTMLButtonElement>('#f-delete')!;
     del.style.display = rec ? 'block' : 'none';
     updateBmi();
+    dateEl.dataset.loaded = date; // 読み込み完了。以降のユーザー入力は上書きされない
   };
 
   const $$stamps = () => {

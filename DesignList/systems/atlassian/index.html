@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlassian 風（Jira / Confluence）— DesignList</title>
+  <meta name="description" content="Atlassian 風のコンポーネント集。ブルー #0052CC・ニュートラルグレー・小さめ角丸・象徴的なロゼンジ・控えめなボタン。">
+  <link rel="stylesheet" href="../_shared/showcase.css">
+  <link rel="stylesheet" href="atlassian.css">
+</head>
+<body>
+  <div class="showcase">
+
+    <div class="sc-topbar">
+      <a class="sc-back" href="../../index.html">← カタログに戻る</a>
+      <span class="spacer"></span>
+      <button class="sc-theme-btn" data-toggle-theme>◐ テーマ: <span data-theme-label>ライト</span></button>
+    </div>
+
+    <header class="sc-header">
+      <div class="sc-eyebrow">Design System 04</div>
+      <h1>Atlassian 風（Jira / Confluence）</h1>
+      <p class="tagline">Atlassian Design System。ブルー #0052CC を軸に、ニュートラルグレーの階調・小さめの角丸(3px)・控えめなボタン。ステータスは象徴的な「ロゼンジ」で表現。チケット管理やドキュメントなど、情報を整理して見せる業務ツール向け。</p>
+      <div class="sc-principles"><span>控えめなボタン</span><span>ニュートラル階調</span><span>角丸3px</span><span>ロゼンジ</span><span>高い一覧性</span></div>
+    </header>
+
+    <section class="sc-section">
+      <h2>カラートークン</h2>
+      <p class="sc-hint">Atlassian のカラー（クリックで値をコピー）。テーマ切替でダークに対応します。</p>
+      <div class="swatches">
+        <div class="swatch" data-copy="#0052CC"><div class="chip" style="background:#0052CC"></div><div class="meta"><div class="n">B400 / blue</div><div class="v">#0052CC</div></div></div>
+        <div class="swatch" data-copy="#172B4D"><div class="chip" style="background:#172B4D"></div><div class="meta"><div class="n">N800 / text</div><div class="v">#172B4D</div></div></div>
+        <div class="swatch" data-copy="#6B778C"><div class="chip" style="background:#6B778C"></div><div class="meta"><div class="n">N200 / subtle</div><div class="v">#6B778C</div></div></div>
+        <div class="swatch" data-copy="#DFE1E6"><div class="chip" style="background:#DFE1E6;border-bottom:1px solid #C1C7D0"></div><div class="meta"><div class="n">N40 / border</div><div class="v">#DFE1E6</div></div></div>
+        <div class="swatch" data-copy="#00875A"><div class="chip" style="background:#00875A"></div><div class="meta"><div class="n">G400 / green</div><div class="v">#00875A</div></div></div>
+        <div class="swatch" data-copy="#DE350B"><div class="chip" style="background:#DE350B"></div><div class="meta"><div class="n">R400 / red</div><div class="v">#DE350B</div></div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>タイポグラフィ</h2>
+      <p class="sc-hint">見出しから本文までのスケール（抜粋）。</p>
+      <div class="type-scale">
+        <div class="lbl">Heading XL</div><div class="atl-xl">タスクを、ひとつの土台で</div>
+        <div class="lbl">Heading L</div><div class="atl-lg">今週の進捗と担当</div>
+        <div class="lbl">Heading M</div><div class="atl-md">リリースノート v5.0 のレビュー</div>
+        <div class="lbl">Body</div><div class="atl-body">優先度・期限・担当を体系的に管理し、迷わず今日やることに集中できます。</div>
+        <div class="lbl">Small</div><div class="atl-sm">補足テキスト / キャプション</div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>ボタン</h2>
+      <p class="sc-hint">Primary / Default / Subtle / Link / Danger。既定は控えめなグレー。</p>
+      <div class="sc-row">
+        <button class="btn btn--primary">Primary</button>
+        <button class="btn btn--secondary">Default</button>
+        <button class="btn btn--tertiary">Subtle</button>
+        <button class="btn btn--ghost">Link</button>
+        <button class="btn btn--danger">Danger</button>
+        <button class="btn btn--primary" disabled>Disabled</button>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>フォーム</h2>
+      <p class="sc-hint">2px ボーダーの入力（フォーカスで青）、チェック / ラジオ / トグル。</p>
+      <div class="form-grid">
+        <div class="field"><label>タスク名</label><input type="text" placeholder="例: リリースノートのレビュー"></div>
+        <div class="field"><label>プロジェクト</label><select><option>AIDD Kit</option><option>QA監査ツール</option><option>Design</option></select></div>
+        <div class="field"><label>期限</label><input type="date" value="2026-07-12"></div>
+      </div>
+      <div class="sc-subhead">選択コントロール</div>
+      <div class="sc-row" style="gap:22px">
+        <label class="opt"><input class="ck" type="checkbox" checked> 期限リマインダー</label>
+        <label class="opt"><input class="ck" type="checkbox"> 週次サマリー</label>
+        <label class="opt"><input class="rd" type="radio" name="pri" checked> 高</label>
+        <label class="opt"><input class="rd" type="radio" name="pri"> 中</label>
+        <label class="opt"><input class="sw" type="checkbox" checked> 通知ON</label>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>ロゼンジ（ステータス）</h2>
+      <p class="sc-hint">Atlassian の象徴。小さな大文字ピルでチケットの状態を示す。</p>
+      <div class="sc-row">
+        <span class="lozenge lozenge--default">TODO</span>
+        <span class="lozenge lozenge--inprogress">IN PROGRESS</span>
+        <span class="lozenge lozenge--success">DONE</span>
+        <span class="lozenge lozenge--removed">BLOCKED</span>
+        <span class="lozenge lozenge--moved">ON HOLD</span>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>カード</h2>
+      <p class="sc-hint">境界線付きのフラットなカード。</p>
+      <div class="demo-grid">
+        <div class="card"><div class="card__body"><h4>課題カード</h4><p>タイトル・担当・状態をまとめる。</p><button class="btn btn--secondary compact">開く</button></div></div>
+        <div class="card"><div class="card__body"><h4>ドキュメント</h4><p>Confluence ページの断片。</p><button class="btn btn--ghost compact">開く</button></div></div>
+        <div class="card"><div class="card__body"><h4>指標</h4><p>スプリントの進捗。</p><div class="atl-lg">71%</div></div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>データテーブル</h2>
+      <p class="sc-hint">大文字ヘッダ・行区切りの一覧。課題リスト向け。</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>課題</th><th>プロジェクト</th><th>優先度</th><th>状態</th></tr></thead>
+          <tbody>
+            <tr><td><a>リリースノート v5.0 のレビュー</a></td><td>AIDD Kit</td><td><span class="lozenge lozenge--removed">高</span></td><td><span class="lozenge lozenge--inprogress">IN PROGRESS</span></td></tr>
+            <tr><td><a>デザインシステムのダーク対応</a></td><td>Design</td><td><span class="lozenge lozenge--default">中</span></td><td><span class="lozenge lozenge--inprogress">IN PROGRESS</span></td></tr>
+            <tr><td><a>週次レトロの下書き</a></td><td>Process</td><td><span class="lozenge lozenge--default">低</span></td><td><span class="lozenge lozenge--success">DONE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>フィードバック</h2>
+      <p class="sc-hint">セクションメッセージ（情報 / 成功 / エラー）。</p>
+      <div class="sc-stack">
+        <div class="note note--info"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg><div>期限の24時間前にリマインダーを送ります。</div></div>
+        <div class="note note--success"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>課題を作成しました。</div></div>
+        <div class="note note--error"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg><div>この操作は取り消せません。</div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>タブ</h2>
+      <p class="sc-hint">下線 2px のアクティブ表現。</p>
+      <div data-tabs>
+        <div class="tabs">
+          <button data-tab="a" class="is-active">概要</button>
+          <button data-tab="b">課題</button>
+          <button data-tab="c">ボード</button>
+        </div>
+        <div class="tab-panel" data-panel="a">プロジェクトの概要を表示しています。</div>
+        <div class="tab-panel" data-panel="b" hidden>課題一覧を表示しています。</div>
+        <div class="tab-panel" data-panel="c" hidden>ボードを表示しています。</div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>プログレス</h2>
+      <p class="sc-hint">スプリント進捗バーと円形インジケータ。</p>
+      <div class="sc-stack" style="max-width:420px">
+        <div class="progress"><i style="width:71%"></i></div>
+        <div class="progress"><i style="width:34%"></i></div>
+      </div>
+      <div class="sc-subhead">インジケータ</div>
+      <div class="spinner"></div>
+    </section>
+
+    <section class="sc-section">
+      <h2>オーバーレイ</h2>
+      <p class="sc-hint">角丸控えめのモーダル。フッタは右寄せ。</p>
+      <button class="btn btn--danger" data-open-modal="atl-modal">モーダルを開く</button>
+    </section>
+
+  </div>
+
+  <div data-modal id="atl-modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog__body">
+        <h3>課題を削除しますか？</h3>
+        <p>「リリースノート v5.0 のレビュー」を削除します。この操作は取り消せません。関連するコメントも削除されます。</p>
+      </div>
+      <div class="dialog__actions">
+        <button class="btn btn--tertiary" data-close-modal>キャンセル</button>
+        <button class="btn btn--danger" data-close-modal data-toast="削除しました">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../_shared/showcase.js"></script>
+</body>
+</html>

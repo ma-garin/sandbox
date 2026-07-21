@@ -1,0 +1,12 @@
+# diet-support 固有の除外設定
+# 静的ファイルのみのプロジェクトのため、生成物・依存物はなし
+
+# OS / エディタ
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+
+# ローカル検証で作った一時ファイル
+*.local
+scratch/

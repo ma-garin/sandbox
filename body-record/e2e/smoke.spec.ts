@@ -59,8 +59,11 @@ test('ナビ・グラフ・履歴が描画される', async ({ page }) => {
 
 test('AC-04 オフライン: 一度起動後、オフラインでも再読込で起動する', async ({ page, context }) => {
   await saveWeight(page, '2026-07-21', '64.9');
-  // Service Worker の有効化を待つ
-  await page.waitForFunction(() => navigator.serviceWorker?.controller !== null, undefined, { timeout: 15000 });
+  // Service Worker が active になるまで待つ（登録→インストール→有効化）
+  await page.waitForFunction(() => navigator.serviceWorker.ready.then(() => true), undefined, { timeout: 20000 });
+  // 一度オンラインで再読込し、ページが SW の制御下に入ることを保証
+  await page.reload();
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, { timeout: 20000 });
 
   await context.setOffline(true);
   await page.reload();

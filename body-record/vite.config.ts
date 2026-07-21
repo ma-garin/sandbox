@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'prompt', // 更新は利用者に通知して適用（NFR-010）
-      injectRegister: 'inline',
+      injectRegister: null, // 登録は main.ts の registerSW() に一本化（二重登録回避）
       includeAssets: ['icons/icon.svg', 'icons/icon-maskable.svg'],
       manifest: {
         name: 'Body Record — 体重・体組成記録',

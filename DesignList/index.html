@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DesignList — デザインシステム・カタログ</title>
+  <meta name="description" content="Webシステムのデザインを作り込むためのカタログ。Material / Carbon などのデザイン言語ごとにコンポーネント集を並べ、見比べ・使い回せる。">
+  <link rel="stylesheet" href="assets/catalog.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="masthead">
+      <div class="kicker">DesignList</div>
+      <h1>デザインシステム・カタログ</h1>
+      <p>Webシステムのデザインを作り込むための引き出し集。デザイン言語（Material / Carbon など）ごとに<strong>同じ部品セット</strong>を並べ、見比べ・使い回せるようにしています。新しい案件は、まずここでスタイルを選ぶところから。</p>
+    </header>
+
+    <div class="section-label">
+      <h2>デザイン言語</h2>
+      <span class="count">2 スタイル</span>
+      <span class="rule"></span>
+    </div>
+
+    <div class="grid">
+
+      <!-- Material -->
+      <a class="sys-card" href="systems/material/index.html">
+        <div class="preview pv-material">
+          <span class="pv-dot"></span>
+          <span class="pv-btn">Filled</span>
+          <span class="pv-chip">Tonal</span>
+        </div>
+        <div class="sys-body">
+          <div class="eyebrow">Design System 01</div>
+          <h3>Material Design 3</h3>
+          <p>丸みのある形状・トーナルカラー・状態レイヤー・エレベーション。親しみやすく動きのあるUI向け。</p>
+          <div class="sys-tags"><span>大きな角丸</span><span>トーナル</span><span>Roboto</span></div>
+          <span class="sys-open">コンポーネントを見る →</span>
+        </div>
+      </a>
+
+      <!-- Carbon -->
+      <a class="sys-card" href="systems/carbon/index.html">
+        <div class="preview pv-carbon">
+          <span class="pv-btn">Primary</span>
+          <span class="pv-chip">Tag</span>
+        </div>
+        <div class="sys-body">
+          <div class="eyebrow">Design System 02</div>
+          <h3>IBM Carbon 風</h3>
+          <p>角ばった形状・機能的グレー・Blue 60・高い情報密度。業務／エンタープライズ系のUI向け。</p>
+          <div class="sys-tags"><span>角ばり</span><span>機能的グレー</span><span>IBM Plex</span></div>
+          <span class="sys-open">コンポーネントを見る →</span>
+        </div>
+      </a>
+
+      <!-- 今後追加のプレースホルダ -->
+      <div class="sys-card soon">
+        <div class="preview"><span class="badge-soon">今後追加</span></div>
+        <div class="sys-body">
+          <div class="eyebrow">Design System 03+</div>
+          <h3>ミニマル / その他</h3>
+          <p>余白広め・ボーダー主体・低彩度など、方向性の異なるスタイルを順次追加予定。</p>
+          <div class="sys-tags"><span>予定</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section-label">
+      <h2>適用サンプル（完成アプリ）</h2>
+      <span class="count">1 件</span>
+      <span class="rule"></span>
+    </div>
+
+    <div class="grid">
+      <a class="sys-card" href="harness-todo/app/index.html">
+        <div class="preview pv-corporate">
+          <span class="pv-dot"></span>
+          <span class="pv-btn">＋ 新規タスク</span>
+          <span class="pv-chip">進行中</span>
+        </div>
+        <div class="sys-body">
+          <div class="eyebrow">Applied · Corporate Blue</div>
+          <h3>Harness. ToDo管理システム</h3>
+          <p>特定スタイルを実画面まで作り込んだ実例。5画面＋ライト/ダーク＋各インタラクション状態。</p>
+          <div class="sys-tags"><span>ダッシュボード</span><span>ライト/ダーク</span><span>実装済み</span></div>
+          <span class="sys-open">アプリを開く →</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="foot">
+      各スタイルは <code>systems/&lt;style&gt;/</code> に自己完結。共通のレイアウト骨組みは <code>systems/_shared/</code>、各スタイルの見た目は <code>&lt;style&gt;.css</code> のトークン＋コンポーネントに集約しています。新スタイルの追加はフォルダを1つ増やすだけ。
+    </div>
+
+  </div>
+</body>
+</html>

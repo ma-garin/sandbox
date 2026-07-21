@@ -27,6 +27,16 @@ Harness ToDo管理システムの画面デザインモック集。
 open gallery.html
 ```
 
+## 実装
+
+`gallery.html` のモックを、動作する静的Webアプリとして `app/` に実装済み。
+素の HTML/CSS/JS 構成（ビルド不要・GitHub Pages 対応）。詳細は `app/README.md` を参照。
+
+```bash
+open app/index.html
+```
+
 ## メモ
 
-- これは「見た目確定用のモック」。ここから実装（HTML/CSS/コンポーネント化）に落とし込んでいく。
+- `gallery.html` は「見た目確定用のモック」、`app/` はそれを落とし込んだ実装。
+- 実装は5画面＋ライト/ダーク＋折りたたみ＋インタラクション状態（モーダル/削除/通知/空状態/エラー）を再現。

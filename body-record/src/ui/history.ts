@@ -1,19 +1,43 @@
-// SCR-04 履歴（日付降順・編集・削除・検索）
+// SCR-04 履歴（日付降順・編集・削除・検索）+ カレンダー表示（FR-103）
 import type { AppContext } from './context';
 import { STAMP_DEFS } from '../types';
 import { roundTo } from '../lib/calc';
 import { $, esc, fmtDateShort, weekday, signed, deltaClass } from './dom';
+import { renderCalendar } from './calendar';
 
 let query = '';
+let mode: 'list' | 'calendar' = 'list';
 
 export function renderHistory(ctx: AppContext, mount: HTMLElement): void {
   mount.innerHTML = `
     <h2 class="view-title">履歴 <span class="badge-count">${ctx.records.length}件</span></h2>
+    <div class="seg" id="hist-mode" style="margin-bottom:14px">
+      <button data-mode="list" aria-pressed="${mode === 'list'}">📋 リスト</button>
+      <button data-mode="calendar" aria-pressed="${mode === 'calendar'}">🗓 カレンダー</button>
+    </div>
+    <div id="hist-body"></div>`;
+
+  $('#hist-mode')!.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');
+    if (!b) return;
+    mode = b.dataset.mode as 'list' | 'calendar';
+    renderHistory(ctx, mount);
+  });
+
+  const body = $('#hist-body')!;
+  if (mode === 'calendar') {
+    const box = document.createElement('div');
+    box.className = 'card';
+    body.appendChild(box);
+    renderCalendar(ctx, box);
+    return;
+  }
+
+  body.innerHTML = `
     <div class="search">
       <input type="text" id="hist-search" placeholder="🔍 日付・メモで検索（例: 2026-07, ジム）" value="${esc(query)}">
     </div>
     <div class="card" style="padding:8px 14px"><div id="hist-list"></div></div>`;
-
   const input = $<HTMLInputElement>('#hist-search')!;
   input.addEventListener('input', () => {
     query = input.value.trim();

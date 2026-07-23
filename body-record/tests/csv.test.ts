@@ -88,6 +88,19 @@ bad,70,,
     expect(p.validCount).toBe(2);
     expect(p.hasHeader).toBe(false);
   });
+
+  it('RecStyle 風（日付のみ・体重・体脂肪率）を取り込める', () => {
+    const recstyle = `日付,体重,体脂肪率\n2026/07/18,65.4,18.2\n2026/07/19,65.1,18.0`;
+    const p = buildImportPreview(recstyle, new Set());
+    expect(p.validCount).toBe(2);
+    expect(p.rows[0].draft?.bodyFatPercent).toBe(18.2);
+  });
+
+  it('日時（時刻付き）でも日付部分を取り込む', () => {
+    const p = buildImportPreview('日付,体重\n2026/07/18 08:30,65.4', new Set());
+    expect(p.validCount).toBe(1);
+    expect(p.rows[0].draft?.measuredAt).toBe('2026-07-18');
+  });
 });
 
 describe('recordsToCsv', () => {

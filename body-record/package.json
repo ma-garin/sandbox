@@ -1,6 +1,6 @@
 {
   "name": "body-record",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "体重・体組成記録 PWA（RecStyle 乗り換え用 / GitHub Pages / オフライン対応）",
   "type": "module",

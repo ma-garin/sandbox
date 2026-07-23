@@ -38,12 +38,12 @@ test('AC-01 日次記録: 保存 → 再読込でデータが残る', async ({ p
 
   await saveWeight(page, '2026-07-21', '64.9');
 
-  // ダッシュボードに最新値
-  await expect(page.locator('.dash-hero .num')).toContainText('64.9');
+  // サマリー（現在体重タイル）に最新値
+  await expect(page.locator('.stat-grid')).toContainText('64.9');
 
   // 再読込しても残る（IndexedDB 永続化）
   await page.reload();
-  await expect(page.locator('.dash-hero .num')).toContainText('64.9');
+  await expect(page.locator('.stat-grid')).toContainText('64.9');
 });
 
 test('AC-02 BMI: 身長172/体重64.9 → 21.9 前後を表示', async ({ page }) => {
@@ -79,8 +79,32 @@ test('AC-04 オフライン: 一度起動後、オフラインでも再読込で
   await page.reload();
   // オフラインでもアプリシェルが起動し、保存済みデータを閲覧できる
   await expect(page.locator('.appbar h1')).toContainText('Body Record');
-  await expect(page.locator('.dash-hero .num')).toContainText('64.9');
+  await expect(page.locator('.stat-grid')).toContainText('64.9');
   await context.setOffline(false);
+});
+
+test('FR-103 カレンダー表示: 記録日がハイライトされる', async ({ page }) => {
+  await saveWeight(page, '2026-07-21', '64.9');
+  await page.locator('nav.bottom [data-tab="history"]').click();
+  await page.locator('[data-mode="calendar"]').click();
+  await expect(page.locator('.cal-grid').first()).toBeVisible();
+  // 記録がある日のセルが存在する
+  await expect(page.locator('.cal-cell.has')).toHaveCount(1);
+});
+
+test('FR-105 PIN ロック: 設定 → 再読込でロック → 解錠', async ({ page }) => {
+  await page.locator('nav.bottom [data-tab="settings"]').click();
+  await page.fill('#s-pin1', '1234');
+  await page.fill('#s-pin2', '1234');
+  await page.locator('#s-pin-set').click();
+  await expect(page.locator('#toast')).toContainText('PIN を設定しました');
+
+  await page.reload();
+  await expect(page.locator('.lock-overlay')).toBeVisible();
+  for (const d of ['1', '2', '3', '4']) await page.locator(`.lock-pad button[data-k="${d}"]`).click();
+  await page.locator('.lock-pad button[data-k="ok"]').click();
+  await expect(page.locator('.lock-overlay')).toHaveCount(0);
+  await expect(page.locator('.appbar h1')).toContainText('Body Record');
 });
 
 test('スタンプの選択トグル', async ({ page }) => {

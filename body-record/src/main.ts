@@ -8,6 +8,8 @@ import { renderRecord } from './ui/record';
 import { renderGraph } from './ui/graph';
 import { renderHistory } from './ui/history';
 import { renderSettings } from './ui/settings';
+import { showLockScreen } from './ui/lock';
+import { hasPin } from './lib/pin';
 import { $, todayStr } from './ui/dom';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -120,6 +122,16 @@ function setupUpdatePrompt(): void {
   });
 }
 
+async function startApp(): Promise<void> {
+  shell();
+  const startTab = (location.hash.slice(1) || 'record') as Tab;
+  state.tab = TABS.some((x) => x.id === startTab) ? startTab : 'record';
+  state.records = await allRecords();
+  syncNav();
+  renderActive();
+  setupUpdatePrompt();
+}
+
 async function init(): Promise<void> {
   applyTheme(state.settings.theme);
   // system テーマ追従
@@ -128,13 +140,14 @@ async function init(): Promise<void> {
       if (state.settings.theme === 'system') applyTheme('system');
     });
   }
-  shell();
-  const startTab = (location.hash.slice(1) || 'record') as Tab;
-  state.tab = TABS.some((x) => x.id === startTab) ? startTab : 'record';
-  state.records = await allRecords();
-  syncNav();
-  renderActive();
-  setupUpdatePrompt();
+  // PIN ロック（設定時のみ）。解錠後にアプリ本体を起動（FR-105）
+  if (hasPin()) {
+    showLockScreen(() => {
+      void startApp();
+    });
+  } else {
+    await startApp();
+  }
 }
 
 init();

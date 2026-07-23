@@ -2,7 +2,7 @@
 import type { AppContext } from './context';
 import type { Metric } from '../types';
 import { METRIC_DEFS, STAMP_DEFS } from '../types';
-import { filterByRange } from '../lib/calc';
+import { filterByRange, monthlyStats } from '../lib/calc';
 import { renderMetricChart } from './chart';
 import type { Chart } from 'chart.js';
 import { $, esc, fmtDateFull } from './dom';
@@ -47,7 +47,8 @@ export function renderGraph(ctx: AppContext, mount: HTMLElement): void {
         <input type="checkbox" id="avg-toggle" ${showAvg ? 'checked' : ''} style="width:auto"> 7日移動平均を表示
       </label>
       <div class="tap-info" id="tap-info">グラフ上の点をタップすると、その日の詳細を表示します。</div>
-    </div>`;
+    </div>
+    ${monthlyCard(ctx)}`;
 
   draw(ctx);
 
@@ -67,6 +68,35 @@ export function renderGraph(ctx: AppContext, mount: HTMLElement): void {
     showAvg = (e.target as HTMLInputElement).checked;
     draw(ctx);
   });
+}
+
+function monthlyCard(ctx: AppContext): string {
+  const stats = monthlyStats(ctx.records).slice(0, 6);
+  if (!stats.length) return '';
+  const rows = stats
+    .map((s) => {
+      const [, m] = s.month.split('-');
+      const diffCls = s.firstDiff == null || s.firstDiff === 0 ? 'flat' : s.firstDiff > 0 ? 'up' : 'down';
+      const diff = s.firstDiff == null ? '—' : (s.firstDiff > 0 ? '+' : '') + s.firstDiff.toFixed(1);
+      return `<tr>
+        <td>${Number(m)}月</td>
+        <td>${s.avg.toFixed(1)}</td>
+        <td class="${diffCls}">${diff}</td>
+        <td>${s.min.toFixed(1)}〜${s.max.toFixed(1)}</td>
+        <td>${s.count}日/${s.recordRate}%</td>
+      </tr>`;
+    })
+    .join('');
+  return `
+    <div class="card">
+      <p class="card-title">月次集計</p>
+      <div style="overflow-x:auto">
+        <table class="mtable">
+          <thead><tr><th>月</th><th>平均</th><th>増減</th><th>最小〜最大</th><th>記録</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 function draw(ctx: AppContext): void {

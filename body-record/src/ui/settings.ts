@@ -5,9 +5,10 @@ import { METRIC_DEFS } from '../types';
 import { buildImportPreview, draftsToImport, recordsToCsv, type ImportPreview } from '../lib/csv';
 import { parseBackup, serializeBackup, BackupError } from '../lib/backup';
 import { bulkImport, replaceAll, clearAll, allRecords } from '../lib/db';
+import { hasPin, setPin, clearPin, isValidPinFormat } from '../lib/pin';
 import { $, esc, toast, download, pickFile, todayStr } from './dom';
 
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.2.0';
 let pendingPreview: ImportPreview | null = null;
 
 export function renderSettings(ctx: AppContext, mount: HTMLElement): void {
@@ -54,7 +55,7 @@ export function renderSettings(ctx: AppContext, mount: HTMLElement): void {
     <div class="group-title">データ移行・バックアップ</div>
     <div class="card">
       <p class="card-title">RecStyle など CSV からの取込</p>
-      <p class="hint" style="margin-top:0">日付・体重・体脂肪率・筋肉量・ウエスト・メモ列を自動判別します。取り込む前に内容をプレビューします。</p>
+      <p class="hint" style="margin-top:0">RecStyle は「設定 → データのエクスポート」で <b>RecStyleData.csv</b> を出力できます（メール添付や共有で端末に保存）。そのファイルを選ぶと、日付・体重・体脂肪率・筋肉量・ウエスト・メモ列を自動判別し、取り込む前に内容をプレビューします。日付のみ（時刻なし）でも取り込めます。</p>
       <button class="btn btn-outline" id="s-csv-import" style="margin-top:10px">CSV を選択して取り込む</button>
       <div id="import-area"></div>
 
@@ -68,6 +69,19 @@ export function renderSettings(ctx: AppContext, mount: HTMLElement): void {
       <p class="card-title">復元（JSON）</p>
       <button class="btn btn-ghost" id="s-json-import">JSON バックアップから復元</button>
       <p class="hint">機種変更・引き継ぎ用。復元は現在のデータを置き換えます。不正なファイルの場合、既存データは変更されません。</p>
+    </div>
+
+    <div class="group-title">PIN ロック</div>
+    <div class="card">
+      ${hasPin()
+        ? `<p class="hint" style="margin-top:0">PIN は設定済みです。起動時に入力を求めます。</p>
+           <button class="btn btn-danger" id="s-pin-clear" style="margin-top:8px">PIN を解除</button>`
+        : `<p class="hint" style="margin-top:0">起動時に 4〜6 桁の PIN を要求します（この端末のみ・端末内に安全なハッシュで保存）。</p>
+           <div class="grid2" style="margin-top:8px">
+             <input type="password" id="s-pin1" inputmode="numeric" maxlength="6" placeholder="PIN（4〜6桁）">
+             <input type="password" id="s-pin2" inputmode="numeric" maxlength="6" placeholder="確認のため再入力">
+           </div>
+           <button class="btn btn-primary" id="s-pin-set" style="margin-top:8px">PIN を設定</button>`}
     </div>
 
     <div class="group-title">その他</div>
@@ -113,6 +127,22 @@ function wire(ctx: AppContext): void {
   $('#s-csv-export')!.addEventListener('click', () => exportCsv(ctx));
   $('#s-json-import')!.addEventListener('click', () => importJson(ctx));
   $('#s-clear')!.addEventListener('click', () => clear(ctx));
+
+  $('#s-pin-set')?.addEventListener('click', async () => {
+    const p1 = $<HTMLInputElement>('#s-pin1')!.value;
+    const p2 = $<HTMLInputElement>('#s-pin2')!.value;
+    if (!isValidPinFormat(p1)) return toast('PIN は 4〜6 桁の数字で入力してください');
+    if (p1 !== p2) return toast('PIN が一致しません');
+    await setPin(p1);
+    toast('PIN を設定しました ✓');
+    ctx.rerender();
+  });
+  $('#s-pin-clear')?.addEventListener('click', () => {
+    if (!confirm('PIN ロックを解除しますか？')) return;
+    clearPin();
+    toast('PIN を解除しました');
+    ctx.rerender();
+  });
 }
 
 /* ---------- CSV import with preview (AC-06) ---------- */

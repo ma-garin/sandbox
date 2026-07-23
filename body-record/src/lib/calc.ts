@@ -131,6 +131,60 @@ export function movingAverage(points: Point[], window = 7): (number | null)[] {
   });
 }
 
+/** 指定月(YYYY-MM)の日数 */
+export function daysInMonth(month: string): number {
+  const [y, m] = month.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+export interface MonthlyStat {
+  month: string; // YYYY-MM
+  count: number;
+  avg: number; // 月平均体重
+  min: number;
+  max: number;
+  firstDiff: number | null; // 月内の(最後-最初)体重差
+  recordRate: number; // 記録率 %（count / その月の日数）
+}
+
+/** 月次集計（FR-101）。月の降順で返す */
+export function monthlyStats(records: BodyRecord[]): MonthlyStat[] {
+  const byMonth = new Map<string, BodyRecord[]>();
+  for (const r of sortByDate(records)) {
+    const m = r.measuredAt.slice(0, 7);
+    (byMonth.get(m) ?? byMonth.set(m, []).get(m)!).push(r);
+  }
+  const out: MonthlyStat[] = [];
+  for (const [month, recs] of byMonth) {
+    const ws = recs.map((r) => r.weightKg);
+    out.push({
+      month,
+      count: recs.length,
+      avg: roundTo(ws.reduce((a, b) => a + b, 0) / ws.length, 1),
+      min: roundTo(Math.min(...ws), 1),
+      max: roundTo(Math.max(...ws), 1),
+      firstDiff: recs.length >= 2 ? roundTo(recs[recs.length - 1].weightKg - recs[0].weightKg, 1) : null,
+      recordRate: Math.round((recs.length / daysInMonth(month)) * 100),
+    });
+  }
+  return out.sort((a, b) => b.month.localeCompare(a.month));
+}
+
+/**
+ * 月間記録率 %（FR-107）。todayIso を与えると当月は経過日数で割る（より実態に近い）。
+ */
+export function monthRecordRate(records: BodyRecord[], month: string, todayIso?: string): number {
+  const count = records.filter((r) => r.measuredAt.slice(0, 7) === month).length;
+  let denom = daysInMonth(month);
+  if (todayIso && todayIso.slice(0, 7) === month) denom = Number(todayIso.slice(8, 10));
+  return denom > 0 ? Math.round((count / denom) * 100) : 0;
+}
+
+/** 記録済みの日付集合（YYYY-MM-DD）。カレンダー表示用（FR-103） */
+export function recordedDateSet(records: BodyRecord[]): Set<string> {
+  return new Set(records.map((r) => r.measuredAt));
+}
+
 /** 期間フィルタ（日数。0 or 負で全期間）。最新日を終端に days 日ぶん遡る */
 export function filterByRange(records: BodyRecord[], days: number): BodyRecord[] {
   const sorted = sortByDate(records);

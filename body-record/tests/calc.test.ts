@@ -10,6 +10,9 @@ import {
   series,
   recordOnOrBefore,
   sortByDate,
+  monthlyStats,
+  monthRecordRate,
+  daysInMonth,
 } from '../src/lib/calc';
 import type { BodyRecord } from '../src/types';
 
@@ -133,5 +136,45 @@ describe('filterByRange', () => {
   });
   it('7日は最新から遡り2件', () => {
     expect(filterByRange(recs, 7).map((r) => r.measuredAt)).toEqual(['2026-07-10', '2026-07-15']);
+  });
+});
+
+describe('daysInMonth', () => {
+  it('うるう年含めて正しい', () => {
+    expect(daysInMonth('2026-07')).toBe(31);
+    expect(daysInMonth('2026-02')).toBe(28);
+    expect(daysInMonth('2024-02')).toBe(29);
+  });
+});
+
+describe('monthlyStats (FR-101)', () => {
+  const recs = [
+    rec('2026-06-28', 66.0),
+    rec('2026-07-01', 65.6),
+    rec('2026-07-10', 65.2),
+    rec('2026-07-20', 64.8),
+  ];
+  it('月ごとに平均・最小最大・月内増減・記録率を集計（降順）', () => {
+    const ms = monthlyStats(recs);
+    expect(ms.map((m) => m.month)).toEqual(['2026-07', '2026-06']);
+    const jul = ms[0];
+    expect(jul.count).toBe(3);
+    expect(jul.avg).toBe(65.2); // (65.6+65.2+64.8)/3
+    expect(jul.min).toBe(64.8);
+    expect(jul.max).toBe(65.6);
+    expect(jul.firstDiff).toBe(-0.8); // 64.8 - 65.6
+    expect(jul.recordRate).toBe(Math.round((3 / 31) * 100));
+    expect(ms[1].firstDiff).toBeNull(); // 6月は1件
+  });
+});
+
+describe('monthRecordRate (FR-107)', () => {
+  const recs = [rec('2026-07-01', 65), rec('2026-07-02', 65), rec('2026-07-03', 65)];
+  it('当月は経過日数で割る（today 指定）', () => {
+    // 3件 / 5日経過 = 60%
+    expect(monthRecordRate(recs, '2026-07', '2026-07-05')).toBe(60);
+  });
+  it('過去月は月日数で割る', () => {
+    expect(monthRecordRate(recs, '2026-07')).toBe(Math.round((3 / 31) * 100));
   });
 });

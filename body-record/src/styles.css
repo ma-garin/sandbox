@@ -176,6 +176,44 @@ nav.bottom button[aria-current='page'] { color: var(--green); }
 .update-bar button { min-height: 40px; padding: 0 14px; border-radius: var(--r-sm); font-weight: 700; }
 .update-bar .apply { background: var(--green); color: #fff; }
 
+/* ---- monthly table (FR-101) ---- */
+.mtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mtable th, .mtable td { padding: 8px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--divider); }
+.mtable th:first-child, .mtable td:first-child { text-align: left; font-weight: 700; }
+.mtable th { color: var(--text-2); font-weight: 600; font-size: 11px; }
+.mtable tbody tr:last-child td { border-bottom: none; }
+
+/* ---- calendar (FR-103) ---- */
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-nav { width: 40px; height: 40px; border-radius: var(--r-md); background: var(--surface-2); font-size: 20px; font-weight: 700; color: var(--text-2); }
+.cal-title { font-weight: 700; font-size: 15px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.cal-rate { font-size: 11px; font-weight: 500; color: var(--text-2); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-wd { margin-bottom: 4px; }
+.cal-wdc { text-align: center; font-size: 11px; color: var(--text-2); font-weight: 600; padding: 2px 0; }
+.cal-wdc.sun { color: var(--up); } .cal-wdc.sat { color: var(--info, #0288d1); }
+.cal-cell { position: relative; aspect-ratio: 1; min-height: 40px; border-radius: var(--r-md); background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text); border: 1.5px solid transparent; }
+.cal-cell.empty { background: transparent; }
+.cal-cell.has { background: var(--green-light); color: var(--green-dark); font-weight: 700; }
+.cal-cell.today { border-color: var(--green); }
+.cal-dot { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+/* ---- lock screen (FR-105) ---- */
+.lock-overlay { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.lock-box { width: 100%; max-width: 320px; text-align: center; }
+.lock-ico { font-size: 40px; }
+.lock-title { font-weight: 700; font-size: 17px; margin-top: 8px; }
+.lock-dots { display: flex; gap: 12px; justify-content: center; margin: 18px 0 6px; }
+.lock-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; }
+.lock-dots i.on { background: var(--green); border-color: var(--green); }
+.lock-msg { font-size: 13px; color: var(--danger); min-height: 20px; margin-bottom: 12px; }
+.lock-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.lock-pad button { height: 60px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--border); font-size: 22px; font-weight: 600; color: var(--text); }
+.lock-pad button:active { background: var(--surface-2); }
+.lock-pad button.ok { background: var(--green); color: #fff; border-color: var(--green); }
+.shake { animation: shake .35s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
 @media (max-width: 360px) {
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .rec .meta { display: none; }

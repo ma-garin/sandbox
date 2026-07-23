@@ -21,9 +21,8 @@ export function renderRecord(ctx: AppContext, mount: HTMLElement): void {
   // リマインド（未記録 / 24h 超過）— 通知の代替（セクション 9）
   const reminder = reminderText(ctx.records);
 
-  const dashboard = latest
-    ? dashboardHtml(ctx, stats)
-    : `<div class="card empty"><div class="e">⚖️</div><p>まだ記録がありません。<br>下の欄に今日の体重を入力しましょう。</p></div>`;
+  // ダッシュボードは入力の「下」に補助表示（記録がなければ何も出さない）
+  const dashboard = latest ? dashboardHtml(ctx, stats) : '';
 
   const enabled = new Set<Metric>(s.enabledFields);
   const field = (id: string, label: string, metric: Metric, ph: string, opt = true) =>
@@ -34,7 +33,6 @@ export function renderRecord(ctx: AppContext, mount: HTMLElement): void {
 
   mount.innerHTML = `
     ${reminder ? `<div class="reminder">⏰ ${esc(reminder)}</div>` : ''}
-    ${dashboard}
     <h2 class="view-title">今日の入力</h2>
     <div class="card">
       <div class="field">
@@ -69,7 +67,8 @@ export function renderRecord(ctx: AppContext, mount: HTMLElement): void {
       </div>
       <button class="btn btn-primary" id="f-save">保存する</button>
       <button class="btn btn-danger" id="f-delete" style="margin-top:10px;display:none">この日の記録を削除</button>
-    </div>`;
+    </div>
+    ${dashboard}`;
 
   // draw dashboard mini chart (直近30日)
   const canvas = $<HTMLCanvasElement>('#dash-chart');
@@ -109,24 +108,15 @@ function dashboardHtml(ctx: AppContext, stats: ReturnType<typeof dashboardStats>
   }
 
   return `
-    <div class="card">
-      <div class="dash-hero">
-        <div class="num">${l.weightKg.toFixed(1)}<span class="u">kg</span></div>
-        <div class="sub">${esc(fmtDateFull(l.measuredAt))} の記録</div>
-      </div>
-      <div class="deltas">
-        <div class="d"><div class="l">前日比</div><div class="v ${deltaClass(stats.deltaPrev)}">${signed(stats.deltaPrev)}</div></div>
-        <div class="d"><div class="l">7日前比</div><div class="v ${deltaClass(stats.delta7)}">${signed(stats.delta7)}</div></div>
-        <div class="d"><div class="l">開始から</div><div class="v ${deltaClass(stats.deltaStart)}">${signed(stats.deltaStart)}</div></div>
-      </div>
-    </div>
     ${progress}
     <div class="card">
-      <p class="card-title">サマリー</p>
+      <p class="card-title">サマリー（最新 ${esc(fmtDateFull(l.measuredAt))}）</p>
       <div class="stat-grid">
+        <div class="stat"><div class="v">${l.weightKg.toFixed(1)}<small>kg</small></div><div class="l">現在体重</div></div>
+        <div class="stat"><div class="v ${deltaClass(stats.deltaPrev)}">${signed(stats.deltaPrev)}</div><div class="l">前日比</div></div>
+        <div class="stat"><div class="v ${deltaClass(stats.delta7)}">${signed(stats.delta7)}</div><div class="l">7日前比</div></div>
         <div class="stat"><div class="v">${bmi > 0 ? bmi.toFixed(1) : '—'}</div><div class="l">BMI ${bmiCategory(bmi)}</div></div>
         <div class="stat"><div class="v">${l.bodyFatPercent != null ? l.bodyFatPercent.toFixed(1) + '<small>%</small>' : '—'}</div><div class="l">体脂肪率</div></div>
-        <div class="stat"><div class="v">${stats.recordCount}</div><div class="l">記録日数</div></div>
         <div class="stat"><div class="v">${stats.streak}</div><div class="l">連続記録</div></div>
       </div>
     </div>

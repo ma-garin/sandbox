@@ -1,0 +1,231 @@
+/* ============================================================
+   material.css — Material Design 3 風スタイル
+   丸みの大きい形状・トーナルカラー・状態レイヤー・エレベーション。
+   ベースラインのカラーロール（primary=purple 系）に準拠。
+   共通の showcase.css を各 class の見た目で上書きする。
+   ============================================================ */
+
+:root, :root[data-theme="light"] {
+  /* カラーロール（M3 baseline / light） */
+  --md-primary: #6750A4;
+  --md-on-primary: #FFFFFF;
+  --md-primary-container: #EADDFF;
+  --md-on-primary-container: #21005D;
+  --md-secondary: #625B71;
+  --md-secondary-container: #E8DEF8;
+  --md-on-secondary-container: #1D192B;
+  --md-tertiary: #7D5260;
+  --md-tertiary-container: #FFD8E4;
+  --md-on-tertiary-container: #31111D;
+  --md-error: #B3261E;
+  --md-on-error: #FFFFFF;
+  --md-error-container: #F9DEDC;
+  --md-on-error-container: #410E0B;
+  --md-success: #386A20;
+  --md-success-container: #D7E8C7;
+
+  --md-surface: #FEF7FF;
+  --md-surface-container-low: #F7F2FA;
+  --md-surface-container: #F3EDF7;
+  --md-surface-container-high: #ECE6F0;
+  --md-surface-container-highest: #E6E0E9;
+  --md-on-surface: #1D1B20;
+  --md-on-surface-variant: #49454F;
+  --md-outline: #79747E;
+  --md-outline-variant: #CAC4D0;
+
+  /* 共通スキャフォールドへの割当 */
+  --sc-page-bg: #F5EFF7;
+  --sc-surface: var(--md-surface);
+  --sc-fg: var(--md-on-surface);
+  --sc-muted: var(--md-on-surface-variant);
+  --sc-border: var(--md-outline-variant);
+  --sc-accent: var(--md-primary);
+  --sc-font: "Roboto", "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  --sc-mono: "Roboto Mono", ui-monospace, monospace;
+  --sc-section-radius: 16px;
+  --sc-swatch-radius: 12px;
+  --sc-toast-radius: 8px;
+
+  --md-elev1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+  --md-elev2: 0 1px 2px rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+  --md-elev3: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.30);
+}
+
+:root[data-theme="dark"] {
+  --md-primary: #D0BCFF;
+  --md-on-primary: #381E72;
+  --md-primary-container: #4F378B;
+  --md-on-primary-container: #EADDFF;
+  --md-secondary: #CCC2DC;
+  --md-secondary-container: #4A4458;
+  --md-on-secondary-container: #E8DEF8;
+  --md-tertiary: #EFB8C8;
+  --md-tertiary-container: #633B48;
+  --md-on-tertiary-container: #FFD8E4;
+  --md-error: #F2B8B5;
+  --md-on-error: #601410;
+  --md-error-container: #8C1D18;
+  --md-on-error-container: #F9DEDC;
+  --md-success: #ADCF95;
+  --md-success-container: #234B0B;
+
+  --md-surface: #141218;
+  --md-surface-container-low: #1D1B20;
+  --md-surface-container: #211F26;
+  --md-surface-container-high: #2B2930;
+  --md-surface-container-highest: #36343B;
+  --md-on-surface: #E6E0E9;
+  --md-on-surface-variant: #CAC4D0;
+  --md-outline: #938F99;
+  --md-outline-variant: #49454F;
+
+  --sc-page-bg: #141218;
+  --sc-surface: var(--md-surface-container-low);
+  --sc-fg: var(--md-on-surface);
+  --sc-muted: var(--md-on-surface-variant);
+  --sc-border: var(--md-outline-variant);
+  --sc-accent: var(--md-primary);
+}
+
+.sc-section { box-shadow: var(--md-elev1); border: none; background: var(--md-surface-container-low); }
+:root[data-theme="dark"] .sc-section { box-shadow: none; border: 1px solid var(--md-outline-variant); }
+.sc-theme-btn { border-radius: 100px; border-color: var(--md-outline); }
+.sc-theme-btn:hover { background: color-mix(in srgb, var(--md-on-surface) 8%, transparent); }
+.sc-principles span { border-radius: 100px; border-color: var(--md-outline-variant); }
+
+/* ---------- タイポグラフィ ---------- */
+.md-display { font-size: 40px; line-height: 1.1; font-weight: 400; letter-spacing: -.5px; }
+.md-headline { font-size: 26px; line-height: 1.25; font-weight: 400; }
+.md-title { font-size: 20px; line-height: 1.3; font-weight: 500; }
+.md-body { font-size: 15px; line-height: 1.5; font-weight: 400; }
+.md-label { font-size: 13px; line-height: 1.4; font-weight: 500; letter-spacing: .1px; }
+
+/* ---------- ボタン ---------- */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 24px; border-radius: 100px; border: none; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 500; letter-spacing: .1px; white-space: nowrap;
+  transition: box-shadow .15s, background .15s; overflow: hidden;
+}
+.btn::after { /* 状態レイヤー */
+  content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity .12s;
+}
+.btn:hover::after { opacity: .08; }
+.btn:active::after { opacity: .12; }
+.btn .ic { width: 18px; height: 18px; }
+.btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--md-primary) 60%, transparent); outline-offset: 2px; }
+
+.btn--primary { background: var(--md-primary); color: var(--md-on-primary); }
+.btn--primary:hover { box-shadow: var(--md-elev1); }
+.btn--secondary { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.btn--tertiary { background: transparent; color: var(--md-primary); border: 1px solid var(--md-outline); }
+.btn--ghost { background: transparent; color: var(--md-primary); padding: 0 12px; }
+.btn--danger { background: var(--md-error); color: var(--md-on-error); }
+.btn[disabled] { cursor: not-allowed; background: color-mix(in srgb, var(--md-on-surface) 12%, transparent); color: color-mix(in srgb, var(--md-on-surface) 38%, transparent); box-shadow: none; border: none; }
+.btn[disabled]::after { display: none; }
+
+/* FAB（Material の象徴的な部品） */
+.fab {
+  position: relative; display: inline-grid; place-items: center; width: 56px; height: 56px;
+  border: none; cursor: pointer; border-radius: 16px; overflow: hidden;
+  background: var(--md-primary-container); color: var(--md-on-primary-container); box-shadow: var(--md-elev3);
+}
+.fab::after { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity .12s; }
+.fab:hover::after { opacity: .08; }
+.fab .ic { width: 24px; height: 24px; }
+.fab--extended { width: auto; padding: 0 20px; gap: 10px; font: inherit; font-weight: 600; font-size: 14px; }
+
+/* ---------- フォーム ---------- */
+.field { display: flex; flex-direction: column; gap: 0; }
+.field > label { font-size: 12px; color: var(--md-on-surface-variant); margin: 0 0 6px 4px; font-weight: 500; }
+/* Filled text field: 上角丸・下線が focus で primary に */
+.field input[type="text"], .field input[type="email"], .field input[type="date"], .field select, .field textarea {
+  font: inherit; font-size: 15px; color: var(--md-on-surface);
+  background: var(--md-surface-container-highest);
+  border: none; border-bottom: 1px solid var(--md-on-surface-variant);
+  border-radius: 8px 8px 0 0; padding: 12px 16px; height: 52px; transition: border-color .12s, background .12s;
+}
+.field textarea { height: auto; min-height: 88px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-bottom: 2px solid var(--md-primary); padding-bottom: 11px;
+}
+.field select { appearance: none; background-image: none; }
+
+.md-check, .md-radio {
+  appearance: none; width: 18px; height: 18px; flex: none; cursor: pointer;
+  border: 2px solid var(--md-on-surface-variant); position: relative; transition: background .12s, border-color .12s;
+}
+.md-check { border-radius: 3px; }
+.md-radio { border-radius: 50%; }
+.md-check:checked { background: var(--md-primary); border-color: var(--md-primary); }
+.md-check:checked::after { content: ""; position: absolute; left: 4px; top: 0px; width: 5px; height: 10px; border: solid var(--md-on-primary); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.md-radio:checked { border-color: var(--md-primary); }
+.md-radio:checked::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--md-primary); }
+label.opt { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; cursor: pointer; }
+
+/* M3 スイッチ（象徴的な形） */
+.md-switch { appearance: none; cursor: pointer; width: 52px; height: 32px; border-radius: 100px; flex: none;
+  background: var(--md-surface-container-highest); border: 2px solid var(--md-outline); position: relative; transition: background .18s, border-color .18s; }
+.md-switch::after { content: ""; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; border-radius: 50%; background: var(--md-outline); transition: all .18s; }
+.md-switch:checked { background: var(--md-primary); border-color: var(--md-primary); }
+.md-switch:checked::after { left: 26px; width: 24px; height: 24px; background: var(--md-on-primary); }
+
+/* ---------- タグ・チップ・バッジ ---------- */
+.chip-a { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--md-outline-variant); background: transparent; color: var(--md-on-surface-variant); font-size: 13px; font-weight: 500; cursor: pointer; }
+.chip-a:hover { background: color-mix(in srgb, var(--md-on-surface) 8%, transparent); }
+.chip-a.selected { background: var(--md-secondary-container); color: var(--md-on-secondary-container); border-color: transparent; }
+.badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+.badge--primary { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.badge--success { background: var(--md-success-container); color: var(--md-success); }
+.badge--error { background: var(--md-error-container); color: var(--md-on-error-container); }
+.badge--neutral { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+
+/* ---------- カード ---------- */
+.card { background: var(--md-surface-container-low); border-radius: 12px; box-shadow: var(--md-elev1); overflow: hidden; }
+:root[data-theme="dark"] .card { border: 1px solid var(--md-outline-variant); box-shadow: none; }
+.card--filled { background: var(--md-surface-container-highest); box-shadow: none; }
+.card--outlined { background: var(--md-surface); box-shadow: none; border: 1px solid var(--md-outline-variant); }
+.card .card__media { height: 96px; background: linear-gradient(135deg, var(--md-primary), var(--md-tertiary)); }
+.card .card__body { padding: 16px; }
+.card .card__body h4 { margin: 0 0 4px; font-size: 16px; font-weight: 500; }
+.card .card__body p { margin: 0 0 14px; font-size: 13.5px; color: var(--md-on-surface-variant); }
+
+/* ---------- テーブル ---------- */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+.data-table th { text-align: left; font-weight: 500; color: var(--md-on-surface-variant); padding: 14px 16px; border-bottom: 1px solid var(--md-outline-variant); font-size: 12px; }
+.data-table td { padding: 14px 16px; border-bottom: 1px solid var(--md-outline-variant); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr { transition: background .1s; }
+.data-table tbody tr:hover { background: color-mix(in srgb, var(--md-primary) 5%, transparent); }
+
+/* ---------- フィードバック ---------- */
+.banner { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 12px; font-size: 13.5px; }
+.banner .ic { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.banner--info { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.banner--success { background: var(--md-success-container); color: var(--md-success); }
+.banner--error { background: var(--md-error-container); color: var(--md-on-error-container); }
+
+/* ---------- タブ ---------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--md-outline-variant); }
+.tabs button { position: relative; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500;
+  color: var(--md-on-surface-variant); padding: 14px 20px; }
+.tabs button.is-active { color: var(--md-primary); }
+.tabs button.is-active::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--md-primary); }
+.tab-panel { padding: 18px 4px; font-size: 14px; color: var(--md-on-surface-variant); }
+
+/* ---------- プログレス ---------- */
+.progress { height: 4px; border-radius: 100px; background: var(--md-surface-container-highest); overflow: hidden; }
+.progress > i { display: block; height: 100%; border-radius: 100px; background: var(--md-primary); }
+.spinner { width: 40px; height: 40px; border-radius: 50%; border: 4px solid var(--md-surface-container-highest); border-top-color: var(--md-primary); animation: md-spin .9s linear infinite; }
+@keyframes md-spin { to { transform: rotate(360deg); } }
+
+/* ---------- モーダル（M3 の大きな角丸ダイアログ） ---------- */
+[data-modal] { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px;
+  background: rgba(0,0,0,.4); }
+[data-modal][hidden] { display: none; }
+.dialog { width: 100%; max-width: 420px; background: var(--md-surface-container-high); border-radius: 28px; padding: 24px; box-shadow: var(--md-elev3); }
+.dialog h3 { margin: 0 0 12px; font-size: 22px; font-weight: 400; }
+.dialog p { margin: 0 0 24px; font-size: 14px; color: var(--md-on-surface-variant); }
+.dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA-PMO Context Triage"
+  short_description: "QA-PMOのREADMEと状態ファイルを小さく読んで次手を整理する"
+  default_prompt: "Use $qa-pmo-context-triage to inspect QA-PMO context cheaply and propose the next action."

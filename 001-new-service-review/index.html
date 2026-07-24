@@ -1,0 +1,576 @@
+<title>第三者検証4社 サービス比較 ── AIエージェント化による代替戦略</title>
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --surface-3:#eef2f7;
+    --ink:#0f1b2d; --ink-soft:#35455b; --muted:#64748b;
+    --line:#dde4ec; --line-strong:#c3ccd8;
+    --signal:#0891b2; --signal-2:#06b6d4; --signal-ink:#075e6f;
+    --glow:rgba(8,145,178,.14);
+    --c-veriserve:#2563eb; --c-shift:#16a34a; --c-agest:#e11d48; --c-valtes:#7c3aed;
+    --warn:#b45309; --good:#15803d;
+    --shadow:0 1px 2px rgba(16,27,45,.06),0 8px 24px rgba(16,27,45,.06);
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+    --jp:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic Medium","Yu Gothic",Meiryo,system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0a1220; --surface:#0f1a2b; --surface-2:#13233a; --surface-3:#182b46;
+      --ink:#e8eef6; --ink-soft:#b7c4d6; --muted:#8496ac;
+      --line:#1e2c44; --line-strong:#2b3d5c;
+      --signal:#22d3ee; --signal-2:#67e8f9; --signal-ink:#a5f3fc;
+      --glow:rgba(34,211,238,.22);
+      --c-veriserve:#60a5fa; --c-shift:#4ade80; --c-agest:#fb7185; --c-valtes:#a78bfa;
+      --warn:#fbbf24; --good:#4ade80;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --surface-3:#eef2f7;
+    --ink:#0f1b2d; --ink-soft:#35455b; --muted:#64748b;
+    --line:#dde4ec; --line-strong:#c3ccd8;
+    --signal:#0891b2; --signal-2:#06b6d4; --signal-ink:#075e6f; --glow:rgba(8,145,178,.14);
+    --c-veriserve:#2563eb; --c-shift:#16a34a; --c-agest:#e11d48; --c-valtes:#7c3aed;
+    --warn:#b45309; --good:#15803d;
+    --shadow:0 1px 2px rgba(16,27,45,.06),0 8px 24px rgba(16,27,45,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a1220; --surface:#0f1a2b; --surface-2:#13233a; --surface-3:#182b46;
+    --ink:#e8eef6; --ink-soft:#b7c4d6; --muted:#8496ac;
+    --line:#1e2c44; --line-strong:#2b3d5c;
+    --signal:#22d3ee; --signal-2:#67e8f9; --signal-ink:#a5f3fc; --glow:rgba(34,211,238,.22);
+    --c-veriserve:#60a5fa; --c-shift:#4ade80; --c-agest:#fb7185; --c-valtes:#a78bfa;
+    --warn:#fbbf24; --good:#4ade80;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);
+    line-height:1.75;font-size:16px;letter-spacing:.01em;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--signal);font-weight:600}
+  h1,h2,h3{text-wrap:balance;line-height:1.28;letter-spacing:.005em}
+  a{color:var(--signal-ink);text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--signal) 45%,transparent)}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 86%,transparent);
+    backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .row{display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px}
+  .brandmark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:.02em}
+  .brandmark .dot{width:9px;height:9px;border-radius:2px;background:var(--signal);box-shadow:0 0 0 3px var(--glow)}
+  .themetoggle{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+  .themetoggle:hover{border-color:var(--line-strong);color:var(--ink)}
+  .themetoggle:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+  /* hero */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero .grid-bg{position:absolute;inset:0;opacity:.5;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 85%)}
+  .hero .inner{position:relative;padding:64px 0 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+  .hero h1{font-size:clamp(30px,4.6vw,52px);font-weight:800;margin:16px 0 18px;letter-spacing:-.01em}
+  .hero h1 .em{color:var(--signal)}
+  .lede{font-size:clamp(16px,1.5vw,18.5px);color:var(--ink-soft);max-width:40ch;margin:0 0 24px}
+  .mission{border-left:2px solid var(--signal);padding:10px 0 10px 16px;color:var(--ink);font-size:15px;background:linear-gradient(90deg,var(--glow),transparent);max-width:44ch}
+  .mission b{color:var(--signal-ink)}
+  .kpis{display:flex;flex-wrap:wrap;gap:26px;margin-top:30px}
+  .kpi .n{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.01em;line-height:1;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:7px;letter-spacing:.04em}
+  .figframe{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+  .figframe svg{display:block;width:100%;height:auto}
+  .figcap{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-top:10px;padding:0 4px}
+
+  /* sections */
+  section{padding:66px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+  .sec-num{font-family:var(--mono);font-size:12.5px;color:var(--signal);font-weight:600;letter-spacing:.12em;padding-top:6px}
+  .sec-head h2{font-size:clamp(22px,2.7vw,30px);font-weight:800;margin:0}
+  .sec-sub{color:var(--ink-soft);max-width:66ch;margin:6px 0 34px;font-size:15.5px}
+
+  /* company snapshot cards */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;box-shadow:var(--shadow);overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cc)}
+  .card .top{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+  .card .icon{width:40px;height:40px;flex:0 0 40px;border-radius:10px;display:grid;place-items:center;
+    background:color-mix(in srgb,var(--cc) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--cc) 30%,var(--line))}
+  .card .icon svg{width:22px;height:22px}
+  .card h3{margin:0;font-size:19px;font-weight:800}
+  .card .legal{font-size:11.5px;color:var(--muted);margin-top:2px;letter-spacing:.01em}
+  .card .tag{color:var(--ink-soft);font-size:13.5px;margin:10px 0 14px;min-height:2.6em}
+  .card .meta{display:flex;flex-wrap:wrap;gap:8px 8px;margin-bottom:14px}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-soft);background:var(--surface-2);white-space:nowrap}
+  .chip.cc{color:var(--cc);border-color:color-mix(in srgb,var(--cc) 34%,var(--line));background:color-mix(in srgb,var(--cc) 8%,var(--surface))}
+  .card .focus{font-size:12.7px;color:var(--muted);line-height:1.65;border-top:1px dashed var(--line);padding-top:12px}
+  .card .ai-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .ai-pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;color:var(--signal-ink);background:color-mix(in srgb,var(--signal) 12%,var(--surface));
+    border:1px solid color-mix(in srgb,var(--signal) 32%,var(--line));border-radius:6px;padding:3px 8px}
+
+  /* generic figure card */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px}
+  .panel svg{display:block;width:100%;height:auto}
+  .split{display:grid;grid-template-columns:1.35fr .65fr;gap:26px;align-items:center}
+  .readout{font-size:14px;color:var(--ink-soft)}
+  .readout h4{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--signal);margin:0 0 12px}
+  .readout li{margin-bottom:11px;list-style:none;padding-left:18px;position:relative}
+  .readout li::before{content:"▸";position:absolute;left:0;color:var(--signal);font-size:11px;top:2px}
+  .readout b{color:var(--ink)}
+
+  /* coverage matrix */
+  .matrix{width:100%;border-collapse:separate;border-spacing:4px}
+  .matrix th,.matrix td{text-align:center}
+  .matrix thead th{font-size:12.5px;font-weight:700;padding:8px 4px;vertical-align:bottom}
+  .matrix thead th .ic{display:inline-flex;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .matrix tbody th{text-align:left;font-weight:600;font-size:13px;color:var(--ink-soft);padding-right:12px;white-space:nowrap}
+  .cell{height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;
+    color:#fff;border:1px solid transparent}
+  .cell[data-v="0"]{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+  .cell[data-v="1"]{background:color-mix(in srgb,var(--signal) 26%,var(--surface));color:var(--ink)}
+  .cell[data-v="2"]{background:color-mix(in srgb,var(--signal) 58%,var(--surface));color:#fff}
+  .cell[data-v="3"]{background:var(--signal);color:#04222a}
+  .mx-legend{display:flex;gap:16px;align-items:center;margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em;flex-wrap:wrap}
+  .mx-legend .sw{display:inline-flex;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:middle}
+
+  /* filter + service tables */
+  .filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:22px}
+  .fbtn{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:8px 15px;border-radius:999px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink-soft);cursor:pointer;transition:.15s}
+  .fbtn:hover{border-color:var(--line-strong);color:var(--ink)}
+  .fbtn[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:#04222a;font-weight:600}
+  .fbtn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+  .co-block{margin-bottom:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;box-shadow:var(--shadow)}
+  .co-block>summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;gap:14px}
+  .co-block>summary::-webkit-details-marker{display:none}
+  .co-block>summary .icon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:0 0 34px;
+    background:color-mix(in srgb,var(--cc) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--cc) 30%,var(--line))}
+  .co-block>summary .icon svg{width:19px;height:19px}
+  .co-block>summary h3{margin:0;font-size:17px;font-weight:800}
+  .co-block>summary .cnt{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
+  .co-block>summary .caret{transition:transform .2s;color:var(--muted);flex:0 0 auto}
+  .co-block[open]>summary .caret{transform:rotate(90deg)}
+  .co-block[open]>summary{border-bottom:1px solid var(--line)}
+  .svc-cat{padding:6px 22px 4px}
+  .svc-cat>h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--cc);margin:16px 0 8px;font-weight:700}
+  .svc{display:grid;grid-template-columns:minmax(180px,1fr) 2fr auto;gap:12px 18px;padding:11px 0;border-top:1px solid var(--line);align-items:start}
+  .svc:first-of-type{border-top:none}
+  .svc .nm{font-weight:700;font-size:14px}
+  .svc .ds{font-size:12.8px;color:var(--muted);line-height:1.6}
+  .svc .badges{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .dchip{font-family:var(--mono);font-size:10px;letter-spacing:.02em;padding:3px 8px;border-radius:5px;border:1px solid var(--line);white-space:nowrap}
+  .dchip.finance{color:var(--c-agest);border-color:color-mix(in srgb,var(--c-agest) 34%,var(--line));background:color-mix(in srgb,var(--c-agest) 8%,transparent)}
+  .dchip.enterprise{color:var(--c-veriserve);border-color:color-mix(in srgb,var(--c-veriserve) 34%,var(--line));background:color-mix(in srgb,var(--c-veriserve) 8%,transparent)}
+  .dchip.generic{color:var(--muted);background:var(--surface-2)}
+  .dchip.web_mobile{color:var(--c-valtes);border-color:color-mix(in srgb,var(--c-valtes) 34%,var(--line));background:color-mix(in srgb,var(--c-valtes) 8%,transparent)}
+  .dchip.game,.dchip.manufacturing{color:var(--ink-soft);background:var(--surface-2)}
+  .aichip{font-family:var(--mono);font-size:10px;letter-spacing:.02em;padding:3px 8px;border-radius:5px;
+    color:var(--signal-ink);background:color-mix(in srgb,var(--signal) 12%,transparent);border:1px solid color-mix(in srgb,var(--signal) 30%,var(--line))}
+  .svc.hidden{display:none}
+
+  /* strategy / disruption layers */
+  .layers{display:flex;flex-direction:column;gap:10px}
+  .layer{display:grid;grid-template-columns:180px 1fr 92px;gap:16px;align-items:center;padding:12px 16px;border:1px solid var(--line);border-radius:11px;background:var(--surface)}
+  .layer.hot{border-color:color-mix(in srgb,var(--signal) 45%,var(--line));background:color-mix(in srgb,var(--signal) 6%,var(--surface))}
+  .layer .lname{font-weight:700;font-size:14px}
+  .layer .lname small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.03em;margin-top:2px}
+  .meter{height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);position:relative;overflow:hidden}
+  .meter>span{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,color-mix(in srgb,var(--signal) 55%,transparent),var(--signal));border-radius:6px}
+  .prio{font-family:var(--mono);font-size:11px;text-align:center;padding:5px 0;border-radius:6px;font-weight:600;letter-spacing:.05em}
+  .prio.p3{background:var(--signal);color:#04222a}
+  .prio.p2{background:color-mix(in srgb,var(--signal) 30%,var(--surface));color:var(--signal-ink);border:1px solid color-mix(in srgb,var(--signal) 40%,var(--line))}
+  .prio.p1{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+
+  .playbook{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+  .pb{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:20px;box-shadow:var(--shadow);position:relative}
+  .pb .step{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--signal);font-weight:600}
+  .pb h4{margin:8px 0 8px;font-size:16px;font-weight:800}
+  .pb p{margin:0;font-size:13px;color:var(--muted);line-height:1.65}
+  .pb .tgt{margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:10px}
+
+  /* appendix json */
+  .jsonbox{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .jsonbox>summary{cursor:pointer;list-style:none;padding:14px 18px;font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--ink-soft);display:flex;gap:10px;align-items:center}
+  .jsonbox>summary::-webkit-details-marker{display:none}
+  .jsonbox>summary .k{color:var(--signal)}
+  .jsonbox[open]>summary{border-bottom:1px solid var(--line)}
+  .jsonbox pre{margin:0;padding:18px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--ink-soft)}
+  .jsonbox pre .s{color:var(--signal-ink)} .jsonbox pre .p{color:var(--c-valtes)}
+
+  .note{font-size:12.5px;color:var(--muted);line-height:1.7;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .note b{color:var(--ink-soft)}
+  footer{padding:44px 0 60px;color:var(--muted);font-size:12.5px}
+  footer .fl{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
+
+  @media (max-width:900px){
+    .hero .inner{grid-template-columns:1fr;gap:30px}
+    .cards{grid-template-columns:1fr}
+    .split{grid-template-columns:1fr}
+    .playbook{grid-template-columns:1fr}
+    .svc{grid-template-columns:1fr;gap:6px}
+    .svc .badges{flex-direction:row;align-items:center;flex-wrap:wrap}
+    .layer{grid-template-columns:120px 1fr 68px;gap:10px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="topbar">
+  <div class="wrap row">
+    <div class="brandmark"><span class="dot"></span>QA DISRUPTION BRIEF <span style="color:var(--muted);font-weight:400">/ 新規サービス検討</span></div>
+    <button class="themetoggle" id="tt" aria-label="配色を切り替え">◐ THEME</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="grid-bg"></div>
+  <div class="wrap inner">
+    <div>
+      <span class="eyebrow">競合インテリジェンス ・ 2026.07</span>
+      <h1>第三者検証4社の<br>サービスを<span class="em">AIエージェント</span>で<br>置き換える</h1>
+      <p class="lede">ベリサーブ・SHIFT・AGEST・バルテス。エンプラ／金融など非製造領域を主戦場とする第三者検証4社のサービスを棚卸しし、どこをAIエージェント化すれば彼らの業務シェアを奪えるかを可視化する。</p>
+      <div class="mission">目的 ── 各社が人手で提供している<b>検証サービス・システムをAIエージェント化</b>し、その業務・仕事・売上シェアを奪う。攻略順位までを一枚に落とす。</div>
+      <div class="kpis">
+        <div class="kpi"><div class="n">4</div><div class="l">比較対象企業</div></div>
+        <div class="kpi"><div class="n">80<span style="font-size:16px">+</span></div><div class="l">棚卸しサービス数</div></div>
+        <div class="kpi"><div class="n">2</div><div class="l">最優先の攻略レイヤー</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="figframe" id="heroFig"></div>
+      <div class="figcap">FIG.00 ── サービス群 → AIエージェント中核 → シェア奪取</div>
+    </div>
+  </div>
+</header>
+
+<section id="snapshot">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>4社スナップショット</h2></div>
+    <p class="sec-sub">いずれもソフトウェアテスト／第三者検証を母体に、AI・自動化へ事業を伸ばしている。規模・垂直統合度・AIの作り込みで性格が分かれる。カード左帯は各社の識別色。</p>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<section id="positioning">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>ポジショニングマップ</h2></div>
+    <p class="sec-sub">横軸=垂直統合度（テスト特化↔コンサル〜開発まで一気通貫）、縦軸=AI・自動化の作り込み度、バブル径=事業規模（年間プロジェクト数の相対値）。右上ほど「AIで置き換えるべき牙城」であり、同時に「AIエージェントで直接戦う土俵」でもある。</p>
+    <div class="panel split">
+      <div><div id="posFig"></div></div>
+      <div class="readout">
+        <h4>読み取り</h4>
+        <ul>
+          <li><b>SHIFT</b>は規模・垂直統合の両方で突出。正面衝突より、その下請け構造（人手の実行工程）をAIで抜くのが効く。</li>
+          <li><b>AGEST</b>はAI最前面だが規模は中位。AIの土俵で品質・価格勝負が可能。</li>
+          <li><b>バルテス</b>は移行×自社ツール（T-DASH/PerfecTwin）が濠。<b>ベリサーブ</b>は独立系＋設計エージェントTESTRAで上流に寄せている。</li>
+          <li>4社とも<b>テスト実行の人手依存</b>が共通の弱点。ここがエージェントの突破口。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="coverage">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>サービスカバレッジ・ヒートマップ</h2></div>
+    <p class="sec-sub">サービスカテゴリ×4社の注力度（0=提供なし 〜 3=主力）。濃いセルほど各社が人員と売上を張っている領域＝AIエージェント化のリターンが大きい標的。</p>
+    <div class="panel">
+      <div style="overflow-x:auto"><table class="matrix" id="matrix"></table></div>
+      <div class="mx-legend">
+        <span>注力度</span>
+        <span><i class="sw" style="background:var(--surface-2);border:1px solid var(--line)"></i>0 なし</span>
+        <span><i class="sw" style="background:color-mix(in srgb,var(--signal) 26%,var(--surface))"></i>1 一部</span>
+        <span><i class="sw" style="background:color-mix(in srgb,var(--signal) 58%,var(--surface))"></i>2 注力</span>
+        <span><i class="sw" style="background:var(--signal)"></i>3 主力</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>サービス詳細比較</h2></div>
+    <p class="sec-sub">各社が公開する主要サービスの一覧。カードを開くとカテゴリ別に全サービスを確認できる。フィルタで領域を絞り込み、AI・自動化サービス（<span class="aichip" style="padding:1px 6px">AI/自動化</span>）を強調表示できる。</p>
+    <div class="filters" id="filters">
+      <button class="fbtn" data-f="all" aria-pressed="true">すべて</button>
+      <button class="fbtn" data-f="finance" aria-pressed="false">金融</button>
+      <button class="fbtn" data-f="enterprise" aria-pressed="false">エンプラ</button>
+      <button class="fbtn" data-f="ai" aria-pressed="false">AI・自動化のみ</button>
+    </div>
+    <div id="serviceBlocks"></div>
+  </div>
+</section>
+
+<section id="strategy">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>AIエージェント化 攻略戦略</h2></div>
+    <p class="sec-sub">品質保証バリューチェーンを6レイヤーに分解し、AIエージェントによる代替可能性（メーター）と、そのレイヤーが抱える人手工数シェアから攻略優先度を算定。代替可能性×人手工数が大きいレイヤーほど「奪える売上」が大きい。</p>
+    <div class="panel">
+      <div class="layers" id="layers"></div>
+      <p class="note" style="margin-top:20px"><b>結論：</b>4社に共通して人手工数が集中する<b>「テスト設計」と「テスト実行」</b>が最大の攻略ポイント。SHIFTのAIテストエージェント（実行80%短縮）やベリサーブTESTRAが示す通り、当事者自身がここをAI化しつつある＝市場が代替を受容し始めた今が参入の窓。仕様書起点で設計〜実行〜報告まで自律で回すエージェントを、<b>各社より安く・速く・第三者性を保って</b>提供できれば、下流の人月ビジネスから直接シェアを奪える。</p>
+    </div>
+    <div class="playbook">
+      <div class="pb"><div class="step">STEP 01</div><h4>実行レイヤーを抜く</h4><p>仕様書・画面から回帰／システムテストを自律生成・実行・自己修復するエージェント。4社が最も多くの人月を張る領域を、成果課金（不具合検出単価）で直撃する。</p><div class="tgt">標的: SHIFT／AGEST の人月実行、バルテスTPO</div></div>
+      <div class="pb"><div class="step">STEP 02</div><h4>設計＋報告を束ねる</h4><p>テスト観点DBと生成AIで設計を自動化し、進捗・エビデンス・品質レポートまで生成。TESTRA/TD/QualityTrackerが担う工程をワンパッケージで内製化不要にする。</p><div class="tgt">標的: 設計自動化ツール群・品質PMO</div></div>
+      <div class="pb"><div class="step">STEP 03</div><h4>第三者性をAIで担保</h4><p>「独立した検証」という各社の売り文句を、監査ログ付き・再現可能なAIエージェントで代替。金融・エンプラが要求する説明可能性とエビデンスを標準装備し、規制業種へ横展開する。</p><div class="tgt">標的: 金融/エンプラの第三者検証契約</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="appendix">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>付録：図版JSONプロンプト</h2></div>
+    <p class="sec-sub">本レポートの図版は、まず下記のJSONプロンプト（自然言語プロンプト＋SVG描画仕様）として定義し、その仕様からインラインSVGを生成している。外部の画像生成モデルに渡す場合は <span class="mono">image_prompt</span> を、自己完結の図として描く場合は <span class="mono">svg_spec</span> を用いる。全文は <span class="mono">figures/figures.json</span> を参照。</p>
+    <details class="jsonbox" open>
+      <summary><span class="k">{ } figures[0]</span> hero-concept ── ヒーロー概念図</summary>
+      <pre id="json0"></pre>
+    </details>
+    <details class="jsonbox" style="margin-top:12px">
+      <summary><span class="k">{ } figures[1]</span> positioning-map ── ポジショニングマップ</summary>
+      <pre id="json1"></pre>
+    </details>
+    <details class="jsonbox" style="margin-top:12px">
+      <summary><span class="k">{ } figures[3]</span> disruption-layers ── 攻略レイヤー</summary>
+      <pre id="json3"></pre>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fl">
+    <div>新規サービス検討 ／ 第三者検証4社 競合インテリジェンス ・ 作成 2026-07-13</div>
+    <div class="mono">SOURCE: 各社公式サイト公開情報より再構成（価格・提供時期は一次情報で要確認）</div>
+  </div>
+</footer>
+
+<script>
+/* ---------- data ---------- */
+const DOMAIN={finance:"金融",enterprise:"エンプラ",generic:"汎用",web_mobile:"Web/ﾓﾊﾞｲﾙ",game:"ゲーム",manufacturing:"製造"};
+const ICONS={
+  veriserve:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--cc)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.2-2.9 7.4-7 8.5C7.9 18.4 5 15.2 5 11V6l7-3z"/><path d="M9 11.5l2 2 4-4.2"/></svg>',
+  shift:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--cc)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 16.5l8 4 8-4"/></svg>',
+  agest:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--cc)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 4.3v9.4L12 21l-7.5-4.3V7.3L12 3z"/><circle cx="12" cy="12" r="2.4"/></svg>',
+  valtes:'<svg viewBox="0 0 24 24" fill="none" stroke="var(--cc)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><path d="M10.4 12l1.2 1.2 2.4-2.6"/></svg>'
+};
+const COMPANIES=[
+  {id:"veriserve",name:"ベリサーブ",legal:"株式会社ベリサーブ（SCSKグループ）",founded:1983,tag:"独立系・第三者性を軸に、設計エージェントTESTRAで上流のAI化を推進。",scale:"1,200社超",chips:["独立系","設立1983","SAP検証","脆弱性診断"],ai:["GIHOZ AI","TESTRA","mabl/Autify","Vex","WAIV2"],
+   focus:"金融・社会インフラ情報システム／ECに最適化。生保・損保系の業界知見とペネトレーション（基準登録）が強み。",
+   cats:[
+     {c:"品質向上（成果物品質）",s:[["ソフトウェア品質コンサルティング","計画・マネジメント〜ライフサイクル全体を上流から支援。","generic",0],["ソースコード静的解析","規約違反・潜在バグを検出報告。","generic",1],["OSSリスク管理 COD-OSS","OSSのライセンス/脆弱性リスクを検出。","enterprise",1],["トレーサビリティ管理 ConTrack","上位〜下位成果物の関連性を管理。","enterprise",1]]},
+     {c:"効率化／テスト自動化",s:[["テスト自動化ソリューション","AI自動テストツールの選定〜運用を一貫支援。","generic",1],["mabl","DevOps向けE2E/API/A11y自動化。自己修復。","web_mobile",1],["Autify NoCode","画面操作記録でノーコード自動テスト。","web_mobile",1]]},
+     {c:"テスト設計・支援ツール（AI）",s:[["テスト技法ツール GIHOZ","主要テスト技法をブラウザで使えるSaaS。","generic",1],["テスト設計エージェント TESTRA","人×AIで設計、将来は自動実行も（2026 PoC）。","generic",1]]},
+     {c:"検証支援（業務／SAP）",s:[["SAPシステム検証","SAP ERP/S4HANAの不具合解析と品質評価。","enterprise",0],["SAP自動化支援","SAP向けテスト自動化・回帰効率化。","enterprise",1]]},
+     {c:"分野特化：金融/エンプラ",s:[["ITサービス・Web・パッケージ検証","金融・社会インフラ情報システム/ECの第三者検証。","finance",0],["クラウドテスティング","240万台超の実機とクラウドテスターで多環境検証。","generic",1]]},
+     {c:"非機能テスト",s:[["負荷検証・性能テスト","ミッションクリティカル系の性能・非機能テスト。","finance",0]]},
+     {c:"セキュリティ",s:[["Webアプリ脆弱性診断","多角的診断・疑似攻撃で脆弱性検出（Vex）。","finance",1],["ネットワーク脆弱性診断","OS/ミドルの潜在脆弱性を検出。","enterprise",1],["ペネトレーションテスト","侵入可否を検証、Red Teaming等も。","finance",0],["セキュリティコンサル","診断結果を踏まえた対策支援。","generic",0]]},
+     {c:"UI/UX・アクセシビリティ",s:[["UX・ユーザビリティ検証","体系化手法で使いやすさを向上。","generic",0],["A11y評価ツール WAIV2","対応度を点数化、WCAG一部を自動評価。","generic",1]]}
+   ]},
+  {id:"shift",name:"SHIFT",legal:"株式会社SHIFT",founded:2005,tag:"標準化・仕組み化で高品質・低価格・安定供給。国内最大手。",scale:"年間約4,000PJ",chips:["国内最大手","設立2005","DX認定","品質PMO"],ai:["AIテストエージェント(実行80%短縮)","TD","CAT","生成AIｾｷｭﾘﾃｨ診断"],
+   focus:"金融基幹システムを主力に、品質コンサル/PMO・大規模負荷・脆弱性診断まで一気通貫。属人性を排除する仕組み化が濠。",
+   cats:[
+     {c:"ソフトウェアテスト・第三者検証",s:[["ソフトウェアテスト・第三者検証","標準化手法で設計〜実行。基幹に強い。","enterprise",1],["アジャイルQA","スプリント単位で品質を継続最適化。","generic",1],["品質コンサル／品質PMO","品質規範・プロセスを組織に定着。","enterprise",1],["テスト自動化サービス","自動化の設計・実装・運用を支援。","generic",1],["多端末テスト","6,600台超の実機で網羅検証。","web_mobile",1],["AI特化型品質保証","AI特有の非決定性に独自観点で対応。","generic",1],["負荷テスト","性能問題を原因分析〜実装まで。","finance",1],["探索的テスト","設計書に依らず素早く不具合検出。","generic",1],["ゲームテスト・QA","全工程QA＋不適切表示対策 SHIFT ALERT。","game",1]]},
+     {c:"AIソリューション",s:[["AIテストエージェント","仕様書起点で設計・実行を24/365自律、実行80%短縮。","enterprise",1],["AIテスト設計自動化 TD","1億件超の実ケースを学習し設計自動生成。","generic",1],["統合テスト管理 CAT","計画・実行・結果を一元管理するSaaS。","generic",1],["生成AIセキュリティ診断","LLM攻撃・学習データ汚染を診断。","generic",1]]},
+     {c:"セキュリティ",s:[["脆弱性診断","スキルを標準化、250名超が最短1営業日で可視化。","finance",1],["クラウド診断","クラウド設定不備・脆弱性を診断。","generic",0],["SOC運用支援","セキュリティ監視の運用を支援。","enterprise",0]]},
+     {c:"DX＆開発",s:[["DXサービス開発（DAAE）","独自コンセプトで売れるサービスづくり。","enterprise",0],["アジャイル開発支援 1LINE","内製化体制構築とPJ推進を支援。","enterprise",0],["DX＆マーケティング","企画〜開発・運用・マーケを一気通貫。","enterprise",0]]},
+     {c:"UI/UX・カスタマーサクセス",s:[["UX×クリエイティブ開発","課題抽出〜デザイン・開発でUX最大化。","generic",0],["アクセシビリティ検証","専門家がWCAG準拠を検証。","generic",0],["Salesforce運用支援","CRM運用・改善を伴走支援。","enterprise",0]]}
+   ]},
+  {id:"agest",name:"AGEST",legal:"株式会社AGEST（デジタルハーツHD系）",founded:2021,tag:"AI-Powered QA／QAOpsを掲げAIを最前面に。ISTQB最上位。",scale:"年間約2,500PJ",chips:["ISTQB Global","設立2021","9拠点","29119準拠"],ai:["AIユーザークローン","AIデバッグ","AIコードレビュー","QA for AI駆動開発"],
+   focus:"汎用第三者検証を軸に金融・保険へ明示対応。有資格者360名超・人材8,000名超。AI活用の打ち出しが最も強い。",
+   cats:[
+     {c:"ソフトウェアテスト・第三者検証",s:[["ソフトウェアテスト・第三者検証","29119ベースで客観的にテスト設計・実行を代行。","enterprise",1],["AGEST式探索的テスト","経験ベース技法でリリース前に欠陥検出。","generic",0],["性能テスト（負荷）","定量的エビデンスに基づく性能テスト。","finance",1],["UI/UX向上支援","ユーザーテスト・評価でUI/UX改善。","generic",0],["ドキュメントインスペクション","上流ドキュメントをレビューし早期検出。","generic",0],["フィールドテスト","実機6,000台超で実利用環境を検証。","web_mobile",0],["DevOps/アジャイルテスト支援","継続的品質改善（自動化・非機能）。","generic",1]]},
+     {c:"テスト自動化",s:[["TestArchitect / TA for Series","LogiGear製、7領域へ拡張したツール。","generic",1],["mabl","ローコードUI・CI/CD統合・負荷・A11y。","generic",1],["Autify","ノーコードでシナリオ作成、自動保守。","generic",1],["自動化導入・推進支援","計画〜実装・継続改善を支援。","generic",1]]},
+     {c:"AI品質保証（AI-Powered QA）",s:[["QA for AI駆動開発","AI駆動開発の全工程を要件〜運用まで保証。","generic",1],["AIアシスト：AIデバッグ","テスト×AIで欠陥検出・デバッグを高度化。","generic",1],["AIアシスト：AIコードレビュー","AIでソースコードをレビュー。","generic",1],["医療AI等の第三者検証","AIモデルの品質保証体制を第三者支援。","generic",1]]},
+     {c:"セキュリティ",s:[["サイバーセキュリティ診断","OWASP準拠、攻撃者視点の手動診断。","finance",1],["Web/スマホアプリ診断","各種基盤のアプリ診断。","finance",1],["ペネトレーション（脅威/シナリオ）","組合せリスク・設定不備を評価。","enterprise",0],["EDR監視（DH-SOC）","監視・脅威除去・ハンティングを一貫。","generic",1]]},
+     {c:"QA for Dev／コンサル・開発",s:[["QA for Development","開発×検証人材が上流から品質保証。","generic",1],["QAコンサルティング","ODC分析等で真因特定し改善支援。","enterprise",0],["DX内製化支援","設計＋QAで内製化を立上げ〜運用。","enterprise",1],["インテグレーション/システム開発","DX・クラウド・SAPと連携した開発。","enterprise",1]]}
+   ]},
+  {id:"valtes",name:"バルテス",legal:"バルテス株式会社",founded:2004,tag:"独自手法QUINTEE＋自社ツール群。移行×自動化が濠。",scale:"年間7,000PJ超",chips:["ISTQB日本初","設立2004","QUINTEE","移行に強い"],ai:["AI Quality","T-DASH","QualityTracker","PerfecTwin"],
+   focus:"金融・保険/業務システムの業界別展開。大規模移行でQMO＋T-DASH＋QualityTracker＋PerfecTwinを束ねる点が最大の差別化。",
+   cats:[
+     {c:"テスト・検証（コア）",s:[["ソフトウェアテスト／第三者検証","Test Early,Test Oftenで上流レビュー、QUINTEEで最適化。","enterprise",1],["テストプロセスアウトソーシング(TPO)","テスト業務一式を継続受託。","enterprise",1],["パフォーマンステスト","実運用負荷をシミュレーションし報告。","finance",1],["テスト自動化支援","キーワード/データ駆動を専任構築。","generic",1],["マイグレーション品質向上支援","移行でQMO＋自社ツール群を組合せ。","finance",1],["アジャイル開発テスト支援","継続的テスト・品質支援。","generic",1]]},
+     {c:"品質コンサル・品質管理",s:[["品質コンサル／QMO","QMOが参画し品質活動を推進。","finance",0],["品質プロジェクト診断","品質状況を診断し改善提案。","generic",0],["QUINTEE","体系化した独自テストアプローチ手法。","generic",0]]},
+     {c:"セキュリティ／アクセシビリティ",s:[["セキュリティ・脆弱性診断","ツール＋手動で網羅、2,000件超実績。","finance",1],["Webアクセシビリティ診断","『合理的配慮』対応の診断・改善。","enterprise",0]]},
+     {c:"AI関連",s:[["AI Quality","AI製品を上流〜下流で品質確保、独自ﾁｪｯｸﾘｽﾄ。","generic",1],["AI搭載製品のテスト・検証","非決定性を踏まえたAI製品検証。","generic",1],["ローコード品質向上支援","ローコード内製開発の品質を支援。","enterprise",1]]},
+     {c:"QAプラットフォーム・製品",s:[["T-DASH","日本語で書きそのまま実行するローコード自動化。","generic",1],["QualityTracker","EVM採用のクラウドテスト管理、工数約30%減。","enterprise",1],["PerfecTwin","現新並行実行で差異を自動検出、SAP移行対応。","finance",1]]},
+     {c:"教育・人材育成",s:[["品質教育支援／セミナー","基礎〜品質戦略・テスター養成の教育。","generic",0]]}
+   ]}
+];
+
+/* ---------- render company cards ---------- */
+const cards=document.getElementById('cards');
+cards.innerHTML=COMPANIES.map(c=>`
+  <article class="card" style="--cc:var(--c-${c.id})">
+    <div class="top">
+      <span class="icon" style="--cc:var(--c-${c.id})">${ICONS[c.id]}</span>
+      <div><h3>${c.name}</h3><div class="legal">${c.legal}</div></div>
+    </div>
+    <div class="tag">${c.tag}</div>
+    <div class="meta"><span class="chip cc">${c.scale}</span>${c.chips.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+    <div class="focus"><b style="color:var(--cc)">非製造領域の強み ▸ </b>${c.focus}</div>
+    <div class="ai-row">${c.ai.map(a=>`<span class="ai-pill">${a}</span>`).join('')}</div>
+  </article>`).join('');
+
+/* ---------- coverage matrix ---------- */
+const MROWS=["テスト設計・実行","テスト自動化","AI品質保証","セキュリティ診断","性能・非機能","品質ｺﾝｻﾙ/PMO","自社ツール/製品","DX・開発内製化","UI/UX・A11y","教育・人材"];
+const MCOLS=["veriserve","shift","agest","valtes"];
+const MNAME={veriserve:"ベリサーブ",shift:"SHIFT",agest:"AGEST",valtes:"バルテス"};
+const MX=[
+ [3,3,3,3],[3,3,3,3],[2,3,3,2],[3,3,3,2],[2,3,2,2],[2,3,2,3],[3,3,2,3],[1,3,2,1],[2,2,1,1],[0,1,1,2]
+];
+let mh=`<thead><tr><th></th>${MCOLS.map(id=>`<th style="color:var(--c-${id})"><span class="ic" style="background:var(--c-${id})"></span><br>${MNAME[id]}</th>`).join('')}</tr></thead><tbody>`;
+MROWS.forEach((r,i)=>{
+  mh+=`<tr><th>${r}</th>${MX[i].map(v=>`<td><div class="cell" data-v="${v}">${v||''}</div></td>`).join('')}</tr>`;
+});
+mh+='</tbody>';
+document.getElementById('matrix').innerHTML=mh;
+
+/* ---------- service blocks ---------- */
+const sb=document.getElementById('serviceBlocks');
+sb.innerHTML=COMPANIES.map((c,i)=>{
+  const total=c.cats.reduce((n,x)=>n+x.s.length,0);
+  const cats=c.cats.map(cat=>`
+    <div class="svc-cat" style="--cc:var(--c-${c.id})"><h4>${cat.c}</h4>
+      ${cat.s.map(s=>`<div class="svc" data-domain="${s[2]}" data-ai="${s[3]}">
+        <div class="nm">${s[0]}</div>
+        <div class="ds">${s[1]}</div>
+        <div class="badges"><span class="dchip ${s[2]}">${DOMAIN[s[2]]}</span>${s[3]?'<span class="aichip">AI/自動化</span>':''}</div>
+      </div>`).join('')}
+    </div>`).join('');
+  return `<details class="co-block" style="--cc:var(--c-${c.id})" ${i===0?'open':''}>
+    <summary><span class="icon" style="--cc:var(--c-${c.id})">${ICONS[c.id]}</span>
+      <h3>${c.name}</h3><span class="cnt">${total} サービス</span>
+      <svg class="caret" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>
+    </summary>${cats}</details>`;
+}).join('');
+
+/* ---------- filters ---------- */
+const filters=document.getElementById('filters');
+filters.addEventListener('click',e=>{
+  const b=e.target.closest('.fbtn'); if(!b)return;
+  [...filters.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+  const f=b.dataset.f;
+  document.querySelectorAll('.svc').forEach(s=>{
+    let show=true;
+    if(f==='ai') show=s.dataset.ai==='1';
+    else if(f!=='all') show=s.dataset.domain===f;
+    s.classList.toggle('hidden',!show);
+  });
+  // auto-open blocks with visible items
+  document.querySelectorAll('.co-block').forEach(bl=>{
+    const any=[...bl.querySelectorAll('.svc')].some(s=>!s.classList.contains('hidden'));
+    if(f!=='all'&&any)bl.open=true;
+  });
+});
+
+/* ---------- strategy layers ---------- */
+const LAYERS=[
+ {n:"要件・仕様レビュー",sub:"upstream review",r:.70,pr:2},
+ {n:"テスト設計",sub:"test design",r:.90,pr:3},
+ {n:"テスト実行",sub:"test execution",r:.95,pr:3},
+ {n:"自動化構築・保守",sub:"automation",r:.80,pr:2},
+ {n:"セキュリティ診断",sub:"security",r:.55,pr:1},
+ {n:"報告・進捗/PMO",sub:"reporting / PMO",r:.75,pr:2}
+];
+const PL={3:["p3","最優先"],2:["p2","高"],1:["p1","中"]};
+document.getElementById('layers').innerHTML=LAYERS.map(l=>`
+  <div class="layer ${l.pr===3?'hot':''}">
+    <div class="lname">${l.n}<small>${l.sub}</small></div>
+    <div class="meter" title="代替可能性 ${Math.round(l.r*100)}%"><span style="width:${l.r*100}%"></span></div>
+    <div class="prio ${PL[l.pr][0]}">${PL[l.pr][1]}</div>
+  </div>`).join('');
+
+/* ---------- hero SVG (generated from figures.json svg_spec) ---------- */
+document.getElementById('heroFig').innerHTML=heroSVG();
+function heroSVG(){
+  const cc=['--c-veriserve','--c-shift','--c-agest','--c-valtes'];
+  const svcs=['テスト設計','テスト実行','自動化','ｾｷｭﾘﾃｨ','品質ｺﾝｻﾙ','非機能'];
+  let tiles='',lines='';
+  svcs.forEach((s,i)=>{
+    const y=40+i*62, col=`var(${cc[i%4]})`;
+    tiles+=`<g><rect x="14" y="${y}" width="150" height="46" rx="9" fill="var(--surface-2)" stroke="${col}" stroke-opacity=".5"/>
+      <rect x="14" y="${y}" width="4" height="46" rx="2" fill="${col}"/>
+      <text x="30" y="${y+28}" font-family="var(--jp)" font-size="14" fill="var(--ink)">${s}</text></g>`;
+    lines+=`<path d="M164 ${y+23} C 250 ${y+23}, 300 230, 452 230" fill="none" stroke="var(--signal)" stroke-width="1.2" stroke-opacity=".55" stroke-dasharray="4 5"><animate attributeName="stroke-dashoffset" from="18" to="0" dur="1.1s" repeatCount="indefinite"/></path>`;
+  });
+  // hexagon core
+  const cx=548,cy=230,r=78;
+  let hx='';for(let k=0;k<6;k++){const a=Math.PI/180*(60*k-90);hx+=(k?'L':'M')+(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)+' ';}hx+='Z';
+  const rings=[112,150].map((rr,i)=>`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="var(--signal)" stroke-opacity="${.28-i*.12}" stroke-width="1"/>`).join('');
+  // share wedge
+  const wx=760,wy=230;
+  const wedge=`<g transform="translate(${wx},${wy})">
+    <circle r="70" fill="none" stroke="var(--line-strong)" stroke-width="14"/>
+    <circle r="70" fill="none" stroke="var(--signal)" stroke-width="14" stroke-linecap="round"
+      stroke-dasharray="${(2*Math.PI*70*.62).toFixed(0)} ${(2*Math.PI*70).toFixed(0)}" transform="rotate(-90)"/>
+    <text y="-2" text-anchor="middle" font-family="var(--mono)" font-size="26" font-weight="600" fill="var(--signal)">62%</text>
+    <text y="18" text-anchor="middle" font-family="var(--jp)" font-size="12" fill="var(--muted)">奪取余地</text></g>`;
+  return `<svg viewBox="0 0 860 460" role="img" aria-label="サービス群がAIエージェント中核に集約されシェアを奪取する概念図">
+    <text x="14" y="24" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--muted)">4社の検証サービス</text>
+    ${lines}${tiles}
+    ${rings}
+    <path d="${hx}" fill="var(--glow)" stroke="var(--signal)" stroke-width="1.6"/>
+    <path d="${hx}" fill="none" stroke="var(--signal)" stroke-width="1" transform="scale(.72)" transform-origin="${cx} ${cy}" opacity=".6"/>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="var(--jp)" font-size="15" font-weight="700" fill="var(--signal-ink)">AI</text>
+    <text x="${cx}" y="${cy+15}" text-anchor="middle" font-family="var(--jp)" font-size="13" font-weight="700" fill="var(--signal-ink)">エージェント</text>
+    <path d="M626 230 L 690 230" stroke="var(--signal)" stroke-width="1.5" marker-end="url(#ah)"/>
+    <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9z" fill="var(--signal)"/></marker></defs>
+    ${wedge}
+  </svg>`;
+}
+
+/* ---------- positioning SVG ---------- */
+document.getElementById('posFig').innerHTML=posSVG();
+function posSVG(){
+  const W=680,H=520,pad=64;
+  const X=v=>pad+v*(W-pad*2), Y=v=>H-pad-v*(H-pad*2-30);
+  const pts=[
+    {id:"shift",n:"SHIFT",x:.90,y:.80,r:44},
+    {id:"agest",n:"AGEST",x:.70,y:.95,r:32},
+    {id:"valtes",n:"バルテス",x:.62,y:.60,r:36},
+    {id:"veriserve",n:"ベリサーブ",x:.55,y:.72,r:34}
+  ];
+  let grid='';
+  for(let i=0;i<=4;i++){const gx=pad+i*(W-pad*2)/4;grid+=`<line x1="${gx}" y1="${pad-14}" x2="${gx}" y2="${H-pad}" stroke="var(--line)" stroke-width="1"/>`;
+    const gy=(H-pad)-i*(H-pad-(pad-14))/4;grid+=`<line x1="${pad}" y1="${gy}" x2="${W-pad}" y2="${gy}" stroke="var(--line)" stroke-width="1"/>`;}
+  // quadrant crosshair
+  const mx=X(.5),my=Y(.5);
+  const quad=`<line x1="${mx}" y1="${pad-14}" x2="${mx}" y2="${H-pad}" stroke="var(--signal)" stroke-opacity=".35" stroke-dasharray="5 5"/>
+    <line x1="${pad}" y1="${my}" x2="${W-pad}" y2="${my}" stroke="var(--signal)" stroke-opacity=".35" stroke-dasharray="5 5"/>`;
+  const ql=[["職人型ニッチ",pad+8,my-10,"start"],["AIツール特化",pad+8,pad+2,"start"],["総合ベンダー",W-pad-8,my-10,"end"],["AI総合ﾌﾟﾗｯﾄﾌｫｰﾑ",W-pad-8,pad+2,"end"]]
+    .map(q=>`<text x="${q[1]}" y="${q[2]}" text-anchor="${q[3]}" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" opacity=".85">${q[0]}</text>`).join('');
+  const bubbles=pts.map(p=>{
+    const cx=X(p.x),cy=Y(p.y),col=`var(--c-${p.id})`;
+    return `<g><circle cx="${cx}" cy="${cy}" r="${p.r}" fill="${col}" fill-opacity=".16" stroke="${col}" stroke-width="1.6"/>
+      <circle cx="${cx}" cy="${cy}" r="4" fill="${col}"/>
+      <text x="${cx}" y="${cy-p.r-8}" text-anchor="middle" font-family="var(--jp)" font-size="13" font-weight="700" fill="${col}">${p.n}</text></g>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="4社のポジショニングマップ">
+    ${grid}${quad}${ql}${bubbles}
+    <text x="${(pad+W-pad)/2}" y="${H-18}" text-anchor="middle" font-family="var(--jp)" font-size="12" fill="var(--ink-soft)">垂直統合度 →（テスト特化 ／ 一気通貫）</text>
+    <text transform="translate(20,${H/2}) rotate(-90)" text-anchor="middle" font-family="var(--jp)" font-size="12" fill="var(--ink-soft)">AI・自動化の作り込み度 →</text>
+  </svg>`;
+}
+
+/* ---------- appendix json pretty ---------- */
+const FIG={
+ 0:{id:"hero-concept",role:"ヒーロー概念図：サービス群→AIエージェント→シェア奪取",image_prompt:{style:"precision blueprint, dark ink-navy, cyan signal, flat vector",mood:"strategic, clinical, quietly aggressive",palette:["#0a1220","#06b6d4","#2563eb","#16a34a","#e11d48","#7c3aed"]},svg_spec:{agent_core:{shape:"hexagon",label:"AIエージェント",rings:3},share_wedge:{captured:0.62}}},
+ 1:{id:"positioning-map",role:"垂直統合度 × AI/自動化度（バブル=規模）",x_axis:"テスト特化 ↔ 一気通貫",y_axis:"人手中心 ↔ AI主導",points:[{name:"SHIFT",x:0.90,y:0.80},{name:"AGEST",x:0.70,y:0.95},{name:"バルテス",x:0.62,y:0.60},{name:"ベリサーブ",x:0.55,y:0.72}]},
+ 3:{id:"disruption-layers",role:"QAバリューチェーンの代替可能性と攻略優先度",layers:LAYERS.map(l=>({name:l.n,replaceability:l.r,priority:PL[l.pr][1]})),note:"replaceability×人手工数が大きい『テスト設計』『テスト実行』が最大の攻略ポイント"}
+};
+function pj(o){return JSON.stringify(o,null,2)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/"(#[0-9a-f]{6})"/gi,'"<span class=p>$1</span>"')
+  .replace(/: "(.*?)"/g,': "<span class=s>$1</span>"');}
+[0,1,3].forEach(i=>{document.getElementById('json'+i).innerHTML=pj(FIG[i]);});
+
+/* ---------- theme toggle ---------- */
+const root=document.documentElement, tt=document.getElementById('tt');
+tt.addEventListener('click',()=>{
+  const cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  const nx=cur==='dark'?'light':'dark';
+  root.setAttribute('data-theme',nx);
+  document.getElementById('heroFig').innerHTML=heroSVG();
+  document.getElementById('posFig').innerHTML=posSVG();
+});
+</script>

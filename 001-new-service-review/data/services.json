@@ -1,0 +1,216 @@
+{
+  "meta": {
+    "title": "第三者検証4社 サービスリスト・比較データ",
+    "purpose": "エンプラ／金融など非製造領域の第三者検証会社のサービスを棚卸しし、AIエージェント化によるシェア奪取の対象を特定する",
+    "collected_at": "2026-07-13",
+    "source_note": "各社公式サイト（veriserve.co.jp / shiftinc.jp / agest.co.jp / valtes.co.jp）は調査環境のegressポリシーにより直接取得が一部遮断されたため、公式ページの検索インデックス要約と公開情報から再構成。価格・提供時期など細部は一次情報で要確認。",
+    "domain_legend": {
+      "enterprise": "業務・基幹システム（非製造）",
+      "finance": "金融・保険（非製造）",
+      "generic": "汎用（業界横断）",
+      "manufacturing": "組込み・製造・IoT",
+      "web_mobile": "Web／モバイル／アプリ",
+      "game": "ゲーム・エンタメ"
+    }
+  },
+  "companies": [
+    {
+      "id": "veriserve",
+      "name": "ベリサーブ",
+      "legal": "株式会社ベリサーブ（VeriServe／SCSKグループ）",
+      "url": "https://www.veriserve.co.jp",
+      "color": "#2563eb",
+      "founded": 1983,
+      "tagline": "ソフトウェア品質を創造する／AIで未来の品質を創る",
+      "scale": { "clients": "1,200社超", "note": "独立系・第三者性を訴求" },
+      "positioning": { "vertical_integration": 0.55, "ai_automation": 0.72, "scale_index": 0.7 },
+      "enterprise_finance_focus": "『ITサービス・Web・パッケージ』領域として金融・社会インフラ情報システム、EC等に最適化。生保・損保系の業界知見を持つエンジニアが在籍。SAP検証、脆弱性診断・ペネトレーション（情報セキュリティサービス基準登録）、非機能テスト、mabl/Autify自動化をワンストップ提供。独立系の中立性が差別化。",
+      "ai_signature": ["GIHOZ AI（仕様書→デシジョンテーブル自動生成）", "TESTRA（生成AI×MBTのテスト設計エージェント／2026PoC→秋にクラウド版で自動実行）", "mabl / Autify NoCode（AI自動テスト）", "WAIV2（アクセシビリティ自動評価）", "Vex（脆弱性診断ツール）"],
+      "categories": [
+        { "category": "品質向上（成果物品質）", "services": [
+          { "name": "ソフトウェア品質コンサルティング", "description": "テスト計画・マネジメント、テストライフサイクル全体のモニタリング等を上流から支援。", "domain": "generic", "ai": "コンサル主体（AI/自動化と併用）" },
+          { "name": "ソースコード静的解析", "description": "静的解析ツールで規約違反・潜在バグ・品質リスクを検出報告。", "domain": "generic", "ai": "静的解析ツール自動検査" },
+          { "name": "OSSリスク管理（COD-OSS）", "description": "OSS検査ツールでライセンス/脆弱性リスクを洗い出し。", "domain": "enterprise", "ai": "OSS検査ツール自動スキャン" },
+          { "name": "トレーサビリティ管理ツール ConTrack", "description": "上位〜下位成果物の関連性を定義しトレーサビリティを管理。", "domain": "enterprise", "ai": "成果物間関連の可視化" }
+        ]},
+        { "category": "効率化／テスト自動化", "services": [
+          { "name": "テスト自動化ソリューション", "description": "AI自動テストツールの選定・導入・運用を一貫支援。", "domain": "generic", "ai": "mabl / Autify NoCode / MagicPod" },
+          { "name": "mabl（ローコード自動化）", "description": "DevOps向けE2E/API/アクセシビリティ自動化。", "domain": "web_mobile", "ai": "AI自己修復・自動メンテナンス" },
+          { "name": "Autify NoCode", "description": "画面操作記録でノーコード自動テスト作成。", "domain": "web_mobile", "ai": "AIメンテナンス自動化" }
+        ]},
+        { "category": "テスト設計・支援ツール（AI含む）", "services": [
+          { "name": "テスト技法ツール GIHOZ", "description": "ペアワイズ/デシジョンテーブル/状態遷移をブラウザで使えるSaaS。", "domain": "generic", "ai": "GIHOZ AI：仕様書からデシジョンテーブル自動生成" },
+          { "name": "テスト設計エージェント TESTRA", "description": "人×AIでテスト分析・設計を支援。将来は自動実行も提供予定。", "domain": "generic", "ai": "生成AI＋テスト観点DB＋MBT（2026PoC）" }
+        ]},
+        { "category": "検証支援（業務システム／SAP）", "services": [
+          { "name": "SAPシステム検証", "description": "SAP ERP／S/4HANA向けに不具合解析と品質評価を支援。", "domain": "enterprise", "ai": "第三者検証主体＋自動化併用" },
+          { "name": "SAPシステム自動化支援", "description": "SAP向けテスト自動化の導入・回帰効率化。", "domain": "enterprise", "ai": "SAP向け自動化ツール" }
+        ]},
+        { "category": "分野特化：ITサービス・Web・パッケージ（金融/エンプラ）", "services": [
+          { "name": "ITサービス・Web・パッケージ検証", "description": "金融・社会インフラ情報システム、EC、業務アプリ、パッケージの第三者検証。", "domain": "finance", "ai": "自動化・脆弱性診断を組合せ" },
+          { "name": "クラウドテスティング", "description": "世界200超地域・240万台超の実機とクラウドテスターで多様環境検証。", "domain": "generic", "ai": "クラウドソーシング型" }
+        ]},
+        { "category": "非機能テスト（性能・負荷）", "services": [
+          { "name": "負荷検証・性能テスト", "description": "ミッションクリティカル系の性能・非機能テスト。", "domain": "finance", "ai": "負荷ツール活用" }
+        ]},
+        { "category": "セキュリティ", "services": [
+          { "name": "Webアプリ脆弱性診断", "description": "多角的診断・疑似攻撃で脆弱性検出。", "domain": "finance", "ai": "診断ツール＋Vex＋専門家" },
+          { "name": "ネットワーク脆弱性診断", "description": "疑似攻撃でOS/ミドルの潜在脆弱性を検出。", "domain": "enterprise", "ai": "診断ツール活用" },
+          { "name": "ペネトレーションテスト", "description": "疑似攻撃で侵入可否を検証。Red Teaming等も提供。", "domain": "finance", "ai": "専門家主体（手動）" },
+          { "name": "セキュリティコンサルティング", "description": "診断結果を踏まえた対策支援。", "domain": "generic", "ai": "コンサル主体" }
+        ]},
+        { "category": "UI/UX・アクセシビリティ", "services": [
+          { "name": "UX・ユーザビリティ検証", "description": "利用環境を体系化手法で検証し使いやすさを向上。", "domain": "generic", "ai": "評価手法主体" },
+          { "name": "アクセシビリティ評価ツール WAIV2", "description": "対応度を点数化しWCAG2.1/2.2の一部を自動評価。", "domain": "generic", "ai": "自動評価ツール" }
+        ]}
+      ]
+    },
+    {
+      "id": "shift",
+      "name": "SHIFT",
+      "legal": "株式会社SHIFT",
+      "url": "https://www.shiftinc.jp",
+      "color": "#16a34a",
+      "founded": 2005,
+      "tagline": "ソフトウェアテストの標準化・仕組み化で高品質・低価格・安定供給",
+      "scale": { "clients": "年間約4,000プロジェクト", "note": "国内最大手・DX認定事業者" },
+      "positioning": { "vertical_integration": 0.9, "ai_automation": 0.8, "scale_index": 1.0 },
+      "enterprise_finance_focus": "金融基幹システムをはじめエンタープライズ第三者検証が主力。品質コンサル/品質PMO、大規模負荷テスト、脆弱性診断まで一気通貫。テストの標準化・仕組み化で属人性を排除。子会社SECが上流コンサルを担当。",
+      "ai_signature": ["AIテストエージェント（2026/2提供開始・実行期間最大80%短縮・24時間自律稼働・最大10並列）", "TD（AIテスト設計自動化・1億件超のケースを学習）", "CAT（統合テスト管理・AI学習基盤）", "生成AIセキュリティ診断（LLM攻撃・学習データ汚染）"],
+      "categories": [
+        { "category": "ソフトウェアテスト・第三者検証", "services": [
+          { "name": "ソフトウェアテスト・第三者検証", "description": "標準化手法でテスト設計〜実行を第三者提供。基幹システムに強い。", "domain": "enterprise", "ai": "設計自動化ツールTDにAI実装" },
+          { "name": "アジャイルQA", "description": "スプリント単位で品質保証を組込み継続的に最適化。", "domain": "generic", "ai": "テスト自動化と組合せ" },
+          { "name": "品質コンサル／品質PMO", "description": "品質規範・プロセスを策定し組織全体で品質マネジメントを定着。", "domain": "enterprise", "ai": "一部AI診断" },
+          { "name": "テスト自動化サービス", "description": "自動化の導入設計・実装・運用を支援。", "domain": "generic", "ai": "AIテストエージェント/CAT連携" },
+          { "name": "多端末テスト", "description": "6,600台超の実機で多様環境を網羅検証。", "domain": "web_mobile", "ai": "実機＋自動化併用" },
+          { "name": "AI特化型品質保証", "description": "AI特有の非決定性に独自『AIテスト標準観点』で対応。", "domain": "generic", "ai": "AI品質保証フレームワーク" },
+          { "name": "負荷テスト", "description": "性能問題を原因分析から解決策実装まで支援。", "domain": "finance", "ai": "クラウド負荷生成器" },
+          { "name": "アドホック（探索的）テスト", "description": "設計書に依らず素早く不具合検出。", "domain": "generic", "ai": "過去不具合データ活用" },
+          { "name": "ゲームテスト・品質保証", "description": "全工程の品質保証＋不適切表示対策SHIFT ALERT。", "domain": "game", "ai": "SHIFT ALERT等ツール" }
+        ]},
+        { "category": "AIソリューション", "services": [
+          { "name": "AIテストエージェント", "description": "仕様書起点でテスト設計・実行を24時間365日自律稼働、実行期間最大80%短縮。", "domain": "enterprise", "ai": "中核がAI・最大10並列・CATへ蓄積し自律進化" },
+          { "name": "AIテスト設計自動化 TD", "description": "1億1,451万件超の実ケースを学習しテスト設計を自動生成。", "domain": "generic", "ai": "AIテスト設計自動生成" },
+          { "name": "統合テスト管理 CAT", "description": "計画・実行・結果を一元管理するSaaS。", "domain": "generic", "ai": "AIエージェントの学習基盤" },
+          { "name": "生成AIセキュリティ診断", "description": "LLM攻撃・学習データ汚染など生成AI特有リスクを診断。", "domain": "generic", "ai": "生成AI/LLM対象診断" }
+        ]},
+        { "category": "セキュリティ（SHIFT SECURITY）", "services": [
+          { "name": "脆弱性診断", "description": "ホワイトハッカーのスキルを標準化・仕組み化、250名超が最短1営業日で可視化。", "domain": "finance", "ai": "プロセス標準化・仕組み化" },
+          { "name": "クラウド診断", "description": "クラウド環境の設定不備・脆弱性を診断。", "domain": "generic", "ai": "-" },
+          { "name": "SOC運用支援", "description": "セキュリティ監視の運用を支援。", "domain": "enterprise", "ai": "-" }
+        ]},
+        { "category": "DX＆開発", "services": [
+          { "name": "DXサービス開発（DAAE）", "description": "独自コンセプトDAAEで『売れるサービスづくり』を実現。", "domain": "enterprise", "ai": "-" },
+          { "name": "アジャイル開発支援 SHIFT 1LINE", "description": "内製化体制構築とプロジェクト推進を支援。", "domain": "enterprise", "ai": "-" },
+          { "name": "DX＆マーケティング", "description": "企画〜開発・運用・マーケまで一気通貫。", "domain": "enterprise", "ai": "データ活用" }
+        ]},
+        { "category": "UI/UX", "services": [
+          { "name": "UX×クリエイティブ開発", "description": "課題抽出〜デザイン・開発までUXを最大化。", "domain": "generic", "ai": "-" },
+          { "name": "アクセシビリティ検証", "description": "専門家がWCAG等準拠を検証。", "domain": "generic", "ai": "-" }
+        ]},
+        { "category": "カスタマーサクセス", "services": [
+          { "name": "ITヘルプデスク／運用保守", "description": "運用サポートと改善提案。", "domain": "enterprise", "ai": "-" },
+          { "name": "Salesforce運用支援", "description": "CRM運用・改善を伴走支援。", "domain": "enterprise", "ai": "-" }
+        ]}
+      ]
+    },
+    {
+      "id": "agest",
+      "name": "AGEST",
+      "legal": "株式会社AGEST（デジタルハーツHD系）",
+      "url": "https://agest.co.jp",
+      "color": "#e11d48",
+      "founded": 2021,
+      "tagline": "先端技術で品質課題と向き合う／AI-Powered QA・QAOps",
+      "scale": { "clients": "年間約2,500プロジェクト", "note": "ISTQB最上位Global Partner・国内9拠点" },
+      "positioning": { "vertical_integration": 0.7, "ai_automation": 0.95, "scale_index": 0.65 },
+      "enterprise_finance_focus": "汎用第三者検証が強みだが金融・保険を含むエンプラに明示対応。ISO/IEC/IEEE 29119準拠、有資格者360名超・テスト人材8,000名超。性能/負荷、脆弱性診断・ペネトレーション、SAP/クラウド統合、QAコンサル、DX内製化まで一気通貫。",
+      "ai_signature": ["AIユーザークローン（早大・鷲崎研共同／実ユーザー類似度約90%）", "AGEST AIアシスト：AIデバッグ", "AGEST AIアシスト：AIテクニカルコードレビュー", "QA for AI駆動開発", "mabl / Autify（AI自動修復）"],
+      "categories": [
+        { "category": "ソフトウェアテスト・第三者検証", "services": [
+          { "name": "ソフトウェアテスト・第三者検証", "description": "ISO/IEC/IEEE 29119ベースで客観的にテスト設計・実行を代行。", "domain": "enterprise", "ai": "AIアシストを工程に組込み可" },
+          { "name": "AGEST式探索的テスト", "description": "経験ベース技法でリリース前に欠陥検出（高橋寿一氏主導）。", "domain": "generic", "ai": "人手エキスパート" },
+          { "name": "性能テスト（負荷テスト）", "description": "定量的エビデンスに基づく性能／負荷テストと対策提示。", "domain": "finance", "ai": "自動化ツール負荷生成" },
+          { "name": "UI/UX向上支援", "description": "ユーザーテスト・ヒューリスティック評価でUI/UX改善。", "domain": "generic", "ai": "人手中心" },
+          { "name": "ドキュメントインスペクション", "description": "上流ドキュメントをレビューし早期欠陥検出。", "domain": "generic", "ai": "AIコードレビュー連携可" },
+          { "name": "フィールドテスト", "description": "実機6,000台超で実利用環境の動作検証。", "domain": "web_mobile", "ai": "なし" },
+          { "name": "DevOps/アジャイルテスト支援", "description": "継続的品質改善（自動化・非機能・品質基準策定）を支援。", "domain": "generic", "ai": "CI/CDへ自動化組込み" }
+        ]},
+        { "category": "テスト自動化", "services": [
+          { "name": "TestArchitect / TA for Series", "description": "LogiGear製の自動化ツール、7領域へ拡張。", "domain": "generic", "ai": "キーワード駆動・スクリプトレス" },
+          { "name": "mabl", "description": "ローコードUIテスト・CI/CD統合・負荷・アクセシビリティ。", "domain": "generic", "ai": "AI auto-heal・リンククローラ" },
+          { "name": "Autify", "description": "ノーコードでシナリオ作成、分業・最適化。", "domain": "generic", "ai": "AIがUI変更検知し自動保守" },
+          { "name": "テスト自動化導入・推進支援", "description": "計画〜実装・継続改善をコンサル/実装で支援。", "domain": "generic", "ai": "各種AI自動化ツール" }
+        ]},
+        { "category": "AI品質保証（AI-Powered QA）", "services": [
+          { "name": "QA for AI駆動開発", "description": "AI駆動開発の全工程を要件〜運用まで一気通貫で品質保証。", "domain": "generic", "ai": "AIユーザークローン＋ATDDでCI/CDに組込み" },
+          { "name": "AGEST AIアシスト：AIデバッグ", "description": "テスト×AIで欠陥検出・デバッグを高度化。", "domain": "generic", "ai": "AIデバッグ支援" },
+          { "name": "AGEST AIアシスト：AIテクニカルコードレビュー", "description": "AIでソースコードをレビューする新サービス。", "domain": "generic", "ai": "AIコードレビュー自動化" },
+          { "name": "医療AI等の第三者検証", "description": "AIモデルの再現性ある品質保証体制を第三者支援。", "domain": "generic", "ai": "AIモデル品質評価" }
+        ]},
+        { "category": "セキュリティ", "services": [
+          { "name": "サイバーセキュリティ診断", "description": "OWASP準拠、攻撃者視点の手動診断でツール検出困難な脆弱性まで検出。", "domain": "finance", "ai": "AI診断ツール併用" },
+          { "name": "Web/スマホアプリ診断", "description": "各種基盤のWeb・スマホアプリ診断。", "domain": "finance", "ai": "自動スキャン＋手動" },
+          { "name": "脅威/シナリオベース・ペネトレーション", "description": "疑似攻撃で組合せリスク・設定不備を評価。", "domain": "enterprise", "ai": "手動主体" },
+          { "name": "EDR監視（DH-SOC）", "description": "エンドポイント監視・脅威除去・ハンティングを一貫提供。", "domain": "generic", "ai": "EDR/SOC監視自動化" }
+        ]},
+        { "category": "QA for Development", "services": [
+          { "name": "QA for Development", "description": "開発×検証のハイブリッド人材が上流から品質保証。", "domain": "generic", "ai": "AIコードレビュー等を内包" }
+        ]},
+        { "category": "コンサル／開発", "services": [
+          { "name": "QAコンサルティング", "description": "ODC分析等で品質課題の真因を特定し改善支援。", "domain": "enterprise", "ai": "分析手法＋AIアシスト" },
+          { "name": "DX内製化支援", "description": "設計＋QAを組合せ内製化チーム立上げ〜運用を支援。", "domain": "enterprise", "ai": "先端品質技術・自動化" },
+          { "name": "インテグレーション／システム開発", "description": "DX・クラウド・SAPテストと連携した開発・導入。", "domain": "enterprise", "ai": "自動化・AI品質技術" }
+        ]}
+      ]
+    },
+    {
+      "id": "valtes",
+      "name": "バルテス",
+      "legal": "バルテス株式会社（VALTES）",
+      "url": "https://www.valtes.co.jp",
+      "color": "#7c3aed",
+      "founded": 2004,
+      "tagline": "独自手法QUINTEEで品質をサポート／価値を創造する",
+      "scale": { "clients": "年間7,000プロジェクト超", "note": "ISTQB Global Partner日本初認定" },
+      "positioning": { "vertical_integration": 0.62, "ai_automation": 0.6, "scale_index": 0.75 },
+      "enterprise_finance_focus": "金融・保険、業務システム、SIer向けの業界別ページを持ち非製造領域を事業の柱に。金融は上流品質管理に強く、法改正・商品リリースの課題をナレッジ化。大規模移行ではQMO（人）＋T-DASH（回帰自動化）＋QualityTracker（EVM進捗）＋PerfecTwin（現新比較自動検証）を組合せる点が最大の差別化。ソニー銀行の基幹更改UAT支援など実績。",
+      "ai_signature": ["AI Quality（AI製品の品質保証・独自AIチェックリスト）", "T-DASH（日本語ローコード自動化・1ライセンス3,960円）", "QualityTracker（EVMクラウドテスト管理・管理工数約30%削減）", "PerfecTwin（現新比較テスト自動化・SAP S/4HANA移行Edition）"],
+      "categories": [
+        { "category": "テスト・検証（第三者検証コア）", "services": [
+          { "name": "ソフトウェアテスト／第三者検証", "description": "計画〜報告を一括。Test Early, Test Oftenで上流レビュー、QUINTEEで最適化。", "domain": "enterprise", "ai": "自動化・AIと連携" },
+          { "name": "テストプロセスアウトソーシング（TPO）", "description": "テスト業務一式を継続受託し顧客をコア業務に集中させる。", "domain": "enterprise", "ai": "自動化・管理ツールで省力化" },
+          { "name": "パフォーマンステスト", "description": "実運用負荷をシミュレーションし測定・報告。", "domain": "finance", "ai": "商用負荷ツール" },
+          { "name": "テスト自動化支援", "description": "キーワード/データ駆動の再利用性高い自動化を専任構築。", "domain": "generic", "ai": "自動化専任チーム＋T-DASH" },
+          { "name": "マイグレーション品質向上支援", "description": "移行案件でQMO参画、T-DASH/QualityTracker/PerfecTwinを組合せ。", "domain": "finance", "ai": "現新差異を自動検出" },
+          { "name": "アジャイル開発テスト支援", "description": "アジャイルへの継続的テスト・品質支援。", "domain": "generic", "ai": "自動化と連携" }
+        ]},
+        { "category": "品質コンサル・品質管理", "services": [
+          { "name": "品質コンサル／QMO", "description": "QMOが参画し品質活動を推進・マネジメント。", "domain": "finance", "ai": "人的コンサル中心" },
+          { "name": "品質プロジェクト診断", "description": "品質状況を診断し課題抽出・改善提案。", "domain": "generic", "ai": "なし" },
+          { "name": "QUINTEE", "description": "体系化した独自テストアプローチ手法（標準化）。", "domain": "generic", "ai": "方法論" }
+        ]},
+        { "category": "セキュリティ", "services": [
+          { "name": "セキュリティ・脆弱性診断", "description": "ツール＋手動でWeb/PF/スマホ/クラウド/IoTを網羅、2,000件超実績。", "domain": "finance", "ai": "ツール＋手動ハイブリッド" }
+        ]},
+        { "category": "アクセシビリティ", "services": [
+          { "name": "Webアクセシビリティ診断", "description": "『合理的配慮の提供』対応を支援する診断・改善。", "domain": "enterprise", "ai": "一部ツール併用" }
+        ]},
+        { "category": "AI関連", "services": [
+          { "name": "AI Quality", "description": "AIシステムの品質を上流〜下流まで一気通貫確保、独自AIチェックリストで早期検出。", "domain": "generic", "ai": "AI製品品質保証" },
+          { "name": "AI搭載製品のテスト・検証支援", "description": "AI特有の非決定性を踏まえた検証。", "domain": "generic", "ai": "AI製品テスト" },
+          { "name": "ローコード品質向上支援", "description": "ローコード内製開発の品質を上流〜テスト効率化で支援。", "domain": "enterprise", "ai": "自動化ツール併用" }
+        ]},
+        { "category": "QAプラットフォーム・製品", "services": [
+          { "name": "T-DASH", "description": "日本語でテストケースを書きそのまま実行できるローコード自動化ツール。", "domain": "generic", "ai": "ローコード自動化本体" },
+          { "name": "QualityTracker", "description": "EVM採用のクラウドテスト管理、管理工数約30%削減。", "domain": "enterprise", "ai": "進捗管理＋自動化連携" },
+          { "name": "PerfecTwin", "description": "本番トランザクションをキャプチャし現新並行実行で差異を自動検出。SAP移行Edition有。", "domain": "finance", "ai": "現新比較自動検証" }
+        ]},
+        { "category": "教育・人材育成", "services": [
+          { "name": "品質教育支援／セミナー", "description": "基礎〜品質戦略・テスター養成の体系的教育。", "domain": "generic", "ai": "なし" }
+        ]}
+      ]
+    }
+  ]
+}

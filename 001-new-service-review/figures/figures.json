@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "title": "図版生成用JSONプロンプト集",
+    "purpose": "レポートに使う画像・図形を、まずJSONプロンプト（自然言語プロンプト＋SVG描画仕様）として定義し、そこからSVGを生成する",
+    "generation_policy": "外部画像生成に出す場合は image_prompt を使用。本レポートではCSP自己完結のため svg_spec に基づきインラインSVGを手描き生成する。",
+    "design_tokens": {
+      "background_dark": "#0a1220",
+      "surface_dark": "#111c2e",
+      "background_light": "#f4f6f8",
+      "ink": "#0f1b2d",
+      "signal": "#06b6d4",
+      "grid": "#22304a",
+      "company_colors": {
+        "veriserve": "#2563eb",
+        "shift": "#16a34a",
+        "agest": "#e11d48",
+        "valtes": "#7c3aed"
+      }
+    }
+  },
+  "figures": [
+    {
+      "id": "hero-concept",
+      "role": "ヒーロー概念図：第三者検証サービス群 → AIエージェント → シェア奪取",
+      "image_prompt": {
+        "subject": "A control-room style intelligence diagram showing four Japanese QA/third-party-verification companies' services being absorbed into a central autonomous AI agent core, which then radiates outward to capture market share.",
+        "composition": "Left: four vertical stacks of service tiles (labelled clusters) in four distinct brand colors. Center: a glowing hexagonal AI-agent core with concentric rings. Right: an expanding share wedge / market territory being taken over. Thin connective data-flow lines from left tiles into the core.",
+        "style": "precision blueprint, dark ink-navy background, cyan signal accents, fine 1px lines, technical instrumentation feel, subtle glow, no photorealism, flat vector",
+        "mood": "strategic, clinical, forward-leaning, quietly aggressive",
+        "palette": ["#0a1220", "#06b6d4", "#2563eb", "#16a34a", "#e11d48", "#7c3aed"],
+        "negative": "no stock-photo people, no gradients-on-white cliché, no purple-to-blue hero gradient, no emoji"
+      },
+      "svg_spec": {
+        "canvas": { "w": 1120, "h": 460 },
+        "layers": [
+          { "type": "source_column", "label": "4社の検証サービス", "x": 60, "items": ["テスト設計", "テスト実行", "自動化", "セキュリティ", "品質コンサル", "非機能"], "colors": ["#2563eb", "#16a34a", "#e11d48", "#7c3aed"] },
+          { "type": "flow_lines", "from": "source_column", "to": "agent_core", "style": "1px cyan, animated dash" },
+          { "type": "agent_core", "shape": "hexagon", "cx": 620, "cy": 230, "r": 92, "label": "AIエージェント", "rings": 3, "glow": "#06b6d4" },
+          { "type": "share_wedge", "x": 820, "label": "シェア奪取", "captured": 0.62, "color": "#06b6d4" }
+        ]
+      }
+    },
+    {
+      "id": "positioning-map",
+      "role": "ポジショニングマップ：垂直統合度 × AI/自動化度（バブル=事業規模）",
+      "image_prompt": {
+        "subject": "A 2-axis strategic positioning scatter plot placing four QA verification companies by vertical integration (x) and AI/automation intensity (y), bubble size = project volume.",
+        "style": "instrument-panel scatter, faint grid, quadrant labels, glowing bubbles in brand colors, cyan axis emphasis on dark ground",
+        "palette": ["#0a1220", "#06b6d4", "#2563eb", "#16a34a", "#e11d48", "#7c3aed"]
+      },
+      "svg_spec": {
+        "canvas": { "w": 760, "h": 560 },
+        "x_axis": { "label": "垂直統合度（コンサル〜開発まで内包）", "left": "テスト特化", "right": "一気通貫" },
+        "y_axis": { "label": "AI・自動化の作り込み度", "low": "人手中心", "high": "AI主導" },
+        "quadrants": ["職人型ニッチ", "AIツール特化", "総合ベンダー", "AI総合プラットフォーム"],
+        "points": [
+          { "id": "shift", "name": "SHIFT", "x": 0.9, "y": 0.8, "r": 46, "color": "#16a34a", "note": "最大規模・一気通貫" },
+          { "id": "agest", "name": "AGEST", "x": 0.7, "y": 0.95, "r": 34, "color": "#e11d48", "note": "AI最前面" },
+          { "id": "valtes", "name": "バルテス", "x": 0.62, "y": 0.6, "r": 38, "color": "#7c3aed", "note": "移行×自社ツール" },
+          { "id": "veriserve", "name": "ベリサーブ", "x": 0.55, "y": 0.72, "r": 36, "color": "#2563eb", "note": "独立系・設計エージェント" }
+        ]
+      }
+    },
+    {
+      "id": "coverage-matrix",
+      "role": "サービスカバレッジ・ヒートマップ：カテゴリ × 4社（濃度=注力度）",
+      "image_prompt": {
+        "subject": "A coverage heatmap matrix, rows = service categories, columns = four companies, cell intensity = investment/coverage strength in cyan.",
+        "style": "clean data grid, cyan sequential intensity, tabular numerals, dark or light adaptive",
+        "palette": ["#06b6d4", "#0a1220"]
+      },
+      "svg_spec": {
+        "rows": ["テスト設計・実行", "テスト自動化", "AI品質保証", "セキュリティ診断", "性能・非機能", "品質コンサル/PMO", "自社ツール/製品", "DX・開発内製化", "UI/UX・A11y", "教育・人材"],
+        "cols": ["ベリサーブ", "SHIFT", "AGEST", "バルテス"],
+        "scale": "0(なし)〜3(主力)",
+        "matrix": [
+          [3, 3, 3, 3],
+          [3, 3, 3, 3],
+          [2, 3, 3, 2],
+          [3, 3, 3, 2],
+          [2, 3, 2, 2],
+          [2, 3, 2, 3],
+          [3, 3, 2, 3],
+          [1, 3, 2, 1],
+          [2, 2, 1, 1],
+          [0, 1, 1, 2]
+        ]
+      }
+    },
+    {
+      "id": "disruption-layers",
+      "role": "AIエージェント代替マップ：品質保証バリューチェーンの各レイヤーと攻略優先度",
+      "image_prompt": {
+        "subject": "A horizontal value-chain of QA activities (upstream consulting -> test design -> test execution -> automation -> security -> reporting/PMO) with each layer scored for AI-agent replaceability and margin, highlighting the highest-leverage attack layers.",
+        "style": "layered horizontal bands, replaceability meter per band, cyan highlight on high-opportunity layers, blueprint aesthetic",
+        "palette": ["#0a1220", "#06b6d4", "#e11d48"]
+      },
+      "svg_spec": {
+        "layers": [
+          { "name": "要件・仕様レビュー", "replaceability": 0.7, "labor_share": 0.1, "priority": "中" },
+          { "name": "テスト設計", "replaceability": 0.9, "labor_share": 0.25, "priority": "最優先" },
+          { "name": "テスト実行", "replaceability": 0.95, "labor_share": 0.3, "priority": "最優先" },
+          { "name": "テスト自動化構築・保守", "replaceability": 0.8, "labor_share": 0.15, "priority": "高" },
+          { "name": "セキュリティ診断", "replaceability": 0.55, "labor_share": 0.1, "priority": "中" },
+          { "name": "報告・進捗/PMO", "replaceability": 0.75, "labor_share": 0.1, "priority": "高" }
+        ],
+        "note": "replaceability×labor_share が大きい『テスト設計』『テスト実行』が最大の攻略ポイント"
+      }
+    },
+    {
+      "id": "company-icons",
+      "role": "各社シンボルアイコン（一貫した幾何モチーフ）",
+      "image_prompt": {
+        "subject": "Four minimal geometric monogram icons for QA companies, sharing a common inspection/verification motif (check, magnifier, node), each in its brand color.",
+        "style": "flat, 1.5px stroke, 48px grid, consistent visual family"
+      },
+      "svg_spec": {
+        "icons": [
+          { "id": "veriserve", "motif": "check-in-shield", "color": "#2563eb" },
+          { "id": "shift", "motif": "stacked-layers", "color": "#16a34a" },
+          { "id": "agest", "motif": "hex-node", "color": "#e11d48" },
+          { "id": "valtes", "motif": "target-check", "color": "#7c3aed" }
+        ]
+      }
+    }
+  ]
+}

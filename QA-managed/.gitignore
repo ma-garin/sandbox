@@ -1,0 +1,11 @@
+# このフォルダ固有の除外設定
+
+# Node.js（検証用に一時導入する playwright-core 等）
+node_modules/
+package-lock.json
+app/node_modules/
+app/package.json
+app/package-lock.json
+
+# 共通
+.env

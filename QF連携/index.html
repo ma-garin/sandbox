@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QF連携 — QualityForward使いやすさアレンジ</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">◈</span>
+      <div>
+        <h1>QF連携</h1>
+        <p class="tagline">QualityForward APIを使いやすく包んだブラウザ完結型ツール</p>
+      </div>
+    </div>
+    <div id="active-profile-bar" class="active-profile-bar"></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="project" role="tab">プロジェクト</button>
+      <button class="tab" data-tab="testsuites" role="tab">テストスイート</button>
+      <button class="tab" data-tab="execution" role="tab">テスト実行</button>
+      <button class="tab" data-tab="bugcounts" role="tab">不具合件数</button>
+      <button class="tab" data-tab="settings" role="tab">設定</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel active" id="panel-project"></section>
+    <section class="panel" id="panel-testsuites"></section>
+    <section class="panel" id="panel-execution"></section>
+    <section class="panel" id="panel-bugcounts"></section>
+    <section class="panel" id="panel-settings"></section>
+  </main>
+
+  <footer class="app-footer">
+    <span>APIキーはこのブラウザのlocalStorageにのみ保存されます。バグ件数の履歴もこのブラウザのみの記録です。</span>
+  </footer>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

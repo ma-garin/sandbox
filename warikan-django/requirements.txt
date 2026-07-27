@@ -1,0 +1,4 @@
+Django>=6.0,<7.0
+segno>=1.6
+pytest>=8.0
+pytest-django>=4.9

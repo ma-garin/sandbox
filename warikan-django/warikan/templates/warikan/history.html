@@ -1,0 +1,41 @@
+{% extends "warikan/base.html" %}
+{% load humanize %}
+
+{# 仕様 4 割り勘結果記録表示画面。 #}
+
+{% block backbutton %}
+  <a class="titlebar__back" href="{% url 'warikan:calculation' %}" aria-label="戻る">&#8592;</a>
+{% endblock %}
+
+{% block content %}
+<div class="history">
+  <div class="history__list">
+    <div class="history__row" style="color:#9e9e9e">
+      <span>日付</span><span>時刻</span>
+    </div>
+    {% for record in records %}
+      <a class="history__row {% if selected and selected.id == record.id %}history__row--selected{% endif %}"
+         href="{% url 'warikan:history' %}?record={{ record.id }}">
+        <span>{{ record.held_on|date:"Y/n/j" }}</span>
+        <span>{{ record.held_at|time:"G:i" }}</span>
+      </a>
+    {% empty %}
+      <p class="history__empty">登録された割り勘結果はありません。</p>
+    {% endfor %}
+  </div>
+
+  <div class="history__detail">
+    {% if selected %}
+      自分側の人数: {{ selected.own_count }}人<br>
+      相手側の人数: {{ selected.other_count }}人<br>
+      金額: {{ selected.total_amount|intcomma }}円<br>
+      支払いの割合:<br>
+      自分側 {{ selected.own_ratio }}: {{ selected.other_ratio }} 相手側<br>
+      自分側: {{ selected.own_per_person|intcomma }}円/人<br>
+      相手側: {{ selected.other_per_person|intcomma }}円/人<br>
+      お釣り: {{ selected.change|intcomma }}円<br>
+      備考: {{ selected.note }}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

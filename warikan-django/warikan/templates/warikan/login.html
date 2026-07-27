@@ -1,0 +1,34 @@
+{% extends "warikan/base.html" %}
+
+{# 仕様 1.1 ログイン機能。初期画面であり、戻るボタンは表示しない。 #}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="field">
+    <label class="field__label" for="{{ form.user_id.id_for_label }}">ユーザID:</label>
+    <span class="field__control">{{ form.user_id }}</span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="{{ form.password.id_for_label }}">パスワード:</label>
+    <span class="field__control">{{ form.password }}</span>
+  </div>
+
+  <div class="checkbox">
+    {{ form.remember }}
+    <label for="{{ form.remember.id_for_label }}">アカウント情報を記録する</label>
+  </div>
+
+  <div class="center">
+    <button type="submit" class="btn">ログイン</button>
+  </div>
+
+  <p class="center" style="margin-top:22px">
+    {# 仕様 1.1.1：本来は NomiKui会のアカウント登録サイトを標準ブラウザで開く。 #}
+    <a href="#" class="linkbutton"
+       data-popup-text="アカウント登録は NomiKui会のウェブサイトの機能であり、本実装の対象外です（仕様 1.1.1）">新規登録</a>
+  </p>
+</form>
+{% endblock %}

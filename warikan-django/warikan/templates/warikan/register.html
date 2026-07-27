@@ -1,0 +1,44 @@
+{% extends "warikan/base.html" %}
+{% load humanize %}
+
+{# 仕様 3 割り勘結果登録画面。 #}
+
+{% block backbutton %}
+  <a class="titlebar__back" href="{% url 'warikan:calculation' %}" aria-label="戻る">&#8592;</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="field">
+    <label class="field__label" for="{{ form.held_on.id_for_label }}">開催日:</label>
+    <span class="field__control">{{ form.held_on }}</span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="{{ form.held_at.id_for_label }}">開催時刻:</label>
+    <span class="field__control">{{ form.held_at }}</span>
+  </div>
+
+  <div class="result" style="text-align:center">
+    自分側の人数: {{ params.own_count }}人<br>
+    相手側の人数: {{ params.other_count }}人<br>
+    金額: {{ params.total_amount|intcomma }}円<br>
+    支払いの割合:<br>
+    自分側 {{ params.own_ratio }}: {{ params.other_ratio }} 相手側<br>
+    自分側: {{ result.own_per_person|intcomma }}円/人<br>
+    相手側: {{ result.other_per_person|intcomma }}円/人<br>
+    お釣り: {{ result.change|intcomma }}円
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="{{ form.note.id_for_label }}">備考:</label>
+    <span class="field__control">{{ form.note }}</span>
+  </div>
+
+  <div class="center">
+    <button type="submit" class="linkbutton">登録</button>
+  </div>
+</form>
+{% endblock %}

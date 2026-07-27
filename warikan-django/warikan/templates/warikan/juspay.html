@@ -1,0 +1,11 @@
+{% extends "warikan/base.html" %}
+
+{# 仕様 2 ジャスPay画面。QR コードのデータはサービスサーバから取得したもの。 #}
+
+{% block backbutton %}
+  <a class="titlebar__back" href="{% url 'warikan:calculation' %}" aria-label="戻る">&#8592;</a>
+{% endblock %}
+
+{% block content %}
+<div class="qr">{{ qr_svg }}</div>
+{% endblock %}

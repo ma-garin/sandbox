@@ -1,0 +1,68 @@
+{% extends "warikan/base.html" %}
+{% load static humanize %}
+
+{# 仕様 1.2〜1.4 割り勘計算画面。ログイン直後の遷移先であり、戻るボタンは表示しない。 #}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="field">
+    <label class="field__label" for="{{ form.own_count.id_for_label }}">自分側の人数:</label>
+    <span class="field__control">{{ form.own_count }}</span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="{{ form.other_count.id_for_label }}">相手側の人数:</label>
+    <span class="field__control">{{ form.other_count }}</span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="{{ form.total_amount.id_for_label }}">金額:</label>
+    <span class="field__control">{{ form.total_amount }}</span>
+  </div>
+
+  <div class="slider">
+    <div class="slider__caption">支払割合</div>
+    <div class="slider__row">
+      <span>自分側</span>
+      {{ form.own_ratio }}
+      <span>相手側</span>
+    </div>
+    <div class="slider__value" id="ratio-value"></div>
+  </div>
+
+  <div class="center">
+    <button type="submit" class="btn">計算する</button>
+  </div>
+</form>
+
+{% if result %}
+  {# 仕様 1.4 出力 #}
+  <div class="result">
+    自分側: {{ result.own_per_person|intcomma }}円/人<br>
+    相手側: {{ result.other_per_person|intcomma }}円/人<br>
+    お釣り: {{ result.change|intcomma }}円
+  </div>
+
+  {% if show_juspay %}
+    <div class="actions">
+      <a class="btn" href="{% url 'warikan:juspay' %}">ジャスPay</a>
+    </div>
+  {% endif %}
+{% endif %}
+
+<div class="actions">
+  {% if result %}
+    <a class="btn" href="{% url 'warikan:register' %}">結果を登録する</a>
+  {% else %}
+    {# 仕様 3：計算結果が表示されない状態では押しても何も反応しない #}
+    <span class="btn btn--disabled">結果を登録する</span>
+  {% endif %}
+  <a class="btn" href="{% url 'warikan:history' %}">履歴を表示する</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'warikan/slider.js' %}"></script>
+{% endblock %}

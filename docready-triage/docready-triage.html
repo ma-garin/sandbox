@@ -287,6 +287,20 @@ code { font-family: var(--font-mono); font-size: 12.5px; background: var(--md-su
 .grade-実証 { background: var(--md-ok-container);   color: var(--md-ok);   }
 .grade-空白 { background: var(--md-warn-container); color: var(--md-warn); }
 .grade-事実 { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+
+/* --- まとめて登録 --- */
+.howto {
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-radius-m);
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+.howto > summary { cursor: pointer; font-weight: 500; font-size: 13.5px; }
+.howto p  { margin: 10px 0 6px; }
+.howto ul { margin: 0 0 6px; padding-left: 22px; }
+.row-warn { color: var(--md-warn); font-size: 12.5px; }
+.row-error { color: var(--md-risk); font-size: 12.5px; }
 </style>
 </head>
 <body>
@@ -370,6 +384,36 @@ code { font-family: var(--font-mono); font-size: 12.5px; background: var(--md-su
         <button class="btn outline small" id="btn-clear-inv">全部消す</button>
       </div>
       <input type="file" id="file-json" accept="application/json,.json" hidden>
+    </div>
+
+    <div class="card">
+      <h2>まとめて登録</h2>
+      <p class="card-sub">Excelやスプレッドシートの範囲をコピーして、下の枠に貼り付けてください。1行が1つの文書になります。</p>
+
+      <details class="howto">
+        <summary>貼り付け方</summary>
+        <p>1行目は見出し行として扱います。使える見出しは次のとおりです。順番は入れ替えても構いません。</p>
+        <ul>
+          <li><b>文書名</b>（必須）</li>
+          <li><b>種別</b> … <span id="bulk-type-list"></span> のいずれか</li>
+          <li><b>保管場所</b></li>
+          <li><b>担当</b></li>
+          <li><b>該当項目</b> … 「判定する」タブのチェック項目名を <code>;</code> で区切って並べます</li>
+        </ul>
+        <p>見出し行がない場合は、左から「文書名・種別・保管場所・担当・該当項目」の順として読み取ります。</p>
+        <p class="muted">Excelからのコピー（タブ区切り）と、CSVのどちらでも読み取れます。</p>
+      </details>
+
+      <div class="field">
+        <label for="bulk-text">貼り付ける場所</label>
+        <textarea id="bulk-text" class="output" style="min-height:150px" placeholder="文書名	種別	保管場所	担当	該当項目"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btn-bulk-read">読み取る</button>
+        <button class="btn outline small" id="btn-bulk-sample">書き方の例を入れる</button>
+        <button class="btn outline small" id="btn-bulk-clear">枠を空にする</button>
+      </div>
+      <div id="bulk-preview"></div>
     </div>
   </section>
 
@@ -822,7 +866,8 @@ function buildStructureNote(doc) {
 const state = {
   tab: "judge",
   form: Object.assign({}, DEFAULT_FORM, { checked: [] }),
-  docs: []          /* 棚卸し。{id, name, docType, location, owner, checked} */
+  docs: [],         /* 棚卸し。{id, name, docType, location, owner, checked} */
+  bulk: null        /* まとめて登録の読み取り結果。登録するまで棚卸しには入れない */
 };
 
 let nextDocId = 1;
@@ -882,6 +927,8 @@ function renderTypeOptions() {
   el.type.innerHTML = RULES.docTypes.map(function (t) {
     return '<option value="' + esc(t.id) + '">' + esc(t.label) + "</option>";
   }).join("");
+  document.getElementById("bulk-type-list").textContent =
+    RULES.docTypes.map(function (t) { return t.label; }).join(" / ");
 }
 
 /* --- 判定タブ: チェック項目 --- */
@@ -991,6 +1038,69 @@ function renderInventory() {
   });
 }
 
+/* --- 棚卸しタブ: まとめて登録の読み取り結果 --- */
+function renderBulkPreview() {
+  const area = document.getElementById("bulk-preview");
+  const parsed = state.bulk;
+
+  if (!parsed) { area.innerHTML = ""; return; }
+
+  if (parsed.rows.length === 0) {
+    area.innerHTML = '<div class="empty">読み取れる行がありませんでした。文書名の列が空になっていないか確認してください。</div>';
+    return;
+  }
+
+  const rows = parsed.rows.map(function (r, i) {
+    const res = assess(r.doc.docType, r.doc.checked);
+    const lv = RULES.levels[res.level];
+    const warn = r.warnings.length
+      ? '<div class="row-warn">' + r.warnings.map(esc).join("<br>") + "</div>"
+      : "";
+    return "<tr>" +
+      '<td class="num">' + (i + 1) + "</td>" +
+      "<td>" + esc(r.doc.name) + warn + "</td>" +
+      "<td>" + esc(typeLabel(r.doc.docType)) + "</td>" +
+      '<td><span class="badge ' + res.level + '">' + esc(lv.label) + "</span></td>" +
+      '<td class="num">' + res.score + "</td>" +
+      "<td>" + esc(r.doc.location || "—") + "</td>" +
+      "<td>" + esc(r.doc.owner || "—") + "</td>" +
+    "</tr>";
+  }).join("");
+
+  const notes = [];
+  notes.push(parsed.usedHeader ? "1行目を見出し行として読みました。" : "見出し行がないため、左から順に読みました。");
+  if (parsed.skipped > 0) notes.push("文書名が空の " + parsed.skipped + " 行は飛ばしました。");
+  const warnCount = parsed.rows.filter(function (r) { return r.warnings.length > 0; }).length;
+  if (warnCount > 0) notes.push("読み替えた行が " + warnCount + " 件あります（黄色の文字）。");
+
+  area.innerHTML =
+    '<p class="card-sub" style="margin-top:20px">読み取り結果 ' + parsed.rows.length + " 件。" + esc(notes.join(" ")) + "</p>" +
+    '<div class="table-wrap"><table><thead><tr>' +
+    "<th>#</th><th>文書名</th><th>種別</th><th>判定</th><th>点数</th><th>保管場所</th><th>担当</th>" +
+    "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+    '<div class="btn-row">' +
+      '<button class="btn" id="btn-bulk-commit">この ' + parsed.rows.length + " 件を登録する</button>" +
+      '<button class="btn outline small" id="btn-bulk-cancel">やめる</button>' +
+    "</div>";
+
+  document.getElementById("btn-bulk-commit").addEventListener("click", function () {
+    const added = parsed.rows.map(function (r) {
+      return Object.assign({ id: nextDocId++ }, r.doc, { checked: r.doc.checked.slice() });
+    });
+    state.docs = state.docs.concat(added);
+    state.bulk = null;
+    document.getElementById("bulk-text").value = "";
+    renderInventory();
+    renderBulkPreview();
+    renderIndex();
+    showToast(added.length + " 件登録しました（合計 " + state.docs.length + " 件）");
+  });
+  document.getElementById("btn-bulk-cancel").addEventListener("click", function () {
+    state.bulk = null;
+    renderBulkPreview();
+  });
+}
+
 /* --- 索引タブ --- */
 function renderIndex() {
   if (state.docs.length === 0) {
@@ -1092,6 +1202,7 @@ function renderAll() {
   renderTabs();
   renderForm();
   renderInventory();
+  renderBulkPreview();
   renderIndex();
 }
 
@@ -1209,6 +1320,212 @@ function applySaveData(data) {
   return docs.length;
 }
 
+/* ---------------- 貼り付けによる一括登録 ---------------- */
+
+/** 見出し行に使える名前。左が正、右が別名 */
+const BULK_COLUMNS = [
+  { key: "name",     aliases: ["文書名", "名前", "ファイル名", "タイトル", "name", "title"] },
+  { key: "docType",  aliases: ["種別", "形式", "種類", "ファイル形式", "type"] },
+  { key: "location", aliases: ["保管場所", "場所", "パス", "格納先", "location", "path"] },
+  { key: "owner",    aliases: ["担当", "管轄", "部署", "担当者", "担当部署", "owner"] },
+  { key: "checked",  aliases: ["該当項目", "項目", "チェック", "注意点", "checks"] }
+];
+
+/** 見出しがないときの並び順 */
+const BULK_POSITIONS = ["name", "docType", "location", "owner", "checked"];
+
+/** 全角英数と記号を半角に寄せ、空白を落とす */
+function normalizeKey(s) {
+  return String(s == null ? "" : s)
+    .replace(/[Ａ-Ｚａ-ｚ０-９（）]/g, function (ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+    })
+    .replace(/[\s　]/g, "")
+    .toLowerCase();
+}
+
+/** 区切り文字を推測する。タブが1つでもあればタブ区切りとみなす */
+function detectDelimiter(text) {
+  return text.indexOf("\t") !== -1 ? "\t" : ",";
+}
+
+/** 引用符に対応した区切りテキストの解析。2次元配列を返す */
+function parseDelimited(text, delim) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  const src = text.replace(/\r\n?/g, "\n");
+
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (src[i + 1] === '"') { field += '"'; i++; }
+        else { quoted = false; }
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"' && field === "") {
+      quoted = true;
+    } else if (ch === delim) {
+      row.push(field); field = "";
+    } else if (ch === "\n") {
+      row.push(field); field = "";
+      rows.push(row); row = [];
+    } else {
+      field += ch;
+    }
+  }
+  row.push(field);
+  rows.push(row);
+
+  /* 全部が空の行は落とす */
+  return rows.filter(function (r) {
+    return r.some(function (c) { return String(c).trim() !== ""; });
+  });
+}
+
+/**
+ * 「エクセル」「パワポ」のような書き方も拾うための対応表。
+ * note があるものは、寄せた結果が確実でないことを利用者に伝える。
+ */
+const DOC_TYPE_HINTS = [
+  { id: "pdf-scan", words: ["pdfスキャン", "スキャンpdf", "スキャン", "画像pdf"] },
+  { id: "pdf-text", words: ["pdf"],
+    note: "PDFはスキャンかどうかで扱いが変わります。スキャンした紙の場合は種別を「PDF（スキャン・画像）」に直してください" },
+  { id: "excel", words: ["excel", "エクセル", "xlsx", "xls", "スプレッドシート"] },
+  { id: "word",  words: ["word", "ワード", "docx", "doc"] },
+  { id: "ppt",   words: ["powerpoint", "パワーポイント", "パワポ", "pptx", "ppt", "スライド"] },
+  { id: "html",  words: ["html", "web", "ウェブ", "サイト", "イントラ"] },
+  { id: "csv",   words: ["csv", "tsv", "テキスト", "txt"] },
+  { id: "mail",  words: ["メール", "mail", "チャット", "chat", "slack", "teams"] }
+];
+
+/**
+ * 文字列から種別を引く。
+ * @returns {{id:string, note:(string|null)}|null} 引けなければ null
+ */
+function resolveDocType(text) {
+  const key = normalizeKey(text);
+  if (!key) return null;
+  const exact = RULES.docTypes.filter(function (t) {
+    return normalizeKey(t.id) === key || normalizeKey(t.label) === key;
+  })[0];
+  if (exact) return { id: exact.id, note: null };
+
+  for (let i = 0; i < DOC_TYPE_HINTS.length; i++) {
+    const h = DOC_TYPE_HINTS[i];
+    for (let j = 0; j < h.words.length; j++) {
+      if (key.indexOf(h.words[j]) !== -1) return { id: h.id, note: h.note || null };
+    }
+  }
+  return null;
+}
+
+/** 文字列からチェック項目を引く。見つからなければ null */
+function resolveCheck(text) {
+  const key = normalizeKey(text);
+  if (!key) return null;
+  const hit = RULES.checks.filter(function (c) {
+    return normalizeKey(c.id) === key || normalizeKey(c.label) === key;
+  })[0];
+  return hit ? hit.id : null;
+}
+
+/**
+ * 貼り付けたテキストを解析する。副作用なし。
+ * @returns {{rows:Array<{doc:Object, warnings:string[]}>, skipped:number, usedHeader:boolean}}
+ */
+function parseBulkText(text) {
+  const cells = parseDelimited(text, detectDelimiter(text));
+  if (cells.length === 0) return { rows: [], skipped: 0, usedHeader: false };
+
+  /* 1行目が見出しかどうかを判定する */
+  const first = cells[0].map(normalizeKey);
+  const headerMap = first.map(function (h) {
+    const col = BULK_COLUMNS.filter(function (c) {
+      return c.aliases.some(function (a) { return normalizeKey(a) === h; });
+    })[0];
+    return col ? col.key : null;
+  });
+  const usedHeader = headerMap.filter(Boolean).length >= 2;
+  const columns = usedHeader ? headerMap : BULK_POSITIONS;
+  const body = usedHeader ? cells.slice(1) : cells;
+
+  const rows = [];
+  let skipped = 0;
+
+  body.forEach(function (cell) {
+    const raw = { name: "", docType: "", location: "", owner: "", checked: "" };
+    columns.forEach(function (key, i) {
+      if (key && cell[i] != null) raw[key] = String(cell[i]).trim();
+    });
+
+    if (!raw.name) { skipped++; return; }
+
+    const warnings = [];
+
+    const resolved = resolveDocType(raw.docType);
+    let docType;
+    if (resolved) {
+      docType = resolved.id;
+      if (resolved.note) warnings.push(typeLabel(docType) + " として扱います。" + resolved.note);
+    } else {
+      docType = DEFAULT_FORM.docType;
+      warnings.push(raw.docType
+        ? "種別「" + raw.docType + "」が分からないため " + typeLabel(docType) + " として扱います"
+        : "種別が空のため " + typeLabel(docType) + " として扱います");
+    }
+
+    /* 項目名には「、」「，」が含まれるため、区切りには使わない */
+    const checked = [];
+    const unknown = [];
+    raw.checked.split(/[;；\/／|]/).forEach(function (part) {
+      const t = part.trim();
+      if (!t) return;
+      const id = resolveCheck(t);
+      if (id) { if (checked.indexOf(id) === -1) checked.push(id); }
+      else unknown.push(t);
+    });
+    if (unknown.length) warnings.push("項目「" + unknown.join("」「") + "」が分からないため無視します");
+
+    const dropped = checked.filter(function (id) {
+      return normalizeChecked(docType, [id]).length === 0;
+    });
+    if (dropped.length) {
+      warnings.push("項目「" + dropped.map(function (id) {
+        return RULES.checks.filter(function (c) { return c.id === id; })[0].label;
+      }).join("」「") + "」は " + typeLabel(docType) + " では起こらないため外します");
+    }
+
+    rows.push({
+      doc: {
+        name: raw.name,
+        docType: docType,
+        location: raw.location,
+        owner: raw.owner,
+        checked: normalizeChecked(docType, checked)
+      },
+      warnings: warnings
+    });
+  });
+
+  return { rows: rows, skipped: skipped, usedHeader: usedHeader };
+}
+
+/** 「書き方の例を入れる」で流し込むテキスト */
+const BULK_SAMPLE = [
+  ["文書名", "種別", "保管場所", "担当", "該当項目"],
+  ["2026年度 案件管理表", "Excel（表・帳票）", "共有ドライブ/営業部/管理", "営業企画部",
+   "セルを結合して見せている箇所がある;見出しが2段以上ある（大分類の下に小分類が並ぶ）"],
+  ["業務委託契約書 雛形", "Word", "共有ドライブ/法務部", "法務部", ""],
+  ["設備点検記録 2025", "PDF（スキャン・画像）", "共有ドライブ/工務部/点検", "工務部",
+   "文字が画像になっている（コピーできない箇所がある）"],
+  ["社内システム操作手順", "PowerPoint", "共有ドライブ/情シス", "情報システム部",
+   "図・写真・画面キャプチャで説明している箇所がある"]
+].map(function (r) { return r.join("\t"); }).join("\n");
+
 function downloadText(filename, text, mime) {
   const blob = new Blob([text], { type: (mime || "text/plain") + ";charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -1325,6 +1642,26 @@ el.fileJson.addEventListener("change", function () {
     el.fileJson.value = "";
   };
   reader.readAsText(file);
+});
+
+document.getElementById("btn-bulk-read").addEventListener("click", function () {
+  const text = document.getElementById("bulk-text").value;
+  if (!text.trim()) { showToast("貼り付けてから押してください"); return; }
+  state.bulk = parseBulkText(text);
+  renderBulkPreview();
+  if (state.bulk.rows.length === 0) showToast("読み取れる行がありませんでした");
+});
+
+document.getElementById("btn-bulk-sample").addEventListener("click", function () {
+  document.getElementById("bulk-text").value = BULK_SAMPLE;
+  state.bulk = null;
+  renderBulkPreview();
+});
+
+document.getElementById("btn-bulk-clear").addEventListener("click", function () {
+  document.getElementById("bulk-text").value = "";
+  state.bulk = null;
+  renderBulkPreview();
 });
 
 document.getElementById("btn-clear-inv").addEventListener("click", function () {

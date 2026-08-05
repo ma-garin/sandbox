@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docready-triage — AIに渡す前の文書チェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Material Design 3 ライトテーマ（primary #1976D2）
+   ========================================================================== */
+:root {
+  --md-primary:            #1976D2;
+  --md-on-primary:         #FFFFFF;
+  --md-primary-container:  #D6E3FF;
+  --md-on-primary-container:#001B3D;
+  --md-surface:            #FFFFFF;
+  --md-surface-variant:    #F8F9FA;
+  --md-surface-container:  #EEF1F5;
+  --md-on-surface:         #1A1C1E;
+  --md-on-surface-variant: #43474E;
+  --md-outline:            #73777F;
+  --md-outline-variant:    #C7CAD1;
+
+  --md-ok:                 #1B6B3A;
+  --md-ok-container:       #C8F0D6;
+  --md-warn:               #8A5000;
+  --md-warn-container:     #FFE0B2;
+  --md-risk:               #B3261E;
+  --md-risk-container:     #F9DEDC;
+
+  --md-radius-s: 8px;
+  --md-radius-m: 12px;
+  --md-radius-l: 16px;
+  --md-elev-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+  --md-elev-2: 0 1px 2px rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+
+  --font-sans: "Noto Sans JP", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--md-surface-variant);
+  color: var(--md-on-surface);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* --- ヘッダ --- */
+.app-bar {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  padding: 16px 24px;
+  box-shadow: var(--md-elev-1);
+}
+.app-bar h1 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: .01em; }
+.app-bar p  { margin: 4px 0 0; font-size: 13px; opacity: .9; }
+
+/* --- タブ --- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--md-surface);
+  border-bottom: 1px solid var(--md-outline-variant);
+  padding: 0 16px;
+  overflow-x: auto;
+}
+.tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+  padding: 14px 18px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.tab:hover { background: var(--md-surface-container); }
+.tab[aria-selected="true"] {
+  color: var(--md-primary);
+  border-bottom-color: var(--md-primary);
+}
+
+/* --- レイアウト --- */
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 72px; }
+.panel[hidden] { display: none; }
+
+.card {
+  background: var(--md-surface);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-radius-l);
+  padding: 20px 22px;
+  margin-bottom: 20px;
+}
+.card > h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.card > .card-sub {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--md-on-surface-variant);
+}
+
+/* --- フォーム --- */
+.field { margin-bottom: 16px; }
+.field > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
+  margin-bottom: 6px;
+}
+.field input[type="text"],
+.field select,
+textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--md-on-surface);
+  background: var(--md-surface);
+  border: 1px solid var(--md-outline);
+  border-radius: var(--md-radius-s);
+  padding: 10px 12px;
+}
+.field input[type="text"]:focus,
+.field select:focus,
+textarea:focus {
+  outline: 2px solid var(--md-primary);
+  outline-offset: -2px;
+  border-color: var(--md-primary);
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+@media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* --- チェック項目 --- */
+.check-group { margin-bottom: 18px; }
+.check-group > h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--md-primary);
+  letter-spacing: .04em;
+}
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--md-radius-m);
+  margin-bottom: 8px;
+  cursor: pointer;
+  background: var(--md-surface);
+}
+.check:hover { background: var(--md-surface-container); }
+.check input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--md-primary); flex: none; }
+.check-body { flex: 1; min-width: 0; }
+.check-label { display: block; font-size: 14px; font-weight: 500; }
+.check-help  { display: block; font-size: 12.5px; color: var(--md-on-surface-variant); margin-top: 2px; }
+
+/* --- ボタン --- */
+.btn {
+  appearance: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+.btn:hover { box-shadow: var(--md-elev-1); }
+.btn:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
+.btn.tonal   { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.btn.outline { background: transparent; color: var(--md-primary); border-color: var(--md-outline); }
+.btn.small   { padding: 6px 14px; font-size: 13px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* --- 判定結果 --- */
+.verdict {
+  border-radius: var(--md-radius-l);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+.verdict.ok   { background: var(--md-ok-container);   border-color: var(--md-ok);   }
+.verdict.warn { background: var(--md-warn-container); border-color: var(--md-warn); }
+.verdict.risk { background: var(--md-risk-container); border-color: var(--md-risk); }
+.verdict-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.verdict-title { font-size: 19px; font-weight: 700; margin: 0; }
+.verdict.ok   .verdict-title { color: var(--md-ok);   }
+.verdict.warn .verdict-title { color: var(--md-warn); }
+.verdict.risk .verdict-title { color: var(--md-risk); }
+.verdict-score { font-family: var(--font-mono); font-size: 13px; color: var(--md-on-surface-variant); }
+.verdict-lead { margin: 8px 0 0; font-size: 14px; }
+
+.finding-list { list-style: none; padding: 0; margin: 0; }
+.finding {
+  border: 1px solid var(--md-outline-variant);
+  border-left: 4px solid var(--md-outline);
+  border-radius: var(--md-radius-s);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--md-surface);
+}
+.finding[data-weight="4"] { border-left-color: var(--md-risk); }
+.finding[data-weight="3"] { border-left-color: var(--md-warn); }
+.finding-title { font-weight: 500; font-size: 14px; }
+.finding-action { font-size: 13px; color: var(--md-on-surface-variant); margin-top: 4px; }
+.finding-action b { color: var(--md-on-surface); font-weight: 500; }
+
+/* --- バッジ --- */
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge.ok   { background: var(--md-ok-container);   color: var(--md-ok);   }
+.badge.warn { background: var(--md-warn-container); color: var(--md-warn); }
+.badge.risk { background: var(--md-risk-container); color: var(--md-risk); }
+
+/* --- 表 --- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--md-outline-variant); vertical-align: top; }
+th { font-size: 12.5px; font-weight: 700; color: var(--md-on-surface-variant); background: var(--md-surface-variant); white-space: nowrap; }
+tbody tr:hover { background: var(--md-surface-variant); }
+td.num { font-family: var(--font-mono); text-align: right; }
+
+/* --- 出力欄 --- */
+textarea.output {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  min-height: 340px;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+textarea.note { min-height: 130px; font-size: 13px; line-height: 1.7; }
+
+/* --- 補助 --- */
+.empty {
+  text-align: center;
+  color: var(--md-on-surface-variant);
+  font-size: 14px;
+  padding: 40px 16px;
+  border: 1px dashed var(--md-outline-variant);
+  border-radius: var(--md-radius-m);
+}
+.callout {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-radius: var(--md-radius-m);
+  padding: 14px 16px;
+  font-size: 13.5px;
+  margin-bottom: 20px;
+}
+.callout p { margin: 0 0 8px; }
+.callout p:last-child { margin-bottom: 0; }
+.muted { color: var(--md-on-surface-variant); font-size: 12.5px; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--md-surface-container); padding: 1px 5px; border-radius: 4px; }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: var(--md-on-surface); color: var(--md-surface);
+  padding: 12px 22px; border-radius: var(--md-radius-s); font-size: 14px;
+  box-shadow: var(--md-elev-2); z-index: 50;
+}
+.toast[hidden] { display: none; }
+.grade { font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.grade-実証 { background: var(--md-ok-container);   color: var(--md-ok);   }
+.grade-空白 { background: var(--md-warn-container); color: var(--md-warn); }
+.grade-事実 { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <h1>docready-triage</h1>
+  <p>社内文書をAIに渡す前に、「そのまま変換していいか」を判定します</p>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" role="tab" data-tab="judge"   aria-selected="true">判定する</button>
+  <button class="tab" role="tab" data-tab="inventory" aria-selected="false">文書棚卸し</button>
+  <button class="tab" role="tab" data-tab="index"   aria-selected="false">索引を出力</button>
+  <button class="tab" role="tab" data-tab="basis"   aria-selected="false">根拠</button>
+</nav>
+
+<main>
+  <!-- ============ 判定する ============ -->
+  <section class="panel" id="panel-judge">
+    <div class="callout">
+      <p><b>このツールは変換を良くするものではありません。</b>変換すると情報が消えてしまう文書を、渡す前に見つけて止めるためのものです。</p>
+      <p>あてはまる項目にチェックを入れてください。判定はその場で変わります。</p>
+    </div>
+
+    <div class="card">
+      <h2>文書の情報</h2>
+      <p class="card-sub">名前と種別だけでも判定できます。</p>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-name">文書名</label>
+          <input type="text" id="f-name" placeholder="例: 2026年度 案件管理表">
+        </div>
+        <div class="field">
+          <label for="f-type">種別</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="field">
+          <label for="f-location">保管場所</label>
+          <input type="text" id="f-location" placeholder="例: 共有ドライブ/営業部/管理">
+        </div>
+        <div class="field">
+          <label for="f-owner">担当・管轄</label>
+          <input type="text" id="f-owner" placeholder="例: 営業企画部">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn tonal small" id="btn-sample">サンプルを入れる</button>
+        <button class="btn outline small" id="btn-clear">入力を消す</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>あてはまるものにチェック</h2>
+      <p class="card-sub">選んだ種別で起こりうる項目だけを表示しています。</p>
+      <div id="check-area"></div>
+    </div>
+
+    <div class="card">
+      <h2>判定</h2>
+      <p class="card-sub">チェックした内容から自動で計算しています。</p>
+      <div id="verdict-area"></div>
+      <div class="btn-row">
+        <button class="btn" id="btn-add">この文書を棚卸しに追加</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 文書棚卸し ============ -->
+  <section class="panel" id="panel-inventory" hidden>
+    <div class="callout">
+      <p>登録した文書の一覧です。<b>この画面を閉じると消えます。</b>残したいときは「JSONで保存」を押してファイルを手元に置いてください。次に開いたときは「JSONを読み込む」で戻せます。</p>
+    </div>
+
+    <div class="card">
+      <h2>登録済みの文書</h2>
+      <p class="card-sub" id="inv-count"></p>
+      <div id="inv-area"></div>
+      <div class="btn-row">
+        <button class="btn tonal small" id="btn-save-json">JSONで保存</button>
+        <button class="btn outline small" id="btn-load-json">JSONを読み込む</button>
+        <button class="btn outline small" id="btn-clear-inv">全部消す</button>
+      </div>
+      <input type="file" id="file-json" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- ============ 索引を出力 ============ -->
+  <section class="panel" id="panel-index" hidden>
+    <div class="callout">
+      <p>AIエージェントが<b>作業を始める前に最初に読む索引</b>です。どの文書がどこにあり、そのまま変換してよいかが書かれています。</p>
+      <p>出力した内容をファイルに保存し、AIに渡すフォルダの先頭に置いてください。</p>
+    </div>
+
+    <div class="card">
+      <h2>索引</h2>
+      <p class="card-sub">棚卸しに登録した文書から作ります。</p>
+      <div id="index-area"></div>
+    </div>
+  </section>
+
+  <!-- ============ 根拠 ============ -->
+  <section class="panel" id="panel-basis" hidden>
+    <div class="callout">
+      <p>判定ルールはすべて出典に紐づけています。<b>根拠のないルールは入れていません。</b>この画面は判定ルールの定義から自動生成しており、ルールを追加すればここにも自動で載ります。</p>
+      <p class="muted">この画面のみ専門用語を使います。</p>
+    </div>
+    <div id="basis-area"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+
+/* ============================================================================
+ * [1] 判定ロジック
+ *     ルール定義（RULES）と、そこから判定結果を導く純粋関数だけを置く。
+ *     DOM には一切触れない。
+ * ==========================================================================*/
+
+/**
+ * 判定ルールの単一定義。
+ * ここを直せば「判定する」タブのチェック項目も「根拠」タブの出典表も同時に変わる。
+ * チェック項目を足すときは sources を必ず埋めること（根拠のないルールは入れない）。
+ */
+const RULES = {
+  version: "0.1",
+
+  /* --- 重みの決め方（序数尺度）。効果量そのものではない --- */
+  weightRubric: [
+    { weight: 4, meaning: "変換で情報が消えること自体が構造的に確定しているか、実証研究で20pt以上あるいは相対50%以上の劣化が報告されている" },
+    { weight: 3, meaning: "実証研究で10〜30pt程度の差、あるいは相対20〜50%の劣化が報告されている" },
+    { weight: 2, meaning: "実証されているが効果量が小さい、または効果が間接的" },
+    { weight: 1, meaning: "定性的な品質次元として提示されているのみで、効果量が測られていない" }
+  ],
+
+  /* --- 判定のしきい値 --- */
+  thresholds: {
+    /* 重み4の項目が1つでも該当したら risk（＝足切り）。合計点では上書きしない */
+    criticalWeight: 4,
+    /* 重み4が無い場合、合計がこの値以上なら warn */
+    warn: 5
+  },
+
+  levels: {
+    ok:   { id: "ok",   label: "そのまま変換してよい",
+            lead: "情報が消える既知の要因は見つかりませんでした。通常どおり変換して渡せます。" },
+    warn: { id: "warn", label: "注意して変換する",
+            lead: "一部が失われる可能性があります。下の対処を行ってから渡してください。" },
+    risk: { id: "risk", label: "そのまま変換しない",
+            lead: "変換すると情報が消えることが分かっています。元の形式のまま渡すか、対処してから渡してください。" }
+  },
+
+  docTypes: [
+    { id: "excel",    label: "Excel（表・帳票）" },
+    { id: "pdf-text", label: "PDF（文字をコピーできる）" },
+    { id: "pdf-scan", label: "PDF（スキャン・画像）" },
+    { id: "word",     label: "Word" },
+    { id: "ppt",      label: "PowerPoint" },
+    { id: "html",     label: "Webページ・HTML" },
+    { id: "csv",      label: "CSV・テキスト" },
+    { id: "mail",     label: "メール・チャットのログ" }
+  ],
+
+  groups: [
+    { id: "table",   label: "表のかたち" },
+    { id: "visual",  label: "見た目で意味を出している" },
+    { id: "image",   label: "画像・図" },
+    { id: "struct",  label: "文書のつくり" },
+    { id: "content", label: "中身・運用" }
+  ],
+
+  checks: [
+    /* ---------------- 表のかたち ---------------- */
+    {
+      id: "merged-cells", group: "table", weight: 4,
+      appliesTo: ["excel", "word", "pdf-text", "pdf-scan", "html"],
+      label: "セルを結合して見せている箇所がある",
+      help: "1つのマスが横や縦に2つ分以上にまたがっている状態です。",
+      action: "この表はMarkdownに変換しない。元のファイルのまま渡すか、HTMLの表として渡す。",
+      note: "この文書の表には結合されたセルがあります。変換後の表では結合が失われ、値が本来かかっていた見出しと切り離されている可能性があります。表の値を読むときは元ファイルを確認してください。",
+      evidence: "Markdown（CommonMark / GFM の表拡張）には colspan / rowspan に相当する記法が存在しない。したがって結合セルは変換の時点で必ず失われる。これは効果量の問題ではなく構造的事実である。表構造を保持した階層 split は、表依存の設問で基本 split に対し33ポイント上回る。",
+      sources: ["md-spec", "pdf2rag"]
+    },
+    {
+      id: "multi-header", group: "table", weight: 4,
+      appliesTo: ["excel", "word", "pdf-text", "pdf-scan", "html", "csv"],
+      label: "見出しが2段以上ある（大分類の下に小分類が並ぶ）",
+      help: "「上期／下期」の下に「予算／実績」が並ぶような、段になった見出しです。",
+      action: "この表はMarkdownに変換しない。元のファイルかHTMLの表のまま渡す。",
+      note: "この文書の表は見出しが階層になっています。変換後は上位の見出しが失われ、どの列が何を指すか判別できなくなっている可能性があります。列の意味は元ファイルで確認してください。",
+      evidence: "階層ヘッダは上位ヘッダを colspan で表現するため、Markdown 表では表現不可能。構造保持型の変換（Docling + 階層分割 + 画像説明）は素の PDFLoader に対し正答率 86.2% → 94.1% を示し、表依存の設問での寄与が最も大きい。",
+      sources: ["md-spec", "pdf2rag"]
+    },
+    {
+      id: "wide-table", group: "table", weight: 4,
+      appliesTo: ["excel", "csv", "pdf-text", "word", "html"],
+      label: "列が多い（20列以上など、横に長い）",
+      help: "右にスクロールしないと端まで見えない表です。",
+      action: "列を減らすか、表を分割してから渡す。1行ずつに見出しを付け直した形にすると読み違いが減る。",
+      note: "この文書の表は列が多く、行と列の対応を取り違えやすい形です。特定のセルの値を答える際は、行見出しと列見出しの両方を必ず確認してください。",
+      evidence: "MMTU では、同じセル数でも縦長より横長の表で正答率が大きく下がる（50行×5列 0.81 に対し 5行×50列 0.43）。列方向は行方向より危険であることが示されている。",
+      sources: ["mmtu"]
+    },
+    {
+      id: "long-table", group: "table", weight: 4,
+      appliesTo: ["excel", "csv", "pdf-text", "word", "html"],
+      label: "行が非常に多い（100行を超える）",
+      help: "明細や台帳のように、延々と行が続く表です。",
+      action: "表をそのまま丸ごと渡さない。必要な範囲に絞るか、行ごとに分けて見出しを繰り返した形で渡す。",
+      note: "この文書の表は行数が多く、全体を一度に読ませると精度が大きく落ちます。集計や検索の対象にする場合は、必要な範囲に絞ってから渡してください。",
+      evidence: "表サイズの効果は形式差より桁違いに大きい。100行超で最大 −52 ポイント（Gemini-2.5-flash 67.06% → 14.88%）。対策としては行単位チャンク＋各行へのヘッダ反復が一貫して有効。",
+      sources: ["mmtu", "gpp3"]
+    },
+    {
+      id: "cross-page-table", group: "table", weight: 3,
+      appliesTo: ["pdf-text", "pdf-scan", "word"],
+      label: "表がページをまたいで続いている",
+      help: "1つの表が次のページにも続いていて、続きのページには見出し行がない状態です。",
+      action: "ページをまたぐ表は分割せずに渡す。続きのページにも見出し行を付け足してから渡す。",
+      note: "この文書には複数ページにまたがる表があります。後続ページの行は見出しを持たないため、変換後に見出しと切り離されている可能性があります。",
+      evidence: "素朴なチャンキングでは表ヘッダがボディから切り離され、相対 −27% の劣化が報告されている。",
+      sources: ["officeqa"]
+    },
+    {
+      id: "layout-sheet", group: "table", weight: 2,
+      appliesTo: ["excel"],
+      label: "印刷レイアウトのためにセルを配置している（帳票・方眼）",
+      help: "データを並べる表ではなく、紙に印刷したときの見た目に合わせてセルを使っている状態です。",
+      action: "表として変換せず、書かれている内容を文章として書き起こしてから渡す。",
+      note: "この文書は、データの表ではなく印刷レイアウトのためにセルを使っています。行と列の位置に意味はありません。表として解釈しないでください。",
+      evidence: "文書要素の表現が不統一であることに起因する Formatting Noise に相当する。OHRBench では Formatting Noise はモデルが強くなるほど耐性が上がり、大型 LLM では約7%の低下に留まると報告されている（＝影響はあるが逓減する）。",
+      sources: ["ohrbench"]
+    },
+
+    /* ---------------- 見た目で意味を出している ---------------- */
+    {
+      id: "visual-meaning", group: "visual", weight: 4,
+      appliesTo: ["excel", "word", "ppt", "pdf-text", "html"],
+      label: "打ち消し線・色・太字などの見た目で意味を表している",
+      help: "「取り消し済み」「未確定」などを、文字ではなく見た目だけで示している箇所です。",
+      action: "見た目で示している意味を、文字として書き足してから渡す。（例: 打ち消し線の行の末尾に「（取消済）」と書く）",
+      note: "この文書では、取り消しや保留などの状態を打ち消し線や色で表している箇所があります。変換後はその区別が失われ、取り消された内容が有効な情報として残っている可能性があります。",
+      evidence: "InduOCRBench の VisualStyle 分類（打ち消し線・色強調）では、OCR 精度 82.9% に対し RAG 精度 52.8%（−30.1pt）。文字は正確に読めても、意味を担う書式が捨てられるため、取り消されたはずの内容が有効な事実として下流に届く。文字認識精度を KPI にしてはいけない典型例。",
+      sources: ["induocr"]
+    },
+
+    /* ---------------- 画像・図 ---------------- */
+    {
+      id: "scanned", group: "image", weight: 4,
+      appliesTo: ["pdf-text", "pdf-scan", "word", "ppt"],
+      label: "文字が画像になっている（コピーできない箇所がある）",
+      help: "紙をスキャンしたページや、文字を画像として貼り付けた箇所です。",
+      action: "読み取り結果をそのまま信用しない。重要な数値・固有名詞は人が確認してから渡す。",
+      note: "この文書には画像として取り込まれた文字があります。読み取り誤りが含まれている可能性があるため、数値や固有名詞をそのまま引用しないでください。",
+      evidence: "OHRBench（8,561画像・8,498QA）では、最良の OCR でも人手構造化データに対し少なくとも14%の性能差が残る。Nougat では −21.6pt（−60%）。重度の Semantic Noise では約50%の性能低下。かつ「密検索の理解力は OCR ノイズへの耐性を与えない」とされ、下流の工夫では救えない。",
+      sources: ["ohrbench"]
+    },
+    {
+      id: "charts", group: "image", weight: 4,
+      appliesTo: ["excel", "ppt", "pdf-text", "pdf-scan", "word", "html"],
+      label: "グラフ・チャートに、本文に書かれていない情報がある",
+      help: "グラフを見ないと分からない数値や傾向がある状態です。",
+      action: "グラフの内容を文章と数値の表にしてから渡す。元の数値表があるならそちらを渡す。",
+      note: "この文書にはグラフが含まれ、その内容は本文に書かれていません。変換後の文章からはグラフの情報が抜け落ちています。グラフに関する質問には答えられません。",
+      evidence: "OHRBench の証拠タイプ別集計でチャートが最も壊滅的（Ground Truth 32.9 → MinerU 9.3、−72%）。チャートを含む文書は OCR テキスト経路では救えないと明記されている。",
+      sources: ["ohrbench"]
+    },
+    {
+      id: "figures", group: "image", weight: 2,
+      appliesTo: ["excel", "ppt", "word", "pdf-text", "pdf-scan", "html"],
+      label: "図・写真・画面キャプチャで説明している箇所がある",
+      help: "手順や構成を、文章ではなく図で示している箇所です。",
+      action: "図が何を示しているかの説明文を書き足してから渡す。",
+      note: "この文書には図が含まれ、説明の一部が図にしかありません。図の内容は変換後の文章に含まれていない可能性があります。",
+      evidence: "ColPali の統制実験では、ingestion への captioning 追加で平均 nDCG@5 +0.9pt。効果量は小さいが、OCR を廃してページ画像を直接埋め込む根本変更では +15.2pt（66.1 → 81.3）であり、画像情報の欠落自体は大きい。ただし後者は本ツールのスコープ外（変換工程の置き換え）。",
+      sources: ["colpali", "pdf2rag"]
+    },
+
+    /* ---------------- 文書のつくり ---------------- */
+    {
+      id: "no-headings", group: "struct", weight: 3,
+      appliesTo: ["word", "pdf-text", "pdf-scan", "html", "mail"],
+      label: "見出しがなく、本文が続いている（章立てがない）",
+      help: "「1.」「第2章」のような区切りがなく、文章が最後まで続く状態です。",
+      action: "見出しを付けてから渡す。難しければ、索引に「どこに何が書いてあるか」を書き足す。",
+      note: "この文書には見出しがありません。機械的に区切られているため、話題の途中で切れている箇所があります。前後を合わせて読んでください。",
+      evidence: "文書構造に沿った分割の優位は複数研究で一貫している。段落グループ分割は nDCG@5 0.459 に対し固定文字数 0.244、Precision@1 は24% 対 2〜3%。HiChunk の階層分割 + Auto-Merge で Evidence Recall 74.06 → 81.03。",
+      sources: ["shaukat", "hichunk"]
+    },
+    {
+      id: "cross-ref", group: "struct", weight: 3,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "「別紙参照」「上記のとおり」など、他の文書やページを指す書き方がある",
+      help: "その文書だけを読んでも内容が分からない箇所です。",
+      action: "指している先の内容を本文に書き写すか、索引に参照先を明記してから渡す。",
+      note: "この文書には他の文書やページを指す参照があります。参照先は自動では解決されません。「別紙参照」等が出てきた場合は、参照先の文書を別途探してください。",
+      evidence: "文書をまたぐ参照の解決を扱った研究は確認できていない（既存の共参照解決研究はいずれも同一文書内の代名詞を対象とする）。すなわち自動処理で解決される見込みが現時点で無いため、人手で埋める前提とする。効果量ではなく空白領域を根拠とする項目である。",
+      sources: ["gap-crossref"]
+    },
+    {
+      id: "very-long", group: "struct", weight: 2,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "1つのファイルが長い（100ページ相当を超える）",
+      help: "分量が多く、一度に読み切れないファイルです。",
+      action: "章ごとにファイルを分けてから渡す。分けられない場合は索引に章立てを書く。",
+      note: "この文書は分量が多いため、真ん中あたりの内容が見落とされやすくなります。特定の章を参照させたい場合は、章を明示して指示してください。",
+      evidence: "Lost in the Middle では、参照文書を増やすと性能が逆U字を描き、20文書設定で関連文書を中央に置いた場合 53.8% と、文書を一切与えない closed-book の 56.1% を下回る。効果量そのものは小さいため重み2とする。",
+      sources: ["lost-middle"]
+    },
+
+    /* ---------------- 中身・運用 ---------------- */
+    {
+      id: "mixed-topics", group: "content", weight: 2,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "1つのファイルに、関係のない複数の話題が入っている",
+      help: "議事録に規程と手順書が混ざっているような状態です。",
+      action: "話題ごとにファイルを分ける。分けられない場合は見出しで区切ってから渡す。",
+      note: "この文書には複数の話題が混在しています。ある話題について検索したとき、無関係な話題の記述が一緒に返る場合があります。",
+      evidence: "文書構造に沿った分割の優位（段落グループ 0.459 対 固定文字数 0.244）は、話題境界とチャンク境界が一致していることを前提とする。また ICIS 2025 の Contextual DQ に Relevance / Coverage が置かれている。",
+      sources: ["shaukat", "icis"]
+    },
+    {
+      id: "jargon", group: "content", weight: 1,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "社内だけの略語・記号が、説明なしで出てくる",
+      help: "部署名の略称、案件コード、独自の記号などです。",
+      action: "用語の一覧を作り、索引と一緒に渡す。",
+      note: "この文書には社内固有の略語が説明なく含まれます。意味が確定できない略語は推測せず、そのまま引用してください。",
+      evidence: "ICIS 2025 の Representational DQ に Domain Knowledge / Representational Consistency が置かれている。ただしこれは定性的タクソノミーであり、スコアリング手法・閾値・効果量を伴わない。そのため重み1とする。",
+      sources: ["icis"]
+    },
+    {
+      id: "versions", group: "content", weight: 1,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "同じ内容の版が複数あり、どれが最新か文書内で分からない",
+      help: "「最終版」「最終版2」のようなファイルが並んでいる状態です。",
+      action: "最新版だけを渡す。残す必要があるなら、索引にどれが有効かを書く。",
+      note: "この文書には複数の版が存在し、有効な版が文書内では判別できません。日付や版数の記述を優先し、判断できない場合は複数版がある旨を明示してください。",
+      evidence: "ICIS 2025 の Contextual DQ に Uniqueness / Timeliness and Versioning が置かれている。定性的タクソノミーであり効果量を伴わないため重み1とする。",
+      sources: ["icis"]
+    },
+    {
+      id: "no-owner", group: "content", weight: 1,
+      appliesTo: ["excel", "pdf-text", "pdf-scan", "word", "ppt", "html", "csv", "mail"],
+      label: "作成者・管轄部署が文書内に書かれていない",
+      help: "誰が責任を持つ文書か、開いても分からない状態です。",
+      action: "索引に担当部署を書いてから渡す。",
+      note: "この文書には作成者・管轄の記載がありません。内容の正誤について責任の所在が不明であることを前提に扱ってください。",
+      evidence: "ICIS 2025 は Wang & Strong (1996) の4次元に Accountability DQ（Ownership / Compliance）を第5次元として追加している。RAG の初期工程に新次元が集中し front-loaded な品質管理が必要と結論している。定性的タクソノミーのため重み1とする。",
+      sources: ["icis"]
+    }
+  ],
+
+  /**
+   * 出典。grade は AI2DocFrendry/docs/RESEARCH.md v1.0 の分類に合わせる。
+   *   実証 = 査読論文または効果量が公開された実験
+   *   事実 = 仕様上そうなっている（測るまでもないもの）
+   *   空白 = 該当する研究が確認できていないこと自体を根拠とするもの
+   */
+  sources: {
+    "md-spec": {
+      grade: "事実",
+      title: "GitHub Flavored Markdown Spec — Tables (extension)",
+      detail: "Markdown の表記法には colspan / rowspan に相当する記述が存在しない。",
+      url: "https://github.github.com/gfm/#tables-extension-"
+    },
+    "ohrbench": {
+      grade: "実証",
+      title: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on Retrieval-Augmented Generation (OHRBench)",
+      detail: "ICCV 2025 / arXiv:2412.02592。8,561画像・8,498QA・7ドメイン。",
+      url: "https://arxiv.org/abs/2412.02592"
+    },
+    "induocr": {
+      grade: "実証",
+      title: "InduOCRBench",
+      detail: "arXiv:2605.00911。570文書・3,402ページ・11カテゴリ。OCR精度とRAG精度の乖離を示す。",
+      url: "https://arxiv.org/abs/2605.00911"
+    },
+    "pdf2rag": {
+      grade: "実証",
+      title: "From PDF to RAG-Ready",
+      detail: "Applied Sciences 16(10) 5069 / arXiv:2604.04948。1,706ページ・50問・21構成・各50回実行・Wilcoxon検定。",
+      url: "https://arxiv.org/abs/2604.04948"
+    },
+    "colpali": {
+      grade: "実証",
+      title: "ColPali: Efficient Document Retrieval with Vision Language Models",
+      detail: "ICLR 2025 / arXiv:2407.01449。ingestion と埋め込みモデルを独立に動かした統制実験。",
+      url: "https://arxiv.org/abs/2407.01449"
+    },
+    "mmtu": {
+      grade: "実証",
+      title: "MMTU: A Massive Multi-Task Table Understanding and Reasoning Benchmark",
+      detail: "arXiv:2506.05587。表の形状（行数・列数）が正答率に与える影響を測定。",
+      url: "https://arxiv.org/html/2506.05587v2"
+    },
+    "gpp3": {
+      grade: "実証",
+      title: "3GPP仕様書における表表現の評価",
+      detail: "arXiv:2408.17008。392文書・21,824表・専門家作成278問・16条件の統制実験。行単位チャンク＋ヘッダ反復の有効性。",
+      url: "https://arxiv.org/abs/2408.17008"
+    },
+    "officeqa": {
+      grade: "実証",
+      title: "OfficeQA Pro (Databricks)",
+      detail: "arXiv:2603.08655。89,000ページ・133問。※作成者の自社製品が1位であり利益相反がある。ここでは順位ではなく「素朴なチャンキングで相対−27%」という分散の大きさのみを根拠に用いる。",
+      url: "https://arxiv.org/abs/2603.08655"
+    },
+    "shaukat": {
+      grade: "実証",
+      title: "Shaukat et al. 2026",
+      detail: "UltraDomain 6分野・36手法・5埋め込みモデル。段落グループ分割 nDCG@5 0.459 対 固定文字数 0.244。※arXiv番号は調査元（RESEARCH.md v1.0)に記録がない。",
+      url: ""
+    },
+    "hichunk": {
+      grade: "実証",
+      title: "HiChunk",
+      detail: "arXiv:2509.11552。階層分割 + Auto-Merge で Evidence Recall 74.06 → 81.03。",
+      url: "https://arxiv.org/abs/2509.11552"
+    },
+    "lost-middle": {
+      grade: "実証",
+      title: "Lost in the Middle: How Language Models Use Long Contexts",
+      detail: "TACL 2024 / arXiv:2307.03172。関連文書の位置により性能が逆U字を描く。",
+      url: "https://arxiv.org/abs/2307.03172"
+    },
+    "icis": {
+      grade: "実証",
+      title: "Data Quality Challenges in Retrieval-Augmented Generation",
+      detail: "ICIS 2025 / arXiv:2510.00552。専門家16名の半構造化インタビュー＋Gioia法で26のDQ課題を同定。※定性的タクソノミーであり、スコアリング手法・閾値・妥当性検証は伴わない。",
+      url: "https://arxiv.org/abs/2510.00552"
+    },
+    "gap-crossref": {
+      grade: "空白",
+      title: "文書をまたぐ参照の解決を扱った研究が確認できていない",
+      detail: "既存の共参照解決研究はいずれも同一文書内の代名詞を対象とする。自動処理で解決される見込みが現時点で無いことを根拠とする。",
+      url: ""
+    }
+  }
+};
+
+/** 判定フォームの初期値 */
+const DEFAULT_FORM = {
+  name: "",
+  docType: "excel",
+  location: "",
+  owner: "",
+  checked: []
+};
+
+/** 「サンプルを入れる」で流し込む値 */
+const SAMPLE_FORM = {
+  name: "2026年度 案件管理表",
+  docType: "excel",
+  location: "共有ドライブ/営業部/管理",
+  owner: "営業企画部",
+  checked: ["merged-cells", "multi-header", "wide-table", "visual-meaning", "jargon"]
+};
+
+/** 指定された種別で有効なチェック項目を返す */
+function checksFor(docTypeId) {
+  return RULES.checks.filter(function (c) { return c.appliesTo.indexOf(docTypeId) !== -1; });
+}
+
+/** 種別と選択を突き合わせ、有効なチェックIDだけに絞る */
+function normalizeChecked(docTypeId, checkedIds) {
+  const valid = checksFor(docTypeId).map(function (c) { return c.id; });
+  return (checkedIds || []).filter(function (id) { return valid.indexOf(id) !== -1; });
+}
+
+/**
+ * 判定する。副作用なし。
+ * @returns {{score:number, max:number, level:string, findings:Array, checked:string[]}}
+ */
+function assess(docTypeId, checkedIds) {
+  const available = checksFor(docTypeId);
+  const checked = normalizeChecked(docTypeId, checkedIds);
+  const findings = available.filter(function (c) { return checked.indexOf(c.id) !== -1; });
+
+  const score = findings.reduce(function (sum, c) { return sum + c.weight; }, 0);
+  const max = available.reduce(function (sum, c) { return sum + c.weight; }, 0);
+  const hasCritical = findings.some(function (c) { return c.weight >= RULES.thresholds.criticalWeight; });
+
+  let level;
+  if (hasCritical) level = "risk";
+  else if (score >= RULES.thresholds.warn) level = "warn";
+  else level = "ok";
+
+  /* 重い順 → 定義順 で安定ソート */
+  const order = RULES.checks.map(function (c) { return c.id; });
+  findings.sort(function (a, b) {
+    return (b.weight - a.weight) || (order.indexOf(a.id) - order.indexOf(b.id));
+  });
+
+  return { score: score, max: max, level: level, findings: findings, checked: checked };
+}
+
+/** AIに添える構造説明文を組み立てる。副作用なし */
+function buildStructureNote(doc) {
+  const result = assess(doc.docType, doc.checked);
+  const type = RULES.docTypes.filter(function (t) { return t.id === doc.docType; })[0];
+  const level = RULES.levels[result.level];
+
+  const lines = [];
+  lines.push("【この文書について】");
+  lines.push("名前: " + (doc.name || "(未記入)"));
+  lines.push("元の形式: " + (type ? type.label : doc.docType));
+  if (doc.location) lines.push("保管場所: " + doc.location);
+  if (doc.owner) lines.push("担当・管轄: " + doc.owner);
+  lines.push("扱い: " + level.label);
+  lines.push("");
+
+  if (result.findings.length === 0) {
+    lines.push("変換によって情報が失われる既知の要因は確認されていません。");
+  } else {
+    lines.push("この文書を読むときは、次の点に注意してください。");
+    lines.push("");
+    result.findings.forEach(function (c, i) {
+      lines.push((i + 1) + ". " + c.note);
+    });
+  }
+  return lines.join("\n");
+}
+
+
+/* ============================================================================
+ * [2] 描画
+ *     状態を DOM に反映する。判定の計算はここでは行わず [1] を呼ぶだけ。
+ * ==========================================================================*/
+
+const state = {
+  tab: "judge",
+  form: Object.assign({}, DEFAULT_FORM, { checked: [] }),
+  docs: []          /* 棚卸し。{id, name, docType, location, owner, checked} */
+};
+
+let nextDocId = 1;
+
+const el = {
+  tabs:        document.querySelectorAll(".tab"),
+  panels:      { judge: document.getElementById("panel-judge"),
+                 inventory: document.getElementById("panel-inventory"),
+                 index: document.getElementById("panel-index"),
+                 basis: document.getElementById("panel-basis") },
+  name:        document.getElementById("f-name"),
+  type:        document.getElementById("f-type"),
+  location:    document.getElementById("f-location"),
+  owner:       document.getElementById("f-owner"),
+  checkArea:   document.getElementById("check-area"),
+  verdictArea: document.getElementById("verdict-area"),
+  invArea:     document.getElementById("inv-area"),
+  invCount:    document.getElementById("inv-count"),
+  indexArea:   document.getElementById("index-area"),
+  basisArea:   document.getElementById("basis-area"),
+  toast:       document.getElementById("toast"),
+  fileJson:    document.getElementById("file-json")
+};
+
+/** テキストを安全に埋めるための最小限のエスケープ */
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function typeLabel(id) {
+  const t = RULES.docTypes.filter(function (x) { return x.id === id; })[0];
+  return t ? t.label : id;
+}
+
+function showToast(msg) {
+  el.toast.textContent = msg;
+  el.toast.hidden = false;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { el.toast.hidden = true; }, 2600);
+}
+
+/* --- タブ --- */
+function renderTabs() {
+  el.tabs.forEach(function (btn) {
+    const on = btn.dataset.tab === state.tab;
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  Object.keys(el.panels).forEach(function (k) {
+    el.panels[k].hidden = (k !== state.tab);
+  });
+}
+
+/* --- 判定タブ: 種別セレクト（初回のみ） --- */
+function renderTypeOptions() {
+  el.type.innerHTML = RULES.docTypes.map(function (t) {
+    return '<option value="' + esc(t.id) + '">' + esc(t.label) + "</option>";
+  }).join("");
+}
+
+/* --- 判定タブ: チェック項目 --- */
+function renderChecks() {
+  const available = checksFor(state.form.docType);
+  const html = RULES.groups.map(function (g) {
+    const items = available.filter(function (c) { return c.group === g.id; });
+    if (items.length === 0) return "";
+    return '<div class="check-group"><h3>' + esc(g.label) + "</h3>" +
+      items.map(function (c) {
+        const on = state.form.checked.indexOf(c.id) !== -1;
+        return '<label class="check">' +
+          '<input type="checkbox" data-check="' + esc(c.id) + '"' + (on ? " checked" : "") + ">" +
+          '<span class="check-body">' +
+            '<span class="check-label">' + esc(c.label) + "</span>" +
+            '<span class="check-help">' + esc(c.help) + "</span>" +
+          "</span></label>";
+      }).join("") + "</div>";
+  }).join("");
+  el.checkArea.innerHTML = html;
+}
+
+/* --- 判定タブ: 結果 --- */
+function renderVerdict() {
+  const result = assess(state.form.docType, state.form.checked);
+  const level = RULES.levels[result.level];
+  const note = buildStructureNote(state.form);
+
+  let html = '<div class="verdict ' + result.level + '">' +
+    '<div class="verdict-head">' +
+      '<p class="verdict-title">' + esc(level.label) + "</p>" +
+      '<span class="verdict-score">重み合計 ' + result.score + " / " + result.max + "</span>" +
+    "</div>" +
+    '<p class="verdict-lead">' + esc(level.lead) + "</p>" +
+  "</div>";
+
+  if (result.findings.length > 0) {
+    html += '<ul class="finding-list">' + result.findings.map(function (c) {
+      return '<li class="finding" data-weight="' + c.weight + '">' +
+        '<div class="finding-title">' + esc(c.label) + "</div>" +
+        '<div class="finding-action"><b>対処:</b> ' + esc(c.action) + "</div>" +
+      "</li>";
+    }).join("") + "</ul>";
+  }
+
+  html += '<div class="field" style="margin-top:18px">' +
+    '<label for="out-note">AIに添える説明文</label>' +
+    '<textarea id="out-note" class="note" readonly>' + esc(note) + "</textarea>" +
+    '<div class="btn-row"><button class="btn outline small" id="btn-copy-note">この説明文をコピー</button></div>' +
+  "</div>";
+
+  el.verdictArea.innerHTML = html;
+  document.getElementById("btn-copy-note").addEventListener("click", function () {
+    copyText(note, "説明文をコピーしました");
+  });
+}
+
+function renderForm() {
+  el.name.value = state.form.name;
+  el.type.value = state.form.docType;
+  el.location.value = state.form.location;
+  el.owner.value = state.form.owner;
+  renderChecks();
+  renderVerdict();
+}
+
+/* --- 棚卸しタブ --- */
+function renderInventory() {
+  el.invCount.textContent = state.docs.length === 0
+    ? "まだ1件も登録されていません。"
+    : state.docs.length + " 件登録されています。";
+
+  if (state.docs.length === 0) {
+    el.invArea.innerHTML = '<div class="empty">「判定する」タブで判定してから「この文書を棚卸しに追加」を押すと、ここに並びます。</div>';
+    return;
+  }
+
+  const rows = state.docs.map(function (d) {
+    const r = assess(d.docType, d.checked);
+    const lv = RULES.levels[r.level];
+    const points = r.findings.map(function (c) { return c.label; }).join(" / ") || "—";
+    return "<tr>" +
+      "<td>" + esc(d.name || "(名称未設定)") + "</td>" +
+      "<td>" + esc(typeLabel(d.docType)) + "</td>" +
+      '<td><span class="badge ' + r.level + '">' + esc(lv.label) + "</span></td>" +
+      '<td class="num">' + r.score + "</td>" +
+      "<td>" + esc(d.location || "—") + "</td>" +
+      "<td>" + esc(d.owner || "—") + "</td>" +
+      '<td class="muted">' + esc(points) + "</td>" +
+      '<td><button class="btn outline small" data-del="' + d.id + '">削除</button></td>' +
+    "</tr>";
+  }).join("");
+
+  el.invArea.innerHTML =
+    '<div class="table-wrap"><table><thead><tr>' +
+    "<th>文書名</th><th>種別</th><th>判定</th><th>点数</th><th>保管場所</th><th>担当</th><th>該当した項目</th><th></th>" +
+    "</tr></thead><tbody>" + rows + "</tbody></table></div>";
+
+  el.invArea.querySelectorAll("[data-del]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const id = Number(btn.dataset.del);
+      state.docs = state.docs.filter(function (d) { return d.id !== id; });
+      renderInventory();
+      renderIndex();
+      showToast("削除しました");
+    });
+  });
+}
+
+/* --- 索引タブ --- */
+function renderIndex() {
+  if (state.docs.length === 0) {
+    el.indexArea.innerHTML = '<div class="empty">先に「文書棚卸し」に文書を登録してください。</div>';
+    return;
+  }
+  const md = buildIndexMarkdown(state.docs);
+  el.indexArea.innerHTML =
+    '<div class="field"><textarea class="output" id="out-index" readonly></textarea></div>' +
+    '<div class="btn-row">' +
+      '<button class="btn" id="btn-copy-index">コピー</button>' +
+      '<button class="btn tonal" id="btn-dl-index">ファイルに保存</button>' +
+    "</div>";
+  document.getElementById("out-index").value = md;
+  document.getElementById("btn-copy-index").addEventListener("click", function () {
+    copyText(md, "索引をコピーしました");
+  });
+  document.getElementById("btn-dl-index").addEventListener("click", function () {
+    downloadText("index.md", md, "text/markdown");
+  });
+}
+
+/* --- 根拠タブ（RULES から自動生成） --- */
+function renderBasis() {
+  const usedIds = {};
+  RULES.checks.forEach(function (c) {
+    c.sources.forEach(function (s) { usedIds[s] = true; });
+  });
+
+  let html = "";
+
+  /* 判定の考え方 */
+  html += '<div class="card"><h2>判定の考え方</h2>' +
+    '<p class="card-sub">重みは効果量そのものではなく、下の基準で決めた序数尺度です。</p>' +
+    '<div class="table-wrap"><table><thead><tr><th>重み</th><th>意味</th></tr></thead><tbody>' +
+    RULES.weightRubric.map(function (r) {
+      return "<tr><td class=\"num\">" + r.weight + "</td><td>" + esc(r.meaning) + "</td></tr>";
+    }).join("") +
+    "</tbody></table></div>" +
+    "<p class=\"muted\" style=\"margin-top:14px\">3段階への分類:" +
+    " 重み" + RULES.thresholds.criticalWeight + "の項目が1つでも該当すれば <b>risk</b>（足切り）。" +
+    " 該当しない場合、重み合計が " + RULES.thresholds.warn + " 以上なら <b>warn</b>、未満なら <b>ok</b>。" +
+    " 合計点で risk を上書きしないのは、本ツールが最適化ではなく足切りを目的とするため。" +
+    "<b>この分類方法自体は設計判断であり、実証研究に基づくものではない。</b></p>" +
+    "</div>";
+
+  /* ルールと出典 */
+  html += '<div class="card"><h2>判定ルールと出典</h2>' +
+    '<p class="card-sub">全 ' + RULES.checks.length + " 項目。ルール定義から自動生成しています。</p>" +
+    '<div class="table-wrap"><table><thead><tr>' +
+    "<th>チェック項目</th><th>重み</th><th>対象</th><th>根拠</th><th>出典</th>" +
+    "</tr></thead><tbody>" +
+    RULES.checks.map(function (c) {
+      const srcs = c.sources.map(function (sid) {
+        const s = RULES.sources[sid];
+        return s ? esc(s.title) : esc(sid);
+      }).join("<br>");
+      return "<tr>" +
+        "<td>" + esc(c.label) + "</td>" +
+        '<td class="num">' + c.weight + "</td>" +
+        '<td class="muted">' + c.appliesTo.map(typeLabel).map(esc).join("、") + "</td>" +
+        "<td>" + esc(c.evidence) + "</td>" +
+        '<td class="muted">' + srcs + "</td>" +
+      "</tr>";
+    }).join("") +
+    "</tbody></table></div></div>";
+
+  /* 出典一覧 */
+  html += '<div class="card"><h2>出典一覧</h2>' +
+    '<p class="card-sub">実証＝査読論文または効果量が公開された実験 ／ 事実＝仕様上そうなっているもの ／ 空白＝該当する研究が確認できていないこと自体を根拠とするもの。</p>' +
+    '<div class="table-wrap"><table><thead><tr><th>区分</th><th>出典</th><th>内容</th></tr></thead><tbody>' +
+    Object.keys(RULES.sources).filter(function (id) { return usedIds[id]; }).map(function (id) {
+      const s = RULES.sources[id];
+      const title = s.url
+        ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.title) + "</a>"
+        : esc(s.title);
+      return "<tr>" +
+        '<td><span class="grade grade-' + esc(s.grade) + '">' + esc(s.grade) + "</span></td>" +
+        "<td>" + title + "</td>" +
+        '<td class="muted">' + esc(s.detail) + "</td>" +
+      "</tr>";
+    }).join("") +
+    "</tbody></table></div>" +
+    '<p class="muted" style="margin-top:14px">出典の選定は、同一リポジトリの先行研究調査（<code>AI2DocFrendry/docs/RESEARCH.md</code> v1.0）で「実証」と分類された一次文献に限定している。同調査が「引用してはいけない数値」として挙げた出典は使用していない。</p>' +
+    "</div>";
+
+  /* このツールが扱わないこと */
+  html += '<div class="card"><h2>このツールが主張しないこと</h2>' +
+    "<ul>" +
+    "<li>Markdown が LLM にとって優れた入力形式であること。単一の最適形式は存在せず、モデル世代で優劣が逆転することが報告されている（arXiv:2411.10541: GPT-3.5 では JSON 59.7% 対 Markdown 50.0%、GPT-4 では Markdown 81.2% 対 JSON 73.9%）。</li>" +
+    "<li>本ツールのスコアが下流タスクの精度を予測すること。投入前のコーパス品質を測る枠組みは現時点で確立しておらず、妥当性検証は行っていない。</li>" +
+    "<li>書式を整えれば性能が上がること。書式に起因する劣化（Formatting Noise）はモデルが強くなるほど逓減する一方、内容の欠落（Semantic Noise）は逓減しない。本ツールは後者、すなわち<b>情報が消える変換</b>の検出を目的とする。</li>" +
+    "</ul></div>";
+
+  el.basisArea.innerHTML = html;
+}
+
+function renderAll() {
+  renderTabs();
+  renderForm();
+  renderInventory();
+  renderIndex();
+}
+
+
+/* ============================================================================
+ * [3] 入出力
+ *     索引の組み立て、JSON の保存・読込、クリップボード、ダウンロード。
+ * ==========================================================================*/
+
+/** 棚卸しから Markdown の索引を組み立てる。副作用なし */
+function buildIndexMarkdown(docs) {
+  const out = [];
+  out.push("# 文書索引");
+  out.push("");
+  out.push("このファイルは、作業を始める前に最初に読む索引です。");
+  out.push("各文書がどこにあり、そのまま変換してよいかを記載しています。");
+  out.push("");
+  out.push("扱いの意味:");
+  out.push("");
+  out.push("- **" + RULES.levels.ok.label + "** … " + RULES.levels.ok.lead);
+  out.push("- **" + RULES.levels.warn.label + "** … " + RULES.levels.warn.lead);
+  out.push("- **" + RULES.levels.risk.label + "** … " + RULES.levels.risk.lead);
+  out.push("");
+  out.push("## 一覧");
+  out.push("");
+  out.push("| # | 文書名 | 元の形式 | 扱い | 保管場所 | 担当 |");
+  out.push("|---|---|---|---|---|---|");
+  docs.forEach(function (d, i) {
+    const r = assess(d.docType, d.checked);
+    out.push("| " + (i + 1) + " | " + mdCell(d.name || "(名称未設定)") +
+      " | " + mdCell(typeLabel(d.docType)) +
+      " | " + mdCell(RULES.levels[r.level].label) +
+      " | " + mdCell(d.location || "—") +
+      " | " + mdCell(d.owner || "—") + " |");
+  });
+  out.push("");
+  out.push("## 文書ごとの注意");
+  out.push("");
+
+  docs.forEach(function (d, i) {
+    const r = assess(d.docType, d.checked);
+    out.push("### " + (i + 1) + ". " + (d.name || "(名称未設定)"));
+    out.push("");
+    out.push("- 元の形式: " + typeLabel(d.docType));
+    out.push("- 扱い: **" + RULES.levels[r.level].label + "**（重み合計 " + r.score + " / " + r.max + "）");
+    if (d.location) out.push("- 保管場所: " + d.location);
+    if (d.owner) out.push("- 担当・管轄: " + d.owner);
+    out.push("");
+    if (r.findings.length === 0) {
+      out.push("変換によって情報が失われる既知の要因は確認されていません。");
+    } else {
+      out.push("見つかった注意点と対処:");
+      out.push("");
+      r.findings.forEach(function (c) {
+        out.push("- " + c.label + "  ");
+        out.push("  → " + c.action);
+      });
+      out.push("");
+      out.push("この文書を読むときの前提:");
+      out.push("");
+      r.findings.forEach(function (c) {
+        out.push("> " + c.note);
+        out.push(">");
+      });
+    }
+    out.push("");
+  });
+
+  out.push("---");
+  out.push("");
+  out.push("この索引は docready-triage（判定ルール v" + RULES.version + "）で作成しました。");
+  return out.join("\n");
+}
+
+/** Markdown の表セルに入れられる形に整える */
+function mdCell(s) {
+  return String(s == null ? "" : s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+}
+
+/** 棚卸し全体を保存用の形にする */
+function toSaveData() {
+  return {
+    schema: "docready-triage/state",
+    rulesVersion: RULES.version,
+    documents: state.docs.map(function (d) {
+      return {
+        name: d.name,
+        docType: d.docType,
+        location: d.location,
+        owner: d.owner,
+        checked: d.checked.slice()
+      };
+    })
+  };
+}
+
+/** 読み込んだ JSON を検証して棚卸しに反映する。戻り値は取り込んだ件数 */
+function applySaveData(data) {
+  if (!data || typeof data !== "object" || !Array.isArray(data.documents)) {
+    throw new Error("このファイルは docready-triage で保存したものではないようです。");
+  }
+  const validTypes = RULES.docTypes.map(function (t) { return t.id; });
+  const docs = data.documents.map(function (raw) {
+    const docType = validTypes.indexOf(raw.docType) !== -1 ? raw.docType : DEFAULT_FORM.docType;
+    return {
+      id: nextDocId++,
+      name: String(raw.name || ""),
+      docType: docType,
+      location: String(raw.location || ""),
+      owner: String(raw.owner || ""),
+      checked: normalizeChecked(docType, Array.isArray(raw.checked) ? raw.checked : [])
+    };
+  });
+  state.docs = docs;
+  return docs.length;
+}
+
+function downloadText(filename, text, mime) {
+  const blob = new Blob([text], { type: (mime || "text/plain") + ";charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+function copyText(text, okMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      function () { showToast(okMsg); },
+      function () { showToast("コピーできませんでした。手動で選択してください。"); }
+    );
+  } else {
+    showToast("コピーできませんでした。手動で選択してください。");
+  }
+}
+
+
+/* ============================================================================
+ * イベント登録
+ * ==========================================================================*/
+
+el.tabs.forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    state.tab = btn.dataset.tab;
+    renderTabs();
+    if (state.tab === "index") renderIndex();
+    if (state.tab === "inventory") renderInventory();
+  });
+});
+
+el.name.addEventListener("input", function () { state.form.name = el.name.value; });
+el.location.addEventListener("input", function () { state.form.location = el.location.value; });
+el.owner.addEventListener("input", function () { state.form.owner = el.owner.value; });
+
+el.type.addEventListener("change", function () {
+  state.form.docType = el.type.value;
+  /* 種別を変えると使えなくなる項目があるので選択を絞り直す */
+  state.form.checked = normalizeChecked(state.form.docType, state.form.checked);
+  renderChecks();
+  renderVerdict();
+});
+
+el.checkArea.addEventListener("change", function (ev) {
+  const id = ev.target && ev.target.dataset ? ev.target.dataset.check : null;
+  if (!id) return;
+  if (ev.target.checked) {
+    if (state.form.checked.indexOf(id) === -1) state.form.checked = state.form.checked.concat([id]);
+  } else {
+    state.form.checked = state.form.checked.filter(function (x) { return x !== id; });
+  }
+  renderVerdict();
+});
+
+document.getElementById("btn-sample").addEventListener("click", function () {
+  state.form = Object.assign({}, SAMPLE_FORM, { checked: SAMPLE_FORM.checked.slice() });
+  renderForm();
+  showToast("サンプルを入れました");
+});
+
+document.getElementById("btn-clear").addEventListener("click", function () {
+  state.form = Object.assign({}, DEFAULT_FORM, { checked: [] });
+  renderForm();
+});
+
+document.getElementById("btn-add").addEventListener("click", function () {
+  const f = state.form;
+  if (!f.name.trim()) { showToast("文書名を入れてください"); el.name.focus(); return; }
+  state.docs = state.docs.concat([{
+    id: nextDocId++,
+    name: f.name.trim(),
+    docType: f.docType,
+    location: f.location.trim(),
+    owner: f.owner.trim(),
+    checked: f.checked.slice()
+  }]);
+  renderInventory();
+  renderIndex();
+  showToast("棚卸しに追加しました（" + state.docs.length + " 件）");
+});
+
+document.getElementById("btn-save-json").addEventListener("click", function () {
+  if (state.docs.length === 0) { showToast("保存する文書がありません"); return; }
+  downloadText("docready-triage.json", JSON.stringify(toSaveData(), null, 2), "application/json");
+});
+
+document.getElementById("btn-load-json").addEventListener("click", function () {
+  el.fileJson.click();
+});
+
+el.fileJson.addEventListener("change", function () {
+  const file = el.fileJson.files && el.fileJson.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function () {
+    try {
+      const n = applySaveData(JSON.parse(String(reader.result)));
+      renderInventory();
+      renderIndex();
+      showToast(n + " 件読み込みました");
+    } catch (e) {
+      showToast(e && e.message ? e.message : "読み込めませんでした");
+    }
+    el.fileJson.value = "";
+  };
+  reader.onerror = function () {
+    showToast("ファイルを読めませんでした");
+    el.fileJson.value = "";
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById("btn-clear-inv").addEventListener("click", function () {
+  if (state.docs.length === 0) return;
+  if (!confirm("登録した " + state.docs.length + " 件を全部消します。よろしいですか？")) return;
+  state.docs = [];
+  renderInventory();
+  renderIndex();
+  showToast("全部消しました");
+});
+
+
+/* ============================================================================
+ * 起動
+ * ==========================================================================*/
+renderTypeOptions();
+renderBasis();
+renderAll();
+</script>
+</body>
+</html>

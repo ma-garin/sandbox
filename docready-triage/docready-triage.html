@@ -867,7 +867,8 @@ const state = {
   tab: "judge",
   form: Object.assign({}, DEFAULT_FORM, { checked: [] }),
   docs: [],         /* 棚卸し。{id, name, docType, location, owner, checked} */
-  bulk: null        /* まとめて登録の読み取り結果。登録するまで棚卸しには入れない */
+  bulk: null,       /* まとめて登録の読み取り結果。登録するまで棚卸しには入れない */
+  indexFormat: "markdown"
 };
 
 let nextDocId = 1;
@@ -1107,19 +1108,38 @@ function renderIndex() {
     el.indexArea.innerHTML = '<div class="empty">先に「文書棚卸し」に文書を登録してください。</div>';
     return;
   }
-  const md = buildIndexMarkdown(state.docs);
+  const fmt = INDEX_FORMATS.filter(function (f) { return f.id === state.indexFormat; })[0]
+    || INDEX_FORMATS[0];
+  const text = fmt.build(state.docs);
+
   el.indexArea.innerHTML =
+    '<div class="field"><label>出力の形</label><div class="btn-row" id="index-format">' +
+      INDEX_FORMATS.map(function (f) {
+        const on = f.id === fmt.id;
+        return '<button class="btn ' + (on ? "tonal" : "outline") + ' small" data-format="' +
+          esc(f.id) + '"' + (on ? ' aria-pressed="true"' : "") + ">" + esc(f.label) + "</button>";
+      }).join("") +
+    "</div>" +
+    '<p class="muted" style="margin-top:6px">' + esc(fmt.help) + "</p></div>" +
     '<div class="field"><textarea class="output" id="out-index" readonly></textarea></div>' +
     '<div class="btn-row">' +
       '<button class="btn" id="btn-copy-index">コピー</button>' +
-      '<button class="btn tonal" id="btn-dl-index">ファイルに保存</button>' +
+      '<button class="btn tonal" id="btn-dl-index">ファイルに保存（' + esc(fmt.filename) + "）</button>" +
     "</div>";
-  document.getElementById("out-index").value = md;
+
+  document.getElementById("out-index").value = text;
+
+  el.indexArea.querySelectorAll("[data-format]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.indexFormat = btn.dataset.format;
+      renderIndex();
+    });
+  });
   document.getElementById("btn-copy-index").addEventListener("click", function () {
-    copyText(md, "索引をコピーしました");
+    copyText(text, "索引をコピーしました");
   });
   document.getElementById("btn-dl-index").addEventListener("click", function () {
-    downloadText("index.md", md, "text/markdown");
+    downloadText(fmt.filename, text, fmt.mime);
   });
 }
 
@@ -1277,6 +1297,64 @@ function buildIndexMarkdown(docs) {
   return out.join("\n");
 }
 
+/**
+ * 棚卸しから機械可読の索引（JSON）を組み立てる。副作用なし。
+ * 判定に使った出典もそのまま含めるので、受け取った側で根拠をたどれる。
+ */
+function buildIndexObject(docs) {
+  const usedSources = {};
+
+  const documents = docs.map(function (d) {
+    const r = assess(d.docType, d.checked);
+    r.findings.forEach(function (c) {
+      c.sources.forEach(function (sid) { usedSources[sid] = true; });
+    });
+    return {
+      name: d.name || "",
+      docType: { id: d.docType, label: typeLabel(d.docType) },
+      location: d.location || "",
+      owner: d.owner || "",
+      verdict: {
+        level: r.level,
+        label: RULES.levels[r.level].label,
+        description: RULES.levels[r.level].lead,
+        score: r.score,
+        maxScore: r.max
+      },
+      findings: r.findings.map(function (c) {
+        return {
+          id: c.id,
+          label: c.label,
+          weight: c.weight,
+          action: c.action,
+          note: c.note,
+          sources: c.sources.slice()
+        };
+      }),
+      structureNote: buildStructureNote(d)
+    };
+  });
+
+  const sources = {};
+  Object.keys(RULES.sources).forEach(function (id) {
+    if (!usedSources[id]) return;
+    const s = RULES.sources[id];
+    sources[id] = { grade: s.grade, title: s.title, detail: s.detail, url: s.url };
+  });
+
+  return {
+    schema: "docready-triage/index",
+    schemaVersion: 1,
+    rulesVersion: RULES.version,
+    purpose: "作業を始める前に最初に読む索引。各文書がどこにあり、そのまま変換してよいかを示す。",
+    levels: Object.keys(RULES.levels).map(function (k) {
+      return { id: k, label: RULES.levels[k].label, description: RULES.levels[k].lead };
+    }),
+    documents: documents,
+    sources: sources
+  };
+}
+
 /** Markdown の表セルに入れられる形に整える */
 function mdCell(s) {
   return String(s == null ? "" : s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
@@ -1319,6 +1397,26 @@ function applySaveData(data) {
   state.docs = docs;
   return docs.length;
 }
+
+/** 索引として出せる形。増やすときはここに足す */
+const INDEX_FORMATS = [
+  {
+    id: "markdown",
+    label: "Markdown（人も読める）",
+    help: "AIに渡すフォルダの先頭に置く索引です。人が見ても内容が分かります。",
+    filename: "index.md",
+    mime: "text/markdown",
+    build: function (docs) { return buildIndexMarkdown(docs); }
+  },
+  {
+    id: "json",
+    label: "JSON（プログラムで読む）",
+    help: "エージェントや自作の仕組みから読み取るための形です。判定に使った出典も一緒に入っています。",
+    filename: "index.json",
+    mime: "application/json",
+    build: function (docs) { return JSON.stringify(buildIndexObject(docs), null, 2); }
+  }
+];
 
 /* ---------------- 貼り付けによる一括登録 ---------------- */
 

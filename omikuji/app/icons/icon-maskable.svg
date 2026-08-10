@@ -1,16 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="ground2" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#D8503F"/>
-      <stop offset="1" stop-color="#98211D"/>
-    </linearGradient>
-  </defs>
-  <!-- maskable: 図形を中央 80% のセーフゾーンに収める -->
-  <rect width="512" height="512" fill="url(#ground2)"/>
-  <g stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none">
-    <path d="M148 182 C 190 150, 322 150, 364 182"/>
-    <line x1="176" y1="243" x2="336" y2="243"/>
-    <line x1="199" y1="181" x2="187" y2="371"/>
-    <line x1="313" y1="181" x2="325" y2="371"/>
+  <!-- maskable: 図形を中央 80% のセーフゾーンに収める。角を丸く抜かれても欠けない -->
+  <rect width="512" height="512" fill="#F4F0E6"/>
+  <g stroke="#C3352E" stroke-width="24" stroke-linecap="round" fill="none">
+    <path d="M143 179 C 188 142, 342 142, 387 179"/>
+    <line x1="172" y1="248" x2="358" y2="248"/>
+    <line x1="201" y1="177" x2="185" y2="414"/>
+    <line x1="326" y1="177" x2="342" y2="414"/>
   </g>
 </svg>

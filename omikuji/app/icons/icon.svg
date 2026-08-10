@@ -1,19 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="ground" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#D8503F"/>
-      <stop offset="1" stop-color="#98211D"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" fill="url(#ground)"/>
-  <!-- 鳥居を4本の線だけで描く。要素を足すほど小さい表示で潰れる -->
-  <g stroke="#FFFFFF" stroke-width="27" stroke-linecap="round" fill="none">
-    <!-- 笠木。反りが鳥居の顔になる -->
-    <path d="M116 152 C 168 112, 344 112, 396 152"/>
-    <!-- 貫。柱を貫いて外へ出るのが鳥居の作り -->
-    <line x1="150" y1="228" x2="362" y2="228"/>
-    <!-- 柱。縦に長く、下へわずかに開く -->
-    <line x1="180" y1="150" x2="164" y2="412"/>
-    <line x1="332" y1="150" x2="348" y2="412"/>
+  <rect width="512" height="512" fill="#F4F0E6"/>
+  <!-- 鳥居を4本の線で。要素を足すほど小さい表示で潰れる -->
+  <g stroke="#C3352E" stroke-width="30" stroke-linecap="round" fill="none">
+    <!-- 笠木: 反りが鳥居の顔になる -->
+    <path d="M104 146 C 160 100, 352 100, 408 146"/>
+    <!-- 貫: 柱の外へはっきり出す -->
+    <line x1="140" y1="232" x2="372" y2="232"/>
+    <!-- 柱: 下端近くまで伸ばして地に立たせる -->
+    <line x1="178" y1="144" x2="158" y2="440"/>
+    <line x1="334" y1="144" x2="354" y2="440"/>
   </g>
 </svg>

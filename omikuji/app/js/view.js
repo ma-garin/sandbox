@@ -4,8 +4,10 @@
  */
 
 import { TYPE_OMIKUJI, TYPE_VISIT } from './store.js';
+import { holidayName } from './holidays.js';
 
 const TOP_FORTUNE = '大吉';
+const UNKNOWN_SHRINE = '場所の記載なし';
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -19,6 +21,11 @@ export function formatDate(iso) {
   return iso.replace(/-/g, '.');
 }
 
+/** 参拝として数える記録か。貼り紙の写真などは参拝ではない。 */
+function isVisit(entry) {
+  return entry.type === TYPE_OMIKUJI || entry.type === TYPE_VISIT;
+}
+
 /** 一覧・詳細で共通して使う、状態を表すラベル（4-15）。 */
 export function badgeEl(entry) {
   if (entry.type === TYPE_VISIT) return el('span', 'fortune fortune--visit', '参拝');
@@ -29,7 +36,6 @@ export function badgeEl(entry) {
   return node;
 }
 
-/** カードの見出しにあたる部分。おみくじは番号、それ以外は題。 */
 function headingText(entry) {
   if (entry.type === TYPE_OMIKUJI) return entry.number || 'おみくじ';
   return entry.title || (entry.type === TYPE_VISIT ? '参拝' : 'その他');
@@ -51,10 +57,10 @@ export function cardEl(entry, onOpen) {
   const li = el('li');
   const btn = el('button', 'card');
   btn.type = 'button';
-  btn.dataset.id = entry.id;   // 詳細を閉じたときにここへフォーカスを戻す
+  btn.dataset.id = entry.id;
 
   const top = el('div', 'card__top');
-  top.appendChild(el('span', 'card__date', formatDate(entry.date)));
+  top.appendChild(el('span', 'card__date', formatDate(entry.date) + (entry.time ? ` ${entry.time}` : '')));
   if (entry.dateEstimated) top.appendChild(el('span', 'card__tag', '日付は推定'));
   if (isUnreadable(entry)) top.appendChild(el('span', 'card__tag card__tag--warn', '本文未判読'));
   if (entry.edited) top.appendChild(el('span', 'card__tag', '手直しあり'));
@@ -66,18 +72,23 @@ export function cardEl(entry, onOpen) {
   title.appendChild(el('span', 'card__no', headingText(entry)));
   btn.appendChild(title);
 
-  const shrine = entry.shrine || (entry.type === TYPE_OMIKUJI ? '神社名の記載なし' : '');
+  const shrine = entry.shrine || (entry.type === TYPE_OMIKUJI ? UNKNOWN_SHRINE : '');
   if (shrine) btn.appendChild(el('p', 'card__shrine', shrine));
 
   const ex = excerpt(entry);
-  if (ex) btn.appendChild(el('p', 'card__excerpt', ex));
+  if (ex) {
+    const p = el('p', 'card__excerpt', ex);
+    // 歌は5句で1つの文なので途中で切らない。長い運勢本文だけ2行に丸める。
+    if (entry.poem && ex === entry.poem) p.classList.add('card__excerpt--poem');
+    btn.appendChild(p);
+  }
 
   btn.addEventListener('click', () => onOpen(entry));
   li.appendChild(btn);
   return li;
 }
 
-/** 年の区切り見出し。スクロール中の現在位置も兼ねる（5-10 一覧を見やすくする） */
+/** 年の区切り見出し（5-10 一覧を見やすくする） */
 export function yearHeaderEl(year, count) {
   const li = el('li', 'year');
   li.appendChild(el('span', 'year__label', `${year}年`));
@@ -87,8 +98,7 @@ export function yearHeaderEl(year, count) {
 
 /* ============================================================
    参拝カレンダー
-   お参りした日を月ごとに見る。おみくじの吉凶は記録一覧の担当なので、
-   ここでは「いつ・どこへ行ったか」だけを扱う。
+   お参りした日を月ごとに見る。おみくじの吉凶は「おみくじ」タブの担当。
    ============================================================ */
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
@@ -97,27 +107,23 @@ function ymd(y, m, d) {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-/** 神社名はマスに収まらないので、見出しになる部分だけ残す。 */
+/** 札は幅が狭い。社名の頭を2文字だけ出し、全文は title と詳細で見せる。 */
 function chipLabel(entry) {
-  if (entry.shrine) return entry.shrine.replace(/（.*?）/g, '').replace(/\s+/g, '').slice(0, 6);
-  if (entry.type === TYPE_OMIKUJI) return 'おみくじ';
+  if (entry.shrine) {
+    const plain = entry.shrine.replace(/（.*?）/g, '').replace(/\s+/g, '');
+    return plain.slice(0, 2);
+  }
+  if (entry.type === TYPE_OMIKUJI) return 'みくじ';
   if (entry.type === TYPE_VISIT) return '参拝';
-  return 'その他';
+  return '他';
 }
 
-/** 札の色分け。おみくじ / 参拝だけ / それ以外。 */
 function chipKind(entry) {
   if (entry.type === TYPE_OMIKUJI) return 'is-omikuji';
   if (entry.type === TYPE_VISIT) return 'is-visit';
   return 'is-other';
 }
 
-/**
- * @param {Array} entries すべての記録
- * @param {string} month  'YYYY-MM'
- * @param {string} today  'YYYY-MM-DD'
- * @param {Function} onPick 日の記録を開くときに呼ぶ
- */
 export function calendarEl(entries, month, today, onPick) {
   const [y, m] = month.split('-').map(Number);
 
@@ -148,11 +154,11 @@ export function calendarEl(entries, month, today, onPick) {
     let cd = offset + 1;
     let outside = false;
 
-    if (offset < 0) {            // 前の月のはみ出し
+    if (offset < 0) {
       cd = daysPrev + offset + 1;
       cm = m - 1; if (cm === 0) { cm = 12; cy -= 1; }
       outside = true;
-    } else if (offset >= daysThis) {   // 次の月のはみ出し
+    } else if (offset >= daysThis) {
       cd = offset - daysThis + 1;
       cm = m + 1; if (cm === 13) { cm = 1; cy += 1; }
       outside = true;
@@ -161,6 +167,7 @@ export function calendarEl(entries, month, today, onPick) {
     const date = ymd(cy, cm, cd);
     const hits = byDate.get(date) || [];
     const dow = i % 7;
+    const holiday = holidayName(date);
 
     const cell = el('div', 'cal__day');
     if (outside) cell.classList.add('is-outside');
@@ -168,15 +175,22 @@ export function calendarEl(entries, month, today, onPick) {
     if (hits.length) cell.classList.add('has-visit');
 
     const num = el('span', 'cal__num', cd);
-    if (dow === 0) num.classList.add('is-sun');
-    if (dow === 6) num.classList.add('is-sat');
+    // 祝日は日曜と同じ扱いで赤くする（暦の慣習）
+    if (dow === 0 || holiday) num.classList.add('is-sun');
+    else if (dow === 6) num.classList.add('is-sat');
     cell.appendChild(num);
+
+    if (holiday) {
+      const h = el('span', 'cal__holiday', holiday);
+      h.title = holiday;
+      cell.appendChild(h);
+    }
 
     hits.forEach((entry) => {
       const chip = el('button', 'cal__chip', chipLabel(entry));
       chip.type = 'button';
       chip.classList.add(chipKind(entry));
-      const label = `${date} ${entry.shrine || '神社名の記載なし'}`;
+      const label = `${date} ${entry.shrine || UNKNOWN_SHRINE}`;
       chip.setAttribute('aria-label', label);
       chip.title = label;
       chip.addEventListener('click', () => onPick(entry));
@@ -189,7 +203,6 @@ export function calendarEl(entries, month, today, onPick) {
   return grid;
 }
 
-/** 何が塗られているかの説明。該当する種類だけ出す。 */
 export function calendarLegendEl(entries) {
   const kinds = new Set(entries.map(chipKind));
   const wrap = el('div', 'legend');
@@ -203,52 +216,113 @@ export function calendarLegendEl(entries) {
     item.append(el('i', `legend__chip ${cls}`), el('span', null, label));
     wrap.appendChild(item);
   });
+  wrap.appendChild(el('span', 'legend__note', '札は社名の頭2文字。押すとその記録が開きます'));
   return wrap;
 }
 
 /* ============================================================
-   TOP の訪問記録
+   訪問記録
    ============================================================ */
 
-export function visitsEl(entries, onPick) {
-  const counts = new Map();
+/**
+ * 神社ごとの参拝回数。
+ * 数えるのは「行った日の数」。同じ日に複数の記録があっても1回とする
+ * （おみくじを2つ引いた日を2回参拝したことにしない）。
+ */
+export function visitStats(entries) {
+  const byShrine = new Map();
   entries.forEach((e) => {
-    const name = e.shrine || '神社名の記載なし';
-    const cur = counts.get(name) || { n: 0, last: '' };
-    counts.set(name, { n: cur.n + 1, last: e.date > cur.last ? e.date : cur.last });
+    if (!isVisit(e)) return;
+    const name = e.shrine || UNKNOWN_SHRINE;
+    if (!byShrine.has(name)) byShrine.set(name, { days: new Set(), last: '' });
+    const info = byShrine.get(name);
+    info.days.add(e.date);
+    if (e.date > info.last) info.last = e.date;
   });
 
-  // 回数の多い順。ただし神社名が分からないものは、社名のある行の後ろへ回す
-  const UNKNOWN = '神社名の記載なし';
-  const rows = [...counts.entries()].sort((a, b) => {
-    if ((a[0] === UNKNOWN) !== (b[0] === UNKNOWN)) return a[0] === UNKNOWN ? 1 : -1;
-    return b[1].n - a[1].n;
-  });
-  const max = rows.length ? Math.max(...rows.map(([, i]) => i.n)) : 1;
+  const rows = [...byShrine.entries()]
+    .map(([name, info]) => ({ name, count: info.days.size, last: info.last }))
+    .sort((a, b) => {
+      if ((a.name === UNKNOWN_SHRINE) !== (b.name === UNKNOWN_SHRINE)) {
+        return a.name === UNKNOWN_SHRINE ? 1 : -1;
+      }
+      return b.count - a.count;
+    });
 
+  const namedShrines = rows.filter((r) => r.name !== UNKNOWN_SHRINE).length;
+  const totalDays = new Set(entries.filter(isVisit).map((e) => e.date)).size;
+
+  return { rows, namedShrines, totalDays };
+}
+
+export function visitsEl(stats, onPick) {
+  const max = stats.rows.length ? Math.max(...stats.rows.map((r) => r.count)) : 1;
   const frag = document.createDocumentFragment();
-  rows.forEach(([name, info]) => {
+
+  stats.rows.forEach((row) => {
     const li = el('li');
     const btn = el('button', 'visit');
     btn.type = 'button';
 
     const head = el('div', 'visit__head');
-    head.appendChild(el('span', 'visit__name', name));
-    head.appendChild(el('span', 'visit__n', `${info.n}回`));
+    head.appendChild(el('span', 'visit__name', row.name));
+    head.appendChild(el('span', 'visit__n', `${row.count}回`));
     btn.appendChild(head);
 
     const bar = el('div', 'visit__bar');
     const fill = el('i');
-    fill.style.width = `${Math.round((info.n / max) * 100)}%`;
+    fill.style.width = `${Math.round((row.count / max) * 100)}%`;
     bar.appendChild(fill);
     btn.appendChild(bar);
 
-    btn.appendChild(el('p', 'visit__last', `最後にお参りしたのは ${formatDate(info.last)}`));
-    btn.addEventListener('click', () => onPick(name));
+    btn.appendChild(el('p', 'visit__last', `最後にお参りしたのは ${formatDate(row.last)}`));
+    btn.addEventListener('click', () => onPick(row.name));
     li.appendChild(btn);
     frag.appendChild(li);
   });
   return frag;
+}
+
+/** 訪問記録タブの1行。日付・時間・場所・目的・おみくじ・賽銭・購入品・メモ。 */
+export function visitRowEl(entry, onOpen) {
+  const li = el('li');
+  const btn = el('button', 'vrow');
+  btn.type = 'button';
+  btn.dataset.id = entry.id;
+
+  const head = el('div', 'vrow__head');
+  const when = el('span', 'vrow__when', formatDate(entry.date));
+  head.appendChild(when);
+  if (entry.time) head.appendChild(el('span', 'vrow__time', entry.time));
+  const hol = holidayName(entry.date);
+  if (hol) head.appendChild(el('span', 'vrow__holiday', hol));
+  btn.appendChild(head);
+
+  btn.appendChild(el('p', 'vrow__place', entry.shrine || UNKNOWN_SHRINE));
+
+  const facts = el('dl', 'vrow__facts');
+  const addFact = (label, value) => {
+    if (value == null || value === '') return;
+    facts.appendChild(el('dt', null, label));
+    facts.appendChild(el('dd', null, value));
+  };
+
+  addFact('目的', entry.purpose);
+  if (entry.type === TYPE_OMIKUJI) {
+    const parts = [entry.fortune, entry.number].filter(Boolean).join('　');
+    addFact('おみくじ', parts || '引いた（吉凶の記載なし）');
+  }
+  if (entry.offering != null && entry.offering !== '') {
+    addFact('賽銭', `${Number(entry.offering).toLocaleString('ja-JP')}円`);
+  }
+  addFact('購入品', entry.purchases);
+  addFact('メモ', entry.memo);
+
+  if (facts.childElementCount) btn.appendChild(facts);
+
+  btn.addEventListener('click', () => onOpen(entry));
+  li.appendChild(btn);
+  return li;
 }
 
 /* ============================================================
@@ -262,13 +336,6 @@ function section(label, node) {
   return wrap;
 }
 
-/**
- * @param {object} entry
- * @param {object} [options]
- * @param {Array}  [options.sameNumber] 同じ神社で同じ番号を引いた他の回
- * @param {Function} [options.onOpen]   その回へ移動するときに呼ぶ
- * @param {Function} [options.onRevert] 手直しを取り消すときに呼ぶ（手直しがある場合のみ）
- */
 export function detailEl(entry, options = {}) {
   const { sameNumber = [], onOpen, onRevert } = options;
   const inner = el('div', 'sheet__inner');
@@ -278,11 +345,10 @@ export function detailEl(entry, options = {}) {
   head.appendChild(el('h2', 'd-title', headingText(entry)));
   inner.appendChild(head);
 
-  // 日付は上のバーに出ているので、ここでは繰り返さない
-  const meta = entry.shrine || (entry.type === TYPE_OMIKUJI ? '神社名の記載なし' : '');
+  const meta = [entry.shrine || (entry.type === TYPE_OMIKUJI ? UNKNOWN_SHRINE : ''), entry.time]
+    .filter(Boolean).join('　');
   if (meta) inner.appendChild(el('p', 'd-shrine', meta));
 
-  // 毎月引いていると同じ番号に当たることがある。読み返しで一番おもしろいところなので目立たせる。
   if (sameNumber.length) {
     const box = el('div', 'same');
     box.appendChild(el('p', 'same__label', `同じ番号を${sameNumber.length + 1}回引いています`));
@@ -299,6 +365,23 @@ export function detailEl(entry, options = {}) {
 
   if (isUnreadable(entry)) {
     inner.appendChild(el('p', 'd-warn', 'この記録は写真の印字が読み取れず、本文が入っていません。撮り直して書き足せます。'));
+  }
+
+  // お参りそのものの記録
+  const visitFacts = [
+    ['目的', entry.purpose],
+    ['賽銭', entry.offering != null && entry.offering !== '' ? `${Number(entry.offering).toLocaleString('ja-JP')}円` : null],
+    ['購入品', entry.purchases],
+  ].filter(([, v]) => v);
+  if (visitFacts.length) {
+    const dl = el('div', 'd-items');
+    visitFacts.forEach(([k, v]) => {
+      const row = el('div', 'd-item');
+      row.appendChild(el('div', 'd-item__k', k));
+      row.appendChild(el('div', 'd-item__v', v));
+      dl.appendChild(row);
+    });
+    inner.appendChild(section('お参り', dl));
   }
 
   if (entry.poem) {
@@ -337,9 +420,9 @@ export function detailEl(entry, options = {}) {
     inner.appendChild(section('判断', dl));
   }
 
-  // どこまで確かな記録なのかを最後に添える
   const notes = [];
   if (entry.dateEstimated) notes.push(`日付は推定です。${entry.dateNote || ''}`.trim());
+  if (entry.timeSource === 'photo') notes.push('時刻は写真を撮った時刻です。参拝そのものの時刻とは限りません。');
   [entry.fortuneNote, entry.shrineNote, entry.note].forEach((n) => { if (n) notes.push(n); });
   if (entry.sourcePhotos && entry.sourcePhotos.length) {
     notes.push(`書き起こしの元にした写真: ${entry.sourcePhotos.join(' / ')}`);
@@ -361,7 +444,6 @@ export function detailEl(entry, options = {}) {
   return inner;
 }
 
-/** 設定画面の数え上げ。 */
 export function statsEl(rows) {
   const frag = document.createDocumentFragment();
   rows.forEach(([label, value]) => {

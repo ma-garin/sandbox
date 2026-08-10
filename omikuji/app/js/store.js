@@ -118,13 +118,37 @@ export function clearOverride(overrides, id) {
   return next;
 }
 
-/** 読むときに重ねる。直した記録には edited の印を付け、画面で区別できるようにする。 */
+/**
+ * 読むときに重ねる。直した記録には edited の印を付け、画面で区別できるようにする。
+ * 隠した記録はここで落とす（配布ファイルは変えないので、いつでも戻せる）。
+ */
 export function applyOverrides(builtin, overrides) {
-  return builtin.map((e) => (
-    overrides[e.id]
-      ? Object.freeze({ ...e, ...overrides[e.id], id: e.id, source: 'builtin', edited: true })
-      : e
-  ));
+  return builtin
+    .filter((e) => !(overrides[e.id] && overrides[e.id].deleted))
+    .map((e) => (
+      overrides[e.id]
+        ? Object.freeze({ ...e, ...overrides[e.id], id: e.id, source: 'builtin', edited: true })
+        : e
+    ));
+}
+
+/** 一覧から隠した書き起こし記録。 */
+export function hiddenIds(overrides) {
+  return Object.entries(overrides)
+    .filter(([, patch]) => patch && patch.deleted)
+    .map(([id]) => id);
+}
+
+/** 隠した記録をまとめて戻す。手直しの内容は消さない。 */
+export function unhideAll(overrides) {
+  const next = {};
+  Object.entries(overrides).forEach(([id, patch]) => {
+    if (!patch || !patch.deleted) { next[id] = patch; return; }
+    const { deleted, ...rest } = patch;
+    if (Object.keys(rest).length) next[id] = rest;   // 手直しがあれば残す
+  });
+  writeOverrides(next);
+  return next;
 }
 
 export function introSeen() {

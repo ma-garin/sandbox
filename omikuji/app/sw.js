@@ -5,7 +5,7 @@
  * 画面の骨格も記録も最初にまとめて取りに行き、以後は通信なしで読める。
  */
 
-const VERSION = 'v2';
+const VERSION = 'v4';
 const SHELL = `omikuji-shell-${VERSION}`;
 
 const SHELL_FILES = [
@@ -15,6 +15,8 @@ const SHELL_FILES = [
   'js/app.js',
   'js/store.js',
   'js/view.js',
+  'js/presets.js',
+  'js/holidays.js',
   'data/omikuji.json',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -47,8 +49,20 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // 新しい方を優先し、オフラインならキャッシュに落とす。
+  //
+  // ここで request をそのまま fetch すると、ブラウザの HTTP キャッシュが挟まって
+  // 更新したはずのファイルが古いまま返ることがある（実際に起きた）。
+  // 取りに行くときは必ずネットワークまで届かせる。
+  const fresh = new Request(request.url, {
+    cache: 'no-store',
+    credentials: 'same-origin',
+    headers: request.headers,
+    mode: request.mode === 'navigate' ? 'same-origin' : request.mode,
+    redirect: 'follow',
+  });
+
   event.respondWith(
-    fetch(request)
+    fetch(fresh)
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();

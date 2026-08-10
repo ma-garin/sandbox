@@ -36,5 +36,12 @@ NNN-short-description/
 | フォルダ / ファイル | 内容 |
 |---|---|
 | `_template/` | 新規フォルダのひな形 |
+| `AI2DocFrendry/` | 社内ナレッジを生成AI（RAG）向けに変換・診断するローカル完結型システム |
+| `omikuji/` | おみくじ帳 PWA（引いたおみくじと参拝の記録・閲覧）。[GitHub Pages で公開](https://ma-garin.github.io/sandbox/) |
+| `QA-knowledge/` | QAナレッジのリバースドキュメント生成（Streamlit） |
+| `QA-PMO/` | 品質PMOプラットフォーム（サービスカタログ・実働ツール群・バリデーション研究） |
+| `spec-inspector/` | 仕様書の観点別解析（QuintSpectレベルアップ版） |
+| `testra-next/` | 一気通貫テストパイプライン（TESTRA上位互換） |
+| `warikan-django/` | 割り勘支援アプリ（Django / 仕様書 Ver.1.0 準拠） |
 | `yuki-aidd-kit/` | AIDD開発キット（スキル・フック・テンプレート） |
 | `AGENTS.md` | Codex用の全プロジェクト共通規約 |

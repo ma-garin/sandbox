@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- maskable: 図形を中央 80% のセーフゾーンに収める -->
+  <rect width="512" height="512" fill="#546E7A"/>
+  <g stroke="#FFFFFF" stroke-linecap="round">
+    <line x1="196" y1="180" x2="196" y2="334" stroke-width="20"/>
+    <line x1="256" y1="158" x2="256" y2="356" stroke-width="20"/>
+    <line x1="316" y1="180" x2="316" y2="334" stroke-width="20"/>
+  </g>
+  <circle cx="256" cy="158" r="23" fill="#FFFFFF"/>
+  <circle cx="256" cy="158" r="10" fill="#546E7A"/>
+</svg>

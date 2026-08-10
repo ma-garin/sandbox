@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#546E7A"/>
+  <!-- みくじ棒を3本。中央の1本だけ頭を出して目印にする -->
+  <g stroke="#FFFFFF" stroke-linecap="round">
+    <line x1="176" y1="152" x2="176" y2="360" stroke-width="26"/>
+    <line x1="256" y1="124" x2="256" y2="388" stroke-width="26"/>
+    <line x1="336" y1="152" x2="336" y2="360" stroke-width="26"/>
+  </g>
+  <circle cx="256" cy="124" r="30" fill="#FFFFFF"/>
+  <circle cx="256" cy="124" r="13" fill="#546E7A"/>
+</svg>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>おみくじ帳</title>
+<meta name="description" content="引いたおみくじと参拝を記録して読み返すための帳面">
+<meta name="theme-color" content="#546E7A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="styles.css">
+
+<!-- アイコンは Google Fonts の Material Symbols (Outlined) を SVG で同梱。
+     外部読み込みにしないのは、オフラインでもアイコンが欠けないようにするため。 -->
+<svg class="icon-defs" aria-hidden="true" focusable="false">
+  <symbol id="i-search" viewBox="0 -960 960 960"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></symbol>
+  <symbol id="i-close" viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></symbol>
+  <symbol id="i-back" viewBox="0 -960 960 960"><path d="M640-80 240-480l400-400 71 71-329 329 329 329-71 71Z"/></symbol>
+  <symbol id="i-edit" viewBox="0 -960 960 960"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></symbol>
+  <symbol id="i-delete" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></symbol>
+  <symbol id="i-list" viewBox="0 -960 960 960"><path d="M360-200v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360ZM200-160q-33 0-56.5-23.5T120-240q0-33 23.5-56.5T200-320q33 0 56.5 23.5T280-240q0 33-23.5 56.5T200-160Zm0-240q-33 0-56.5-23.5T120-480q0-33 23.5-56.5T200-560q33 0 56.5 23.5T280-480q0 33-23.5 56.5T200-400Zm-56.5-263.5Q120-687 120-720t23.5-56.5Q167-800 200-800t56.5 23.5Q280-753 280-720t-23.5 56.5Q233-640 200-640t-56.5-23.5Z"/></symbol>
+  <symbol id="i-add" viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></symbol>
+  <symbol id="i-prev" viewBox="0 -960 960 960"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></symbol>
+  <symbol id="i-next" viewBox="0 -960 960 960"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></symbol>
+</svg>
+</head>
+<body>
+
+<!-- 6-03 ヘッダー -->
+<header class="appbar">
+  <p class="appbar__title">おみくじ帳</p>
+</header>
+
+<!-- 一覧 -->
+<section class="view" id="view-list">
+  <header class="page-header">
+    <p class="page-header__sub" id="summary">読み込み中</p>
+  </header>
+
+  <div class="filters">
+    <div class="search">
+      <svg class="search__icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <input type="search" id="search" placeholder="神社・歌・言葉で探す" autocomplete="off" aria-label="記録を検索">
+      <button type="button" class="search__clear" id="search-clear" hidden aria-label="検索を消す">
+        <svg aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="絞り込み"></div>
+  </div>
+
+  <ul class="cards" id="list"></ul>
+
+  <!-- 4-12 エンプティステート -->
+  <div class="empty" id="empty" hidden>
+    <p class="empty__title" id="empty-title">見つかりませんでした</p>
+    <p class="empty__body" id="empty-body">別の言葉で探すか、絞り込みを外してみてください。</p>
+    <button type="button" class="btn btn--ghost" id="empty-reset">絞り込みを外す</button>
+  </div>
+</section>
+
+<!-- 記録 -->
+<section class="view" id="view-add" hidden>
+  <header class="page-header">
+    <h2 id="form-heading">記録する</h2>
+    <p class="page-header__sub">引いたおみくじや、お参りしたことを書きとめます</p>
+  </header>
+
+  <form id="form" class="form" novalidate>
+    <!-- 6-19 セグメント: 何を記録するかで入力欄が変わる -->
+    <div class="field">
+      <span class="field__label">記録の種類</span>
+      <div class="segmented" role="radiogroup" aria-label="記録の種類">
+        <label class="segmented__item">
+          <input type="radio" name="kind" value="omikuji" checked>
+          <span>おみくじ</span>
+        </label>
+        <label class="segmented__item">
+          <input type="radio" name="kind" value="visit">
+          <span>参拝のみ</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <div class="field">
+        <label for="f-date">日付 <span class="req">必須</span></label>
+        <input type="date" id="f-date" required>
+        <p class="field__error" id="e-date" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="f-shrine">神社 <span class="req" id="shrine-req" hidden>必須</span></label>
+        <input type="text" id="f-shrine" list="shrine-list" placeholder="例: 東京大神宮" autocomplete="off">
+        <datalist id="shrine-list"></datalist>
+        <p class="field__error" id="e-shrine" hidden></p>
+      </div>
+    </div>
+
+    <!-- おみくじのときだけ出す -->
+    <div id="omikuji-fields" class="card-block">
+      <div class="field field--row">
+        <div>
+          <label for="f-number">番号</label>
+          <input type="text" id="f-number" placeholder="例: 第八番" autocomplete="off">
+        </div>
+        <div>
+          <label for="f-fortune">吉凶</label>
+          <select id="f-fortune">
+            <option value="">記載なし</option>
+            <option>大吉</option><option>吉</option><option>中吉</option>
+            <option>小吉</option><option>末吉</option><option>凶</option><option>大凶</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-poem">歌</label>
+        <textarea id="f-poem" rows="2" placeholder="おみくじに載っていた和歌"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-overview">運勢・本文</label>
+        <textarea id="f-overview" rows="5" placeholder="本文をそのまま書きうつします"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-items">判断の項目</label>
+        <textarea id="f-items" rows="4" placeholder="願望: 叶う&#10;待人: 来る"></textarea>
+        <p class="field__hint">1行に1項目。「願望: 叶う」のように書きます。</p>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <div class="field">
+        <label for="f-memo">メモ</label>
+        <textarea id="f-memo" rows="3" placeholder="そのとき思ったこと、天気、誰と行ったかなど"></textarea>
+      </div>
+    </div>
+
+    <div class="form__actions">
+      <button type="submit" class="btn btn--primary" id="form-submit">保存する</button>
+      <button type="button" class="btn btn--ghost" id="form-cancel" hidden>編集をやめる</button>
+    </div>
+  </form>
+</section>
+
+<!-- 詳細（5-11 全画面パターン） -->
+<div class="detail" id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="d-barlabel">
+  <header class="detail__bar">
+    <button type="button" class="iconbtn" id="detail-close" aria-label="一覧へ戻る">
+      <svg aria-hidden="true"><use href="#i-back"/></svg>
+    </button>
+    <p class="detail__barlabel" id="d-barlabel"></p>
+    <button type="button" class="iconbtn" id="detail-edit" hidden aria-label="この記録を直す">
+      <svg aria-hidden="true"><use href="#i-edit"/></svg>
+    </button>
+    <button type="button" class="iconbtn iconbtn--danger" id="detail-delete" hidden aria-label="この記録を削除">
+      <svg aria-hidden="true"><use href="#i-delete"/></svg>
+    </button>
+  </header>
+  <div class="detail__scroll" id="detail-body"></div>
+  <!-- 4-14 よく使う操作を手前に: 続けて読み返せるようにする -->
+  <nav class="detail__nav" aria-label="前後の記録">
+    <button type="button" class="stepbtn" id="detail-prev">
+      <svg aria-hidden="true"><use href="#i-prev"/></svg><span id="prev-label"></span>
+    </button>
+    <button type="button" class="stepbtn stepbtn--next" id="detail-next">
+      <span id="next-label"></span><svg aria-hidden="true"><use href="#i-next"/></svg>
+    </button>
+  </nav>
+</div>
+
+<!-- 4-10 危険な操作の前の確認 -->
+<div class="confirm" id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="c-title">
+  <div class="confirm__box">
+    <h2 id="c-title">この記録を削除しますか</h2>
+    <p id="c-body">削除すると元に戻せません。</p>
+    <div class="confirm__actions">
+      <button type="button" class="btn btn--ghost" id="confirm-cancel">やめる</button>
+      <button type="button" class="btn btn--danger" id="confirm-ok">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6-02 モバイルのナビゲーション -->
+<nav class="tabbar" aria-label="画面の切り替え">
+  <button type="button" class="tab is-active" data-view="list" aria-current="page">
+    <svg aria-hidden="true"><use href="#i-list"/></svg>
+    <span>一覧</span>
+  </button>
+  <button type="button" class="tab" data-view="add">
+    <svg aria-hidden="true"><use href="#i-add"/></svg>
+    <span>記録</span>
+  </button>
+</nav>
+
+<!-- 6-30 トースト -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -32,3 +32,9 @@ __pycache__/
 *.pyc
 db.sqlite3
 staticfiles/
+
+# おみくじ — 写真の原本と変換後の画像。
+# アプリは本文テキストだけを表示するため、リポジトリには含めない（合計 80MB 超）。
+omikuji/data/
+omikuji/app/images/
+omikuji/app/thumbs/

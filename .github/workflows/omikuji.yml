@@ -1,0 +1,76 @@
+# おみくじ帳 PWA を GitHub Pages へ公開する。
+# ビルド工程はない（素の HTML/CSS/ES modules）。omikuji/app をそのまま配る。
+name: omikuji Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'omikuji/app/**'
+      - '.github/workflows/omikuji.yml'
+  pull_request:
+    paths:
+      - 'omikuji/app/**'
+      - '.github/workflows/omikuji.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 壊れた記録をそのまま公開しないための最低限の確認
+      - name: 記録データの形式を確認
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+
+          path = pathlib.Path('omikuji/app/data/omikuji.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+
+          entries = data.get('entries')
+          assert isinstance(entries, list) and entries, 'entries が空です'
+
+          ids = [e['id'] for e in entries]
+          assert len(ids) == len(set(ids)), f'id が重複しています: {len(ids)} 件中 {len(set(ids))} 種'
+
+          for e in entries:
+              assert e.get('date'), f'{e["id"]}: date がありません'
+              assert e.get('type') in {'omikuji', 'visit', 'other'}, f'{e["id"]}: type が不正です'
+
+          print(f'{len(entries)} 件 / OK')
+          PY
+
+      - name: 参照ファイルの存在を確認
+        run: |
+          for f in index.html styles.css sw.js manifest.webmanifest \
+                   js/app.js js/store.js js/view.js \
+                   data/omikuji.json icons/icon-192.png icons/icon-512.png; do
+            test -f "omikuji/app/$f" || { echo "missing: $f"; exit 1; }
+          done
+          echo "all present"
+
+  deploy:
+    # main への push のときだけ公開する
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: omikuji/app
+      - id: deployment
+        uses: actions/deploy-pages@v4

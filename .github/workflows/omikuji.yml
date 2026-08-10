@@ -19,37 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      # 壊れた記録をそのまま公開しないための最低限の確認
-      - name: 記録データの形式を確認
+      # ビルドを挟まない構成なので、壊れても実行するまで分からない。
+      # 実際に起きた事故（import 名の食い違い、SW の先読み漏れ）を関所で止める。
+      - name: 公開前の点検
+        run: node omikuji/scripts/check.mjs
+
+      - name: JavaScript の構文
         run: |
-          python3 - <<'PY'
-          import json, sys, pathlib
-
-          path = pathlib.Path('omikuji/app/data/omikuji.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
-
-          entries = data.get('entries')
-          assert isinstance(entries, list) and entries, 'entries が空です'
-
-          ids = [e['id'] for e in entries]
-          assert len(ids) == len(set(ids)), f'id が重複しています: {len(ids)} 件中 {len(set(ids))} 種'
-
-          for e in entries:
-              assert e.get('date'), f'{e["id"]}: date がありません'
-              assert e.get('type') in {'omikuji', 'visit', 'other'}, f'{e["id"]}: type が不正です'
-
-          print(f'{len(entries)} 件 / OK')
-          PY
-
-      - name: 参照ファイルの存在を確認
-        run: |
-          for f in index.html styles.css sw.js manifest.webmanifest \
-                   js/app.js js/store.js js/view.js \
-                   data/omikuji.json icons/icon-192.png icons/icon-512.png; do
-            test -f "omikuji/app/$f" || { echo "missing: $f"; exit 1; }
+          for f in omikuji/app/js/*.js; do
+            node --check "$f" || { echo "構文エラー: $f"; exit 1; }
           done
-          echo "all present"
+          echo "構文 OK"
 
   deploy:
     # main への push のときだけ公開する

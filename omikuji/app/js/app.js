@@ -16,6 +16,10 @@ import {
   calendarEl, calendarLegendEl, visitsEl, visitStats, visitRowEl, statsEl,
 } from './view.js';
 import { OMIKUJI_PRESETS, findPreset, guessPreset, numberOptions } from './presets.js';
+import {
+  watch as watchInstall, onAvailable, canPrompt, promptInstall,
+  needsManualHint, isStandalone, dismissed, markDismissed, IOS_STEPS,
+} from './install.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -73,6 +77,10 @@ const dom = {
   exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'),
   backupStat: $('backup-stat'), stats: $('stats'),
   hiddenBlock: $('hidden-block'), hiddenText: $('hidden-text'), unhideBtn: $('unhide-btn'),
+  installBlock: $('install-block'), installText: $('install-text'), installSteps: $('install-steps'),
+  installActions: $('install-actions'), installBtn: $('install-btn'),
+  promo: $('install-promo'), promoLater: $('promo-later'), promoAdd: $('promo-add'),
+  promoBody: $('promo-body'),
 
   appbar: document.querySelector('.appbar'), tabbar: document.querySelector('.tabbar'),
 };
@@ -94,6 +102,9 @@ let state = {
 
 let toastTimer = null;
 let lastFocused = null;
+/** タブごとのスクロール位置。戻ったときに読んでいた場所を失わせない。 */
+const scrollByView = new Map();
+let scrollBeforeDetail = 0;
 
 // ---------- 状態 ----------
 
@@ -343,6 +354,55 @@ function renderSettings() {
   dom.stats.appendChild(statsEl(rows));
 }
 
+/**
+ * ホーム画面への案内。3通りに分かれる。
+ *   すでに入っている → 何も勧めない
+ *   ブラウザが対応  → ボタンひとつで追加
+ *   iOS Safari      → 自動で出せないので手順を書く
+ */
+function renderInstall() {
+  if (isStandalone()) {
+    dom.installBlock.hidden = false;
+    dom.installText.textContent = 'ホーム画面から開いています。電波がなくても記録を読み返せます。';
+    dom.installSteps.hidden = true;
+    dom.installActions.hidden = true;
+    return;
+  }
+  if (canPrompt()) {
+    dom.installBlock.hidden = false;
+    dom.installText.textContent = 'アプリのように開けるようになり、電波がなくても読み返せます。';
+    dom.installSteps.hidden = true;
+    dom.installActions.hidden = false;
+    return;
+  }
+  if (needsManualHint()) {
+    dom.installBlock.hidden = false;
+    dom.installText.textContent = 'この端末では、Safari の共有メニューから置けます。';
+    dom.installSteps.textContent = '';
+    IOS_STEPS.forEach((step) => {
+      const li = document.createElement('li');
+      li.textContent = step;
+      dom.installSteps.appendChild(li);
+    });
+    dom.installSteps.hidden = false;
+    dom.installActions.hidden = true;
+    return;
+  }
+  dom.installBlock.hidden = true;
+}
+
+/** 記録し終えた直後にだけ勧める。初回ロードでは出さない。 */
+function maybeShowPromo() {
+  if (isStandalone() || dismissed()) return;
+  const auto = canPrompt();
+  if (!auto && !needsManualHint()) return;
+  dom.promoBody.textContent = auto
+    ? 'アプリのように開けて、電波がなくても読み返せます。'
+    : 'Safari の共有メニューから「ホーム画面に追加」で置けます。設定に手順があります。';
+  dom.promoAdd.hidden = !auto;
+  dom.promo.hidden = false;
+}
+
 function renderShrineSuggestions() {
   dom.shrineList.textContent = '';
   shrineSuggestions(allEntries()).forEach((name) => {
@@ -358,6 +418,7 @@ function render() {
   renderChips();
   renderList();
   renderSettings();
+  renderInstall();
   renderShrineSuggestions();
   if (!dom.detail.hidden && state.openId) refreshDetail();
 }
@@ -372,8 +433,17 @@ function setBackgroundInert(on) {
 
 // ---------- 詳細 ----------
 
-function openDetail(entry) {
-  if (dom.detail.hidden) lastFocused = document.activeElement;
+/** 記録ごとに URL を持たせる。共有でき、端末の「戻る」で閉じられる。 */
+function hashId() {
+  const m = location.hash.match(/^#\/r\/(.+)$/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function openDetail(entry, { push = true } = {}) {
+  if (dom.detail.hidden) {
+    lastFocused = document.activeElement;
+    scrollBeforeDetail = window.scrollY;
+  }
   state = { ...state, openId: entry.id };
   refreshDetail();
   dom.detailBody.scrollTop = 0;
@@ -381,6 +451,12 @@ function openDetail(entry) {
   setBackgroundInert(true);
   document.body.style.overflow = 'hidden';
   dom.detailClose.focus();
+
+  // standalone にはブラウザの戻るボタンがない。履歴に積んでおけば
+  // 端末の戻る操作（Android の戻る、iOS の横スワイプ）で閉じられる。
+  const url = `#/r/${encodeURIComponent(entry.id)}`;
+  if (push && location.hash !== url) history.pushState({ id: entry.id }, '', url);
+  else if (!push) history.replaceState({ id: entry.id }, '', url);
 }
 
 function refreshDetail() {
@@ -413,16 +489,23 @@ function step(delta) {
   if (next) openDetail(next);
 }
 
-function closeDetail() {
+function closeDetail({ pop = true } = {}) {
+  if (dom.detail.hidden) return;
   dom.detail.hidden = true;
   setBackgroundInert(false);
   document.body.style.overflow = '';
   const id = state.openId;
   state = { ...state, openId: null };
+
+  // 読んでいた場所へ戻す。開く前の位置を覚えているのでそこへ。
+  window.scrollTo(0, scrollBeforeDetail);
+
   const card = id && document.querySelector(`[data-id="${CSS.escape(id)}"]`);
   if (card) card.focus();
   else if (lastFocused && lastFocused.isConnected) lastFocused.focus();
   lastFocused = null;
+
+  if (pop && hashId()) history.back();
 }
 
 // ---------- トースト ----------
@@ -678,6 +761,8 @@ function onSubmit(event) {
       closeForm();
       setState({ user: nextUser });
       toast(kind === TYPE_VISIT ? '参拝を記録しました' : 'おみくじを記録しました');
+      // 一度使ってもらった後が勧めどき。初回ロードでは出さない。
+      setTimeout(maybeShowPromo, 1200);
     }
   } catch (err) {
     toast(isQuotaError(err)
@@ -897,6 +982,9 @@ function onImportFile(event) {
 // ---------- タブ ----------
 
 function switchView(name) {
+  // 離れるタブの位置を覚えておき、戻ってきたら同じ場所を見せる
+  if (state.view !== name) scrollByView.set(state.view, window.scrollY);
+
   state = { ...state, view: name };
   dom.viewTop.hidden = name !== 'top';
   dom.viewVisits.hidden = name !== 'visits';
@@ -909,7 +997,7 @@ function switchView(name) {
     if (on) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
   });
-  window.scrollTo(0, 0);
+  window.scrollTo(0, scrollByView.get(name) || 0);
 }
 
 // ---------- 初回の案内（4-13） ----------
@@ -1015,6 +1103,31 @@ function bind() {
   dom.importBtn.addEventListener('click', () => dom.importFile.click());
   dom.importFile.addEventListener('change', onImportFile);
 
+  const add = async () => {
+    dom.promo.hidden = true;
+    const outcome = await promptInstall();
+    if (outcome === 'accepted') toast('ホーム画面に追加しました');
+    renderInstall();
+  };
+  dom.installBtn.addEventListener('click', add);
+  dom.promoAdd.addEventListener('click', add);
+  dom.promoLater.addEventListener('click', () => {
+    markDismissed();          // 断られたら二度と出さない
+    dom.promo.hidden = true;
+    renderInstall();
+  });
+
+  // 端末の戻る操作で詳細を閉じる（standalone にはブラウザの戻るがない）
+  window.addEventListener('popstate', () => {
+    const id = hashId();
+    if (id) {
+      const entry = findEntry(id);
+      if (entry) openDetail(entry, { push: false });
+    } else {
+      closeDetail({ pop: false });
+    }
+  });
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (!dom.confirm.hidden) closeConfirm();
@@ -1042,6 +1155,9 @@ async function main() {
   window.addEventListener('online', syncOnlineState);
   window.addEventListener('offline', syncOnlineState);
 
+  watchInstall();
+  onAvailable(renderInstall);
+
   const { entries: user, warning } = loadUser();
   if (warning) toast(warning);
   const overrides = loadOverrides();
@@ -1050,6 +1166,12 @@ async function main() {
     const builtin = await loadBuiltIn();
     setState({ builtin, overrides, user });
     showIntroIfFirstTime();
+    // URL で名指しされた記録があれば開く（共有されたリンクから来た場合）
+    const id = hashId();
+    if (id) {
+      const entry = findEntry(id);
+      if (entry) openDetail(entry, { push: false });
+    }
   } catch (err) {
     setState({ builtin: [], overrides, user });
     dom.empty.hidden = false;

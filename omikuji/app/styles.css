@@ -10,6 +10,11 @@
    ============================================================ */
 
 :root {
+  /* 切り欠きのある端末で確保する余白。env() を直に書くと値を差し替えられず、
+     standalone でだけ出る崩れを検証できないので、変数を1枚挟んでいる。 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
   --bg:        #EFF1F5;
   --surface:   #FFFFFF;
   --surface-2: #E6EAEE;
@@ -53,7 +58,7 @@
   --fab-gap: 18px;
   /* 画面の下端に置く余白。タブバーだけでなく＋ボタンの高さも見る。
      見ていないと、最後の1行が＋ボタンの下に隠れる。 */
-  --bottom-space: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--fab-size) + var(--fab-gap) + 20px);
+  --bottom-space: calc(var(--tabbar-h) + var(--safe-bottom) + var(--fab-size) + var(--fab-gap) + 20px);
 }
 
 * { box-sizing: border-box; }
@@ -61,7 +66,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  padding-top: calc(var(--appbar-h) + env(safe-area-inset-top));
+  padding-top: calc(var(--appbar-h) + var(--safe-top));
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -83,8 +88,8 @@ svg { fill: currentColor; stroke: none; display: block; }
 
 .appbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 30;
-  height: calc(var(--appbar-h) + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) 20px 0;
+  height: calc(var(--appbar-h) + var(--safe-top));
+  padding: var(--safe-top) 20px 0;
   display: flex; align-items: center;
   background: var(--bar); color: #fff;
   box-shadow: var(--shadow-bar);
@@ -94,14 +99,14 @@ svg { fill: currentColor; stroke: none; display: block; }
 /* オフラインの知らせ。「つながらない」ではなく「何ができるか」を書く */
 .offline {
   position: fixed; z-index: 29;
-  top: calc(var(--appbar-h) + env(safe-area-inset-top));
+  top: calc(var(--appbar-h) + var(--safe-top));
   left: 0; right: 0;
   padding: 9px 16px;
   background: #37474F; color: #fff;
   font-size: 12.5px; text-align: center; letter-spacing: 0.02em;
 }
 .offline[hidden] { display: none; }
-body.is-offline { padding-top: calc(var(--appbar-h) + env(safe-area-inset-top) + 38px); }
+body.is-offline { padding-top: calc(var(--appbar-h) + var(--safe-top) + 38px); }
 
 /* ---------- 画面 ---------- */
 
@@ -289,7 +294,7 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 /* ---------- 検索と絞り込み ---------- */
 
 .filters {
-  position: sticky; top: calc(var(--appbar-h) + env(safe-area-inset-top));
+  position: sticky; top: calc(var(--appbar-h) + var(--safe-top));
   z-index: 5; background: var(--bg);
   padding: 2px 0 10px;
 }
@@ -468,8 +473,8 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 
 .sheet__bar {
   display: flex; align-items: center; gap: 2px;
-  height: calc(var(--appbar-h) + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) 6px 0;
+  height: calc(var(--appbar-h) + var(--safe-top));
+  padding: var(--safe-top) 6px 0;
   background: var(--bar); color: #fff;
   box-shadow: var(--shadow-bar);
 }
@@ -490,13 +495,13 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 
 .sheet__scroll {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 18px 16px calc(env(safe-area-inset-bottom) + 28px);
+  padding: 18px 16px calc(var(--safe-bottom) + 28px);
 }
 .sheet__inner { max-width: 640px; margin: 0 auto; }
 
 .sheet__nav {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  padding: 9px 12px calc(env(safe-area-inset-bottom) + 10px);
+  padding: 9px 12px calc(var(--safe-bottom) + 10px);
   background: var(--surface); box-shadow: var(--shadow-up);
 }
 .stepbtn {
@@ -695,7 +700,7 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 
 .fab {
   position: fixed; right: 18px; z-index: 45;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--fab-gap));
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--fab-gap));
   width: var(--fab-size); height: var(--fab-size); padding: 15px;
   background: var(--primary); color: #fff;
   border: 0; border-radius: 18px;
@@ -712,8 +717,8 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
   display: grid; grid-template-columns: repeat(4, 1fr);
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
   background: var(--surface); box-shadow: var(--shadow-up);
 }
 .tab {
@@ -734,11 +739,42 @@ button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 .tab.is-active { color: var(--primary); font-weight: 600; }
 .tab.is-active .tab__icon { background: var(--surface-2); }
 
+/* ---------- ホーム画面への案内 ---------- */
+
+.steps {
+  margin: 12px 0 0; padding-left: 1.3em;
+  font-size: 13px; color: var(--text-sub); line-height: 1.9;
+}
+.steps[hidden] { display: none; }
+.steps li { padding-left: 2px; }
+
+/* 記録し終えた直後に下から出す。読むのを邪魔しない高さに収める */
+.promo {
+  position: fixed; left: 0; right: 0; z-index: 55;
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 12px 16px;
+  animation: promo-in 220ms var(--ease);
+}
+.promo[hidden] { display: none; }
+@keyframes promo-in { from { opacity: 0; transform: translateY(12px); } }
+.promo__box {
+  max-width: 608px; margin: 0 auto;
+  padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line-str);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 20px rgba(38, 50, 56, 0.18);
+}
+.promo__title { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; }
+.promo__body { margin: 0 0 14px; font-size: 12.5px; color: var(--text-sub); line-height: 1.7; }
+.promo__actions { display: flex; gap: 10px; justify-content: flex-end; }
+.promo__actions .btn { flex: 0 0 auto; }
+.promo__actions .btn--primary { width: auto; }
+
 /* ---------- トースト（6-30） ---------- */
 
 .toast {
   position: fixed; left: 50%; z-index: 70;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
   transform: translateX(-50%);
   max-width: calc(100vw - 40px);
   padding: 11px 18px;

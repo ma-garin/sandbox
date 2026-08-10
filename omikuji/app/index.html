@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>おみくじ帳</title>
 <meta name="description" content="参拝とおみくじを記録して読み返すための帳面">
+<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#546E7A">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -151,6 +152,17 @@
           <svg aria-hidden="true"><use href="#i-upload"/></svg>読み込む
         </button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="install-block" hidden>
+    <div class="block__head"><h2>ホーム画面に置く</h2></div>
+    <div class="panel">
+      <p class="panel__text" id="install-text"></p>
+      <ol class="steps" id="install-steps" hidden></ol>
+      <div class="panel__actions panel__actions--single" id="install-actions" hidden>
+        <button type="button" class="btn btn--ghost" id="install-btn">ホーム画面に追加する</button>
       </div>
     </div>
   </section>
@@ -385,6 +397,18 @@
     <span>設定</span>
   </button>
 </nav>
+
+<!-- 記録し終えた直後にだけ出す案内（初回ロードでは出さない） -->
+<div class="promo" id="install-promo" hidden role="dialog" aria-labelledby="promo-title">
+  <div class="promo__box">
+    <p class="promo__title" id="promo-title">ホーム画面に置きますか</p>
+    <p class="promo__body" id="promo-body">アプリのように開けて、電波がなくても読み返せます。</p>
+    <div class="promo__actions">
+      <button type="button" class="btn btn--ghost btn--sm" id="promo-later">あとで</button>
+      <button type="button" class="btn btn--primary btn--sm" id="promo-add">追加する</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 

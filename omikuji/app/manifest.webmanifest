@@ -1,18 +1,42 @@
 {
   "name": "おみくじ帳",
   "short_name": "おみくじ帳",
-  "description": "引いたおみくじを記録して読み返すための帳面",
+  "description": "引いたおみくじと参拝を書きとめて、あとから読み返すための帳面。歌・訓・運勢・判断まで残せます。電波がなくても読めます。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FBFAF7",
-  "theme_color": "#FBFAF7",
+  "background_color": "#EFF1F5",
+  "theme_color": "#546E7A",
   "lang": "ja",
   "dir": "ltr",
+  "categories": ["lifestyle", "utilities"],
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/top.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "お参りした日が並ぶ参拝カレンダー"
+    },
+    {
+      "src": "screenshots/visits.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "いつ・どこへ行ったかの訪問記録"
+    },
+    {
+      "src": "screenshots/list.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "引いたおみくじの一覧"
+    }
   ]
 }

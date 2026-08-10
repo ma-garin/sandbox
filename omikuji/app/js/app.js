@@ -57,7 +57,7 @@ const dom = {
   prevLabel: $('prev-label'), nextLabel: $('next-label'),
 
   formSheet: $('form-sheet'), formClose: $('form-close'), fab: $('fab'),
-  confirm: $('confirm'), confirmOk: $('confirm-ok'), confirmCancel: $('confirm-cancel'),
+  confirm: $('confirm'), confirmActions: $('confirm-actions'),
   confirmTitle: $('c-title'), confirmBody: $('c-body'),
   toast: $('toast'), form: $('form'), formHeading: $('form-heading'), formSubmit: $('form-submit'),
 
@@ -688,14 +688,42 @@ function onSubmit(event) {
 
 // ---------- 取り返しのつかない操作の前に確認する（4-10） ----------
 
-function ask(kind, id, title, body, okLabel) {
-  state = { ...state, pending: { kind, id } };
+/**
+ * @param {object} options
+ * @param {string} options.title
+ * @param {string} options.body
+ * @param {Array}  options.actions [{ label, kind, danger }]。押した kind が runPending へ渡る
+ * @param {object} [options.payload] kind と一緒に持ち回す値
+ */
+function ask({ title, body, actions, payload = {} }) {
   dom.confirmTitle.textContent = title;
   dom.confirmBody.textContent = body;
-  dom.confirmOk.textContent = okLabel;
+
+  dom.confirmActions.textContent = '';
+  dom.confirmActions.classList.toggle('confirm__actions--stack', actions.length > 1);
+
+  actions.forEach((action) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `btn ${action.danger ? 'btn--danger' : 'btn--ghost'}`;
+    b.textContent = action.label;
+    b.addEventListener('click', () => {
+      state = { ...state, pending: { kind: action.kind, ...payload } };
+      runPending();
+    });
+    dom.confirmActions.appendChild(b);
+  });
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'btn btn--ghost';
+  cancel.textContent = 'やめる';
+  cancel.addEventListener('click', closeConfirm);
+  dom.confirmActions.appendChild(cancel);
+
   dom.confirm.hidden = false;
   dom.detail.inert = true;
-  dom.confirmCancel.focus();
+  cancel.focus();
 }
 
 function closeConfirm() {
@@ -707,30 +735,68 @@ function closeConfirm() {
 function askDelete() {
   const entry = findEntry(state.openId);
   if (!entry) return;
-  if (entry.source === 'builtin') {
-    ask('hide', entry.id, 'この記録を一覧から外しますか',
-      '写真から書き起こした記録です。一覧とカレンダーに出なくなりますが、設定からいつでも戻せます。',
-      '一覧から外す');
-  } else {
-    ask('delete', entry.id, 'この記録を削除しますか', '削除すると元に戻せません。', '削除する');
+
+  const builtin = entry.source === 'builtin';
+  const wording = builtin
+    ? { verb: '一覧から外す', note: '設定からいつでも戻せます。' }
+    : { verb: '削除する', note: '元に戻せません。' };
+
+  // おみくじの記録は、お参りの記録でもある。
+  // まとめて消すと「その日その社に行った」ことまで失われるので、分けて選べるようにする。
+  if (entry.type === TYPE_OMIKUJI) {
+    ask({
+      title: 'この記録をどうしますか',
+      body: `${formatDate(entry.date)}　${entry.shrine || '場所の記載なし'} のお参りの記録でもあります。`
+        + `おみくじだけを消せば、お参りに行ったことは残ります。${wording.note}`,
+      payload: { id: entry.id },
+      actions: [
+        { kind: builtin ? 'omikuji-only-builtin' : 'omikuji-only-user', label: 'おみくじだけ消す' },
+        { kind: builtin ? 'hide' : 'delete', label: `記録ごと${wording.verb}`, danger: true },
+      ],
+    });
+    return;
   }
+
+  ask({
+    title: builtin ? 'この記録を一覧から外しますか' : 'この記録を削除しますか',
+    body: builtin
+      ? `一覧とカレンダーに出なくなります。${wording.note}`
+      : `${wording.note}`,
+    payload: { id: entry.id },
+    actions: [{ kind: builtin ? 'hide' : 'delete', label: wording.verb, danger: true }],
+  });
 }
 
 function askRevert(id) {
-  ask('revert', id, '手直しを取り消しますか',
-    '写真から書き起こしたときの内容に戻ります。直した内容は消えます。', '元に戻す');
+  ask({
+    title: '手直しを取り消しますか',
+    body: '写真から書き起こしたときの内容に戻ります。直した内容は消えます。',
+    payload: { id },
+    actions: [{ kind: 'revert', label: '元に戻す', danger: true }],
+  });
 }
 
 function askImport(bundle) {
-  state = { ...state, pending: { kind: 'import', bundle } };
-  dom.confirmTitle.textContent = '読み込むと今の記録は置き換わります';
-  dom.confirmBody.textContent =
-    `いまこの端末にある記録 ${state.user.length}件・手直し ${Object.keys(state.overrides).length}件は、`
-    + `ファイルの内容（記録 ${bundle.entries.length}件・手直し ${Object.keys(bundle.overrides).length}件）に置き換わります。`;
-  dom.confirmOk.textContent = '読み込む';
-  dom.confirm.hidden = false;
-  dom.confirmCancel.focus();
+  ask({
+    title: '読み込むと今の記録は置き換わります',
+    body: `いまこの端末にある記録 ${state.user.length}件・手直し ${Object.keys(state.overrides).length}件は、`
+      + `ファイルの内容（記録 ${bundle.entries.length}件・手直し ${Object.keys(bundle.overrides).length}件）に置き換わります。`,
+    payload: { bundle },
+    actions: [{ kind: 'import', label: '読み込む', danger: true }],
+  });
 }
+
+/** おみくじの中身だけを落として、お参りの記録として残す形。 */
+const WITHOUT_OMIKUJI = {
+  type: TYPE_VISIT,
+  title: '参拝',
+  number: null,
+  fortune: null,
+  poem: null,
+  teaching: null,
+  overview: null,
+  items: [],
+};
 
 function runPending() {
   const pending = state.pending;
@@ -751,6 +817,23 @@ function runPending() {
     closeDetail();
     setState({ overrides: nextOverrides });
     toast('一覧から外しました');
+    return;
+  }
+
+  // おみくじの中身だけを落とし、お参りの記録としては残す
+  if (pending.kind === 'omikuji-only-builtin') {
+    const patch = { ...(state.overrides[pending.id] || {}), ...WITHOUT_OMIKUJI };
+    setState({ overrides: setOverride(state.overrides, pending.id, patch) });
+    toast('おみくじを消して、お参りの記録として残しました');
+    return;
+  }
+
+  if (pending.kind === 'omikuji-only-user') {
+    const entry = findEntry(pending.id);
+    if (!entry) return;
+    const nextUser = updateUser(state.user, { ...entry, ...WITHOUT_OMIKUJI });
+    setState({ user: nextUser });
+    toast('おみくじを消して、お参りの記録として残しました');
     return;
   }
 
@@ -913,9 +996,6 @@ function bind() {
   });
   dom.fPreset.addEventListener('change', () => applyPreset(dom.fPreset.value));
   dom.fNumber.addEventListener('change', syncNumberOther);
-
-  dom.confirmCancel.addEventListener('click', closeConfirm);
-  dom.confirmOk.addEventListener('click', runPending);
 
   dom.unhideBtn.addEventListener('click', () => {
     setState({ overrides: unhideAll(state.overrides) });

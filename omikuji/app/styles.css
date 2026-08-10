@@ -639,6 +639,8 @@ svg { fill: currentColor; stroke: none; display: block; }
 .confirm__box h2 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
 .confirm__box p { margin: 0 0 20px; font-size: 13px; color: var(--text-sub); line-height: 1.7; }
 .confirm__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* 選べる道が2つ以上あるときは縦に積む。横に並べると文言が読めなくなる */
+.confirm__actions--stack { grid-template-columns: 1fr; }
 
 /* ---------- ＋ボタン（4-14 よく使う操作を手前に） ---------- */
 

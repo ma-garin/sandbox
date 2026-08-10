@@ -41,9 +41,16 @@ export function loadUser() {
       warning: null,
     };
   } catch (err) {
+    // 壊れていても捨てない。このあと1件でも足すと上書きで永久に失われるため、
+    // 別のキーへ退避してから空で始める。
+    try {
+      localStorage.setItem(`${KEY_ENTRIES}.broken.${Date.now()}`, raw);
+    } catch {
+      // 退避もできない（容量など）ときは、せめて警告だけは出す
+    }
     return {
       entries: [],
-      warning: `この端末に保存した記録を読めませんでした（${err.message}）。`,
+      warning: `保存されていた記録を読めませんでした（${err.message}）。壊れたデータは残してあります。`,
     };
   }
 }
@@ -213,6 +220,59 @@ export function sameNumberEntries(entries, entry) {
     && e.shrine === entry.shrine
     && numberKey(e.number) === key
   ));
+}
+
+/* ---------- 持ち出しと取り込み ----------
+ *
+ * 自分で足した記録はこの端末の中にしかない。機種変更やブラウザのデータ削除で
+ * 消えてしまうので、ファイルとして書き出せるようにしておく。
+ */
+
+export function buildBundle(user, overrides, stampedAt) {
+  return {
+    app: 'omikuji-cho',
+    version: 1,
+    exportedAt: stampedAt,
+    entries: user.map(({ source, ...rest }) => rest),
+    overrides,
+  };
+}
+
+/** 取り込むファイルは他人が作ったかもしれない。境界で必ず検める。 */
+export function parseBundle(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('JSON として読めないファイルです。');
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('おみくじ帳の書き出しファイルではないようです。');
+  }
+  const entries = Array.isArray(data.entries) ? data.entries : null;
+  if (!entries) throw new Error('記録が入っていないファイルです。');
+
+  entries.forEach((e, i) => {
+    if (!e || typeof e !== 'object') throw new Error(`${i + 1}件目の記録の形式が違います。`);
+    if (!e.id || !e.date) throw new Error(`${i + 1}件目の記録に id か日付がありません。`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date)) throw new Error(`${i + 1}件目の日付の形式が違います（${e.date}）。`);
+  });
+
+  const overrides = (data.overrides && typeof data.overrides === 'object' && !Array.isArray(data.overrides))
+    ? data.overrides
+    : {};
+
+  return { entries, overrides };
+}
+
+/** 取り込んだ内容で丸ごと置き換える。 */
+export function replaceAll(entries, overrides) {
+  writeUser(entries);
+  writeOverrides(overrides);
+  return {
+    user: entries.map((e) => Object.freeze({ ...e, source: 'user' })),
+    overrides,
+  };
 }
 
 /** 今日の日付を YYYY-MM-DD で。記録はその日のうちに付けることが多い。 */

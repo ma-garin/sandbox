@@ -26,21 +26,64 @@
   <symbol id="i-add" viewBox="0 -960 960 960"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></symbol>
   <symbol id="i-prev" viewBox="0 -960 960 960"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/></symbol>
   <symbol id="i-next" viewBox="0 -960 960 960"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></symbol>
+  <symbol id="i-home" viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Z"/></symbol>
+  <symbol id="i-settings" viewBox="0 -960 960 960"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm0-80q-25 0-42.5-17.5T422-480q0-25 17.5-42.5T482-540q25 0 42.5 17.5T542-480q0 25-17.5 42.5T482-420Zm-2-60Zm-40 320h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Z"/></symbol>
+  <symbol id="i-download" viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T760-160H240Z"/></symbol>
+  <symbol id="i-upload" viewBox="0 -960 960 960"><path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T760-160H240Z"/></symbol>
 </svg>
 </head>
 <body>
 
 <!-- 6-03 ヘッダー -->
 <header class="appbar">
-  <p class="appbar__title">おみくじ帳</p>
+  <p class="appbar__title" id="appbar-title">おみくじ帳</p>
 </header>
 
-<!-- 一覧 -->
-<section class="view" id="view-list">
-  <header class="page-header">
-    <p class="page-header__sub" id="summary">読み込み中</p>
-  </header>
+<!-- ============ TOP ============ -->
+<section class="view" id="view-top">
+  <!-- 参拝カレンダー: お参りした日を月ごとに見る。おみくじの中身は記録一覧が持つ -->
+  <section class="block">
+    <div class="block__head">
+      <h2>参拝カレンダー</h2>
+      <p class="block__sub" id="cal-sub"></p>
+    </div>
+    <div class="cal">
+      <div class="cal__head">
+        <button type="button" class="cal__nav" id="cal-prev" aria-label="前の月">
+          <svg aria-hidden="true"><use href="#i-prev"/></svg>
+        </button>
+        <p class="cal__month" id="cal-month"></p>
+        <button type="button" class="cal__nav" id="cal-next" aria-label="次の月">
+          <svg aria-hidden="true"><use href="#i-next"/></svg>
+        </button>
+        <button type="button" class="cal__today" id="cal-today">今日</button>
+      </div>
+      <div class="cal__grid" id="calendar"></div>
+    </div>
+    <div class="cal-legend" id="cal-legend"></div>
+  </section>
 
+  <!-- 直近の記録 -->
+  <section class="block">
+    <div class="block__head">
+      <h2>直近の記録</h2>
+      <button type="button" class="block__more" data-view="list">すべて見る</button>
+    </div>
+    <ul class="cards" id="recent"></ul>
+  </section>
+
+  <!-- 訪問記録 -->
+  <section class="block">
+    <div class="block__head">
+      <h2>訪問記録</h2>
+      <p class="block__sub" id="visit-sub"></p>
+    </div>
+    <ul class="visits" id="visits"></ul>
+  </section>
+</section>
+
+<!-- ============ 記録一覧 ============ -->
+<section class="view" id="view-list" hidden>
   <div class="filters">
     <div class="search">
       <svg class="search__icon" aria-hidden="true"><use href="#i-search"/></svg>
@@ -50,6 +93,7 @@
       </button>
     </div>
     <div class="chips" id="chips" role="group" aria-label="絞り込み"></div>
+    <p class="filters__count" id="summary"></p>
   </div>
 
   <ul class="cards" id="list"></ul>
@@ -62,99 +106,54 @@
   </div>
 </section>
 
-<!-- 記録 -->
-<section class="view" id="view-add" hidden>
-  <header class="page-header">
-    <h2 id="form-heading">記録する</h2>
-    <p class="page-header__sub">引いたおみくじや、お参りしたことを書きとめます</p>
-  </header>
-
-  <form id="form" class="form" novalidate>
-    <!-- 6-19 セグメント: 何を記録するかで入力欄が変わる -->
-    <div class="field">
-      <span class="field__label">記録の種類</span>
-      <div class="segmented" role="radiogroup" aria-label="記録の種類">
-        <label class="segmented__item">
-          <input type="radio" name="kind" value="omikuji" checked>
-          <span>おみくじ</span>
-        </label>
-        <label class="segmented__item">
-          <input type="radio" name="kind" value="visit">
-          <span>参拝のみ</span>
-        </label>
+<!-- ============ 設定 ============ -->
+<section class="view" id="view-settings" hidden>
+  <section class="block">
+    <div class="block__head"><h2>記録の持ち出し</h2></div>
+    <div class="panel">
+      <p class="panel__text">
+        自分で足した記録と、書き起こしへの手直しは、この端末の中だけに保存されています。
+        機種を変えるときやブラウザのデータを消す前に、書き出して控えてください。
+      </p>
+      <p class="panel__stat" id="backup-stat"></p>
+      <div class="panel__actions">
+        <button type="button" class="btn btn--ghost" id="export-btn">
+          <svg aria-hidden="true"><use href="#i-download"/></svg>書き出す
+        </button>
+        <button type="button" class="btn btn--ghost" id="import-btn">
+          <svg aria-hidden="true"><use href="#i-upload"/></svg>読み込む
+        </button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
     </div>
+  </section>
 
-    <div class="card-block">
-      <div class="field">
-        <label for="f-date">日付 <span class="req">必須</span></label>
-        <input type="date" id="f-date" required>
-        <p class="field__error" id="e-date" hidden></p>
-      </div>
-
-      <div class="field">
-        <label for="f-shrine">神社 <span class="req" id="shrine-req" hidden>必須</span></label>
-        <input type="text" id="f-shrine" list="shrine-list" placeholder="例: 東京大神宮" autocomplete="off">
-        <datalist id="shrine-list"></datalist>
-        <p class="field__error" id="e-shrine" hidden></p>
-      </div>
+  <section class="block">
+    <div class="block__head"><h2>いま入っている記録</h2></div>
+    <div class="panel">
+      <dl class="stats" id="stats"></dl>
     </div>
+  </section>
 
-    <!-- おみくじのときだけ出す -->
-    <div id="omikuji-fields" class="card-block">
-      <div class="field field--row">
-        <div>
-          <label for="f-number">番号</label>
-          <input type="text" id="f-number" placeholder="例: 第八番" autocomplete="off">
-        </div>
-        <div>
-          <label for="f-fortune">吉凶</label>
-          <select id="f-fortune">
-            <option value="">記載なし</option>
-            <option>大吉</option><option>吉</option><option>中吉</option>
-            <option>小吉</option><option>末吉</option><option>凶</option><option>大凶</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-poem">歌</label>
-        <textarea id="f-poem" rows="2" placeholder="おみくじに載っていた和歌"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="f-overview">運勢・本文</label>
-        <textarea id="f-overview" rows="5" placeholder="本文をそのまま書きうつします"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="f-items">判断の項目</label>
-        <textarea id="f-items" rows="4" placeholder="願望: 叶う&#10;待人: 来る"></textarea>
-        <p class="field__hint">1行に1項目。「願望: 叶う」のように書きます。</p>
-      </div>
+  <section class="block">
+    <div class="block__head"><h2>この帳面について</h2></div>
+    <div class="panel">
+      <p class="panel__text">
+        写真から書き起こした記録には、日付や神社名を推定したもの、印字が薄くて読み取れなかった箇所があります。
+        どこが確かでないかは、各記録の「この記録について」に理由つきで書いてあります。
+        書き起こしの写し間違いは、詳細画面の「直す」から直せます。
+      </p>
     </div>
-
-    <div class="card-block">
-      <div class="field">
-        <label for="f-memo">メモ</label>
-        <textarea id="f-memo" rows="3" placeholder="そのとき思ったこと、天気、誰と行ったかなど"></textarea>
-      </div>
-    </div>
-
-    <div class="form__actions">
-      <button type="submit" class="btn btn--primary" id="form-submit">保存する</button>
-      <button type="button" class="btn btn--ghost" id="form-cancel" hidden>編集をやめる</button>
-    </div>
-  </form>
+  </section>
 </section>
 
-<!-- 詳細（5-11 全画面パターン） -->
-<div class="detail" id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="d-barlabel">
-  <header class="detail__bar">
-    <button type="button" class="iconbtn" id="detail-close" aria-label="一覧へ戻る">
+<!-- ============ 詳細（5-11 全画面パターン） ============ -->
+<div class="sheet" id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="d-barlabel">
+  <header class="sheet__bar">
+    <button type="button" class="iconbtn" id="detail-close" aria-label="閉じる">
       <svg aria-hidden="true"><use href="#i-back"/></svg>
     </button>
-    <p class="detail__barlabel" id="d-barlabel"></p>
+    <p class="sheet__title" id="d-barlabel"></p>
     <button type="button" class="iconbtn" id="detail-edit" hidden aria-label="この記録を直す">
       <svg aria-hidden="true"><use href="#i-edit"/></svg>
     </button>
@@ -162,9 +161,9 @@
       <svg aria-hidden="true"><use href="#i-delete"/></svg>
     </button>
   </header>
-  <div class="detail__scroll" id="detail-body"></div>
+  <div class="sheet__scroll" id="detail-body"></div>
   <!-- 4-14 よく使う操作を手前に: 続けて読み返せるようにする -->
-  <nav class="detail__nav" aria-label="前後の記録">
+  <nav class="sheet__nav" aria-label="前後の記録">
     <button type="button" class="stepbtn" id="detail-prev">
       <svg aria-hidden="true"><use href="#i-prev"/></svg><span id="prev-label"></span>
     </button>
@@ -172,6 +171,101 @@
       <span id="next-label"></span><svg aria-hidden="true"><use href="#i-next"/></svg>
     </button>
   </nav>
+</div>
+
+<!-- ============ 記録フォーム（＋から開く） ============ -->
+<div class="sheet" id="form-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="form-heading">
+  <header class="sheet__bar">
+    <button type="button" class="iconbtn" id="form-close" aria-label="閉じる">
+      <svg aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
+    <p class="sheet__title" id="form-heading">記録する</p>
+    <span class="iconbtn" aria-hidden="true"></span>
+  </header>
+
+  <div class="sheet__scroll">
+    <form id="form" class="form" novalidate>
+      <!-- 6-19 セグメント: 何を記録するかで入力欄が変わる -->
+      <div class="field">
+        <span class="field__label">記録の種類</span>
+        <div class="segmented" role="radiogroup" aria-label="記録の種類">
+          <label class="segmented__item">
+            <input type="radio" name="kind" value="omikuji" checked>
+            <span>おみくじ</span>
+          </label>
+          <label class="segmented__item">
+            <input type="radio" name="kind" value="visit">
+            <span>参拝のみ</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card-block">
+        <div class="field">
+          <label for="f-date">日付 <span class="req">必須</span></label>
+          <input type="date" id="f-date" required>
+          <p class="field__error" id="e-date" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="f-shrine">神社 <span class="req" id="shrine-req" hidden>必須</span></label>
+          <input type="text" id="f-shrine" list="shrine-list" placeholder="例: 東京大神宮" autocomplete="off">
+          <datalist id="shrine-list"></datalist>
+          <p class="field__error" id="e-shrine" hidden></p>
+        </div>
+      </div>
+
+      <!-- おみくじのときだけ出す -->
+      <div id="omikuji-fields" class="card-block">
+        <div class="field field--row">
+          <div>
+            <label for="f-number">番号</label>
+            <input type="text" id="f-number" placeholder="例: 第八番" autocomplete="off">
+          </div>
+          <div>
+            <label for="f-fortune">吉凶</label>
+            <select id="f-fortune">
+              <option value="">記載なし</option>
+              <option>大吉</option><option>吉</option><option>中吉</option>
+              <option>小吉</option><option>末吉</option><option>凶</option><option>大凶</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-poem">歌</label>
+          <textarea id="f-poem" rows="2" placeholder="おみくじに載っていた和歌"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="f-teaching">訓</label>
+          <input type="text" id="f-teaching" placeholder="「善良なるしつけは、まづ家庭に始まるべし。」など">
+        </div>
+
+        <div class="field">
+          <label for="f-overview">運勢・本文</label>
+          <textarea id="f-overview" rows="5" placeholder="本文をそのまま書きうつします"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="f-items">判断の項目</label>
+          <textarea id="f-items" rows="4" placeholder="願望: 叶う&#10;待人: 来る"></textarea>
+          <p class="field__hint">1行に1項目。「願望: 叶う」のように書きます。</p>
+        </div>
+      </div>
+
+      <div class="card-block">
+        <div class="field">
+          <label for="f-memo">メモ</label>
+          <textarea id="f-memo" rows="3" placeholder="そのとき思ったこと、天気、誰と行ったかなど"></textarea>
+        </div>
+      </div>
+
+      <div class="form__actions">
+        <button type="submit" class="btn btn--primary" id="form-submit">保存する</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- 4-10 危険な操作の前の確認 -->
@@ -186,15 +280,24 @@
   </div>
 </div>
 
+<!-- 4-14 よく使う操作を手前に -->
+<button type="button" class="fab" id="fab" aria-label="記録する">
+  <svg aria-hidden="true"><use href="#i-add"/></svg>
+</button>
+
 <!-- 6-02 モバイルのナビゲーション -->
 <nav class="tabbar" aria-label="画面の切り替え">
-  <button type="button" class="tab is-active" data-view="list" aria-current="page">
-    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-list"/></svg></span>
-    <span>一覧</span>
+  <button type="button" class="tab is-active" data-view="top" aria-current="page">
+    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-home"/></svg></span>
+    <span>TOP</span>
   </button>
-  <button type="button" class="tab" data-view="add">
-    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-add"/></svg></span>
-    <span>記録</span>
+  <button type="button" class="tab" data-view="list">
+    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-list"/></svg></span>
+    <span>記録一覧</span>
+  </button>
+  <button type="button" class="tab" data-view="settings">
+    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-settings"/></svg></span>
+    <span>設定</span>
   </button>
 </nav>
 

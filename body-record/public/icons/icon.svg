@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#2f6f4f"/>
+  <!-- rising trend line (progress) -->
+  <polyline points="112,340 196,300 268,326 344,224 412,176"
+    fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="112" cy="340" r="16" fill="#a7e0c0"/>
+  <circle cx="196" cy="300" r="16" fill="#a7e0c0"/>
+  <circle cx="268" cy="326" r="16" fill="#a7e0c0"/>
+  <circle cx="344" cy="224" r="16" fill="#a7e0c0"/>
+  <circle cx="412" cy="176" r="18" fill="#ffffff"/>
+  <!-- baseline -->
+  <line x1="96" y1="392" x2="416" y2="392" stroke="#ffffff" stroke-opacity="0.4" stroke-width="10" stroke-linecap="round"/>
+</svg>

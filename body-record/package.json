@@ -1,0 +1,30 @@
+{
+  "name": "body-record",
+  "version": "0.1.0",
+  "private": true,
+  "description": "体重・体組成記録 PWA（RecStyle 乗り換え用 / GitHub Pages / オフライン対応）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.7",
+    "dexie": "^4.0.10"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.8"
+  }
+}

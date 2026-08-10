@@ -135,23 +135,20 @@ svg { fill: currentColor; stroke: none; display: block; }
 }
 .search__clear svg { width: 100%; height: 100%; }
 
-/* 6-25 ステータスラベルとチップ */
+/* 6-25 ステータスラベルとチップ
+   横スクロールにすると後ろのチップの存在に気づけないので、折り返して全部見せる。 */
 .chips {
-  display: flex; gap: 7px;
+  display: flex; flex-wrap: wrap; gap: 7px;
   margin-top: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 }
-.chips::-webkit-scrollbar { display: none; }
 .chip {
   flex: 0 0 auto;
-  padding: 6px 13px;
+  padding: 4px 11px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--text-sub);
-  font-size: 12.5px; letter-spacing: 0.02em;
+  font-size: 12px; letter-spacing: 0.01em;
   cursor: pointer; white-space: nowrap;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
@@ -334,6 +331,15 @@ svg { fill: currentColor; stroke: none; display: block; }
 }
 .same__link:hover { background: var(--surface-2); }
 
+/* 文中に置く操作。ボタンらしく見せすぎない */
+.linkbtn {
+  margin-top: 12px; padding: 8px 0;
+  background: none; border: 0;
+  color: var(--bar); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.linkbtn:hover { color: var(--primary); }
+
 .d-section {
   margin-bottom: 12px;
   padding: 16px;
@@ -507,13 +513,21 @@ svg { fill: currentColor; stroke: none; display: block; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background: none; border: 0;
-  color: var(--text-weak);
+  /* 白地に対して 5.4:1。--text-weak (#90A4AE) では 2.6:1 しかなく AA に届かない */
+  color: var(--text-sub);
   font-size: 10.5px; letter-spacing: 0.06em;
   cursor: pointer;
   transition: color var(--dur) var(--ease);
 }
 .tab svg { width: 22px; height: 22px; }
+/* 選択中は色の濃さだけに頼らず、アイコンの背後に印を敷いて区別する */
+.tab__icon {
+  display: grid; place-items: center;
+  width: 52px; height: 28px; border-radius: 999px;
+  transition: background var(--dur) var(--ease);
+}
 .tab.is-active { color: var(--primary); font-weight: 600; }
+.tab.is-active .tab__icon { background: var(--surface-2); }
 
 /* ---------- トースト（6-30） ---------- */
 

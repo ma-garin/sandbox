@@ -45,9 +45,11 @@ export function cardEl(entry, onOpen) {
   const li = el('li');
   const btn = el('button', 'card');
   btn.type = 'button';
+  btn.dataset.id = entry.id;   // 詳細を閉じたときにここへフォーカスを戻す
 
   const top = el('div', 'card__top');
   top.appendChild(el('span', 'card__date', formatDate(entry.date)));
+  if (entry.edited) top.appendChild(el('span', 'card__tag', '手直しあり'));
   // 神社名の推定はほぼ全件に付くため一覧には出さない（同じ札が並ぶと識別の助けにならない）。
   // 根拠は詳細の「この記録について」に残してある。
   if (entry.dateEstimated) top.appendChild(el('span', 'card__tag', '日付は推定'));
@@ -90,9 +92,10 @@ function section(label, node) {
  * @param {object} [options]
  * @param {Array}  [options.sameNumber] 同じ神社で同じ番号を引いた他の回
  * @param {Function} [options.onOpen]   その回へ移動するときに呼ぶ
+ * @param {Function} [options.onRevert] 手直しを取り消すときに呼ぶ（手直しがある場合のみ）
  */
 export function detailEl(entry, options = {}) {
-  const { sameNumber = [], onOpen } = options;
+  const { sameNumber = [], onOpen, onRevert } = options;
   const inner = el('div', 'detail__inner');
 
   const head = el('div', 'd-head');
@@ -164,10 +167,19 @@ export function detailEl(entry, options = {}) {
   if (entry.sourcePhotos && entry.sourcePhotos.length) {
     notes.push(`書き起こしの元にした写真: ${entry.sourcePhotos.join(' / ')}`);
   }
-  if (notes.length) {
+  if (notes.length || onRevert) {
     const wrap = el('div', 'd-section');
     wrap.appendChild(el('p', 'd-label', 'この記録について'));
+    if (onRevert) {
+      wrap.appendChild(el('p', 'd-note', 'この記録は書き起こしのあとに手直しされています。'));
+    }
     notes.forEach((n) => wrap.appendChild(el('p', 'd-note', n)));
+    if (onRevert) {
+      const b = el('button', 'linkbtn', '書き起こしたときの内容に戻す');
+      b.type = 'button';
+      b.addEventListener('click', onRevert);
+      wrap.appendChild(b);
+    }
     inner.appendChild(wrap);
   }
 

@@ -10,6 +10,7 @@
  */
 
 const KEY_ENTRIES = 'omikuji.entries.v1';
+const KEY_OVERRIDES = 'omikuji.overrides.v1';
 const KEY_INTRO = 'omikuji.introSeen.v1';
 
 /** 吉凶の並び順。神社本庁の一例に合わせる（大吉→吉→中吉→小吉→末吉→凶） */
@@ -70,6 +71,53 @@ export function removeUser(entries, id) {
   const next = entries.filter((e) => e.id !== id);
   writeUser(next);
   return next;
+}
+
+/* ---------- 書き起こし記録の手直し ----------
+ *
+ * data/omikuji.json は写真から起こしたものなので、写し間違いが混じりうる。
+ * かといって配布ファイルを端末側で書き換えるわけにはいかないので、
+ * 「どこをどう直したか」だけを localStorage に持ち、読むときに重ねる。
+ * こうすると元の記録はいつでも取り戻せる。
+ */
+
+export function loadOverrides() {
+  const raw = localStorage.getItem(KEY_OVERRIDES);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeOverrides(overrides) {
+  localStorage.setItem(KEY_OVERRIDES, JSON.stringify(overrides));
+}
+
+/** 手直しを記録する。既存を変えず新しいオブジェクトを返す。 */
+export function setOverride(overrides, id, patch) {
+  const next = { ...overrides, [id]: patch };
+  writeOverrides(next);
+  return next;
+}
+
+/** 手直しを取り消して、書き起こしたときの内容に戻す。 */
+export function clearOverride(overrides, id) {
+  const next = { ...overrides };
+  delete next[id];
+  writeOverrides(next);
+  return next;
+}
+
+/** 読むときに重ねる。直した記録には edited の印を付け、画面で区別できるようにする。 */
+export function applyOverrides(builtin, overrides) {
+  return builtin.map((e) => (
+    overrides[e.id]
+      ? Object.freeze({ ...e, ...overrides[e.id], id: e.id, source: 'builtin', edited: true })
+      : e
+  ));
 }
 
 export function introSeen() {

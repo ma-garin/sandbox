@@ -604,7 +604,7 @@ function startEdit(entry) {
   dom.fPreset.value = guessed || '';
   dom.presetNote.textContent = guessed ? (findPreset(guessed)?.note || '') : '';
 
-  dom.formHeading.textContent = entry.source === 'builtin' ? '書き起こしを直す' : '記録を直す';
+  dom.formHeading.textContent = '記録を直す';
   dom.formSubmit.textContent = '書きかえる';
   clearErrors();
   closeDetail();
@@ -664,7 +664,7 @@ function onSubmit(event) {
       resetForm();
       closeForm();
       setState({ overrides: nextOverrides });
-      toast('書き起こしを直しました');
+      toast('書きかえました');
     } else if (editing) {
       const nextUser = updateUser(state.user, { ...fields, id: editing.id });
       resetForm();
@@ -738,7 +738,7 @@ function askDelete() {
 
   const builtin = entry.source === 'builtin';
   const wording = builtin
-    ? { verb: '一覧から外す', note: '設定からいつでも戻せます。' }
+    ? { verb: '一覧から外す', note: 'あとで設定から戻せます。' }
     : { verb: '削除する', note: '元に戻せません。' };
 
   // おみくじの記録は、お参りの記録でもある。
@@ -748,6 +748,7 @@ function askDelete() {
       title: 'この記録をどうしますか',
       body: `${formatDate(entry.date)}　${entry.shrine || '場所の記載なし'} のお参りの記録でもあります。`
         + `おみくじだけを消せば、お参りに行ったことは残ります。${wording.note}`,
+      // builtin は配布ファイルを消せないため「隠す」だけ。文言でその差を出す
       payload: { id: entry.id },
       actions: [
         { kind: builtin ? 'omikuji-only-builtin' : 'omikuji-only-user', label: 'おみくじだけ消す' },
@@ -770,7 +771,7 @@ function askDelete() {
 function askRevert(id) {
   ask({
     title: '手直しを取り消しますか',
-    body: '写真から書き起こしたときの内容に戻ります。直した内容は消えます。',
+    body: 'もとの内容に戻ります。直した内容は消えます。',
     payload: { id },
     actions: [{ kind: 'revert', label: '元に戻す', danger: true }],
   });
@@ -918,13 +919,22 @@ function showIntroIfFirstTime() {
   const box = document.createElement('div');
   box.className = 'intro';
   const p = document.createElement('p');
-  p.textContent = '写真から起こした過去の記録が入っています。カレンダーの札を押すとその回を読めます。新しく引いたら右下の＋から足せます。';
+  p.textContent = 'これまでの記録が入っています。カレンダーの日を押すとその回を読めます。新しく引いたら右下の＋から足せます。';
   const close = document.createElement('button');
   close.type = 'button';
   close.textContent = '閉じる';
   close.addEventListener('click', () => { markIntroSeen(); box.remove(); });
   box.append(p, close);
   dom.viewTop.insertBefore(box, dom.viewTop.firstChild);
+}
+
+// ---------- 電波の状態を伝える（4-06） ----------
+
+function syncOnlineState() {
+  const offline = !navigator.onLine;
+  const banner = $('offline');
+  if (banner) banner.hidden = !offline;
+  document.body.classList.toggle('is-offline', offline);
 }
 
 // ---------- Service Worker ----------
@@ -1027,6 +1037,10 @@ async function main() {
   buildFormOptions();
   resetForm();
   registerServiceWorker();
+
+  syncOnlineState();
+  window.addEventListener('online', syncOnlineState);
+  window.addEventListener('offline', syncOnlineState);
 
   const { entries: user, warning } = loadUser();
   if (warning) toast(warning);

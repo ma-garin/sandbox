@@ -18,7 +18,9 @@
 
   --text:      #263238;
   --text-sub:  #546E7A;
-  --text-weak: #90A4AE;
+  /* 薄いほうの文字色。白地だけでなく地の #EFF1F5 の上でも 4.5:1 を満たす濃さにする。
+     #90A4AE は 2.29:1、#5E7A86 でも地の上では 4.03:1 で足りなかった（WCAG 2.1 AA） */
+  --text-weak: #57727D;
 
   --bar:       #546E7A;
   --primary:   #37474F;
@@ -89,6 +91,18 @@ svg { fill: currentColor; stroke: none; display: block; }
 }
 .appbar__title { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.06em; }
 
+/* オフラインの知らせ。「つながらない」ではなく「何ができるか」を書く */
+.offline {
+  position: fixed; z-index: 29;
+  top: calc(var(--appbar-h) + env(safe-area-inset-top));
+  left: 0; right: 0;
+  padding: 9px 16px;
+  background: #37474F; color: #fff;
+  font-size: 12.5px; text-align: center; letter-spacing: 0.02em;
+}
+.offline[hidden] { display: none; }
+body.is-offline { padding-top: calc(var(--appbar-h) + env(safe-area-inset-top) + 38px); }
+
 /* ---------- 画面 ---------- */
 
 .view {
@@ -119,13 +133,14 @@ svg { fill: currentColor; stroke: none; display: block; }
 }
 
 .cal__head {
-  display: grid; grid-template-columns: 36px 1fr 36px;
+  display: grid; grid-template-columns: 48px 1fr 48px;
   align-items: center; gap: 2px; padding: 0 2px 8px;
   justify-items: center;
 }
 /* 月ラベル自体を押せるようにして、年月を直接選べる入口にする */
 .cal__month {
-  margin: 0; padding: 6px 10px;
+  margin: 0; padding: 0 14px;
+  min-height: 48px;   /* 指で押す的は 48px 以上 */
   background: none; border: 0; border-radius: var(--radius);
   font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums; color: inherit; cursor: pointer;
@@ -144,7 +159,7 @@ svg { fill: currentColor; stroke: none; display: block; }
   border-radius: var(--radius); outline: none;
 }
 .cal__nav {
-  width: 36px; height: 36px; padding: 9px;
+  width: 48px; height: 48px; padding: 14px;
   background: none; border: 0; border-radius: 50%;
   color: var(--text-sub); cursor: pointer; flex: 0 0 auto;
   transition: background var(--dur) var(--ease);
@@ -168,12 +183,17 @@ svg { fill: currentColor; stroke: none; display: block; }
 .cal__dow.is-sun { color: var(--sun); }
 .cal__dow.is-sat { color: var(--sat); }
 
+/* 記録のある日はマス全体を押せるようにする。
+   1マスの幅は48px程度しかなく、中の札だけを的にすると 44×19px にしかならない。 */
 .cal__day {
   min-height: 62px;
   display: flex; flex-direction: column; gap: 2px;
   padding: 4px 2px;
-  border-top: 1px solid var(--line);
+  border: 0; border-top: 1px solid var(--line);
+  background: none; font-family: inherit; text-align: center;
 }
+button.cal__day { cursor: pointer; }
+button.cal__day:hover { background: rgba(84, 110, 122, 0.07); }
 /* 祝日の名前。狭いので1行に収め、全文は title で見せる */
 .cal__holiday {
   font-size: 8px; line-height: 1.3; color: var(--sun);
@@ -192,13 +212,14 @@ svg { fill: currentColor; stroke: none; display: block; }
 .cal__num.is-sat { color: var(--sat); }
 
 /* 予定の札。TimeTree のように日のマスへ積む */
-/* 札は社名の頭2文字だけ。8.5pxでは読めなかったので11pxまで上げた */
+/* 札は社名の頭2文字だけ。8.5pxでは読めなかったので11pxまで上げた。
+   押す的はマス全体なので、札自体はボタンにしない */
 .cal__chip {
   display: block; width: 100%;
   padding: 1px 2px;
-  border: 0; border-radius: 3px;
-  font-family: inherit; font-size: 11px; line-height: 1.5; font-weight: 600;
-  color: #fff; cursor: pointer; text-align: center;
+  border-radius: 3px;
+  font-size: 11px; line-height: 1.5; font-weight: 600;
+  color: #fff; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .cal__chip.is-omikuji { background: var(--primary); }
@@ -288,8 +309,8 @@ svg { fill: currentColor; stroke: none; display: block; }
 .search input::placeholder { color: var(--text-weak); }
 .search input::-webkit-search-cancel-button { display: none; }
 .search__clear {
-  position: absolute; right: 7px;
-  width: 30px; height: 30px; padding: 7px;
+  position: absolute; right: 2px;
+  width: 44px; height: 44px; padding: 13px;
   background: none; border: 0; border-radius: 50%;
   color: var(--text-sub); cursor: pointer;
 }
@@ -299,9 +320,11 @@ svg { fill: currentColor; stroke: none; display: block; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip {
   flex: 0 0 auto;
-  padding: 4px 11px;
+  /* 指で押す的として最低限の高さを確保する（絞り込みは密に並ぶので幅は詰める） */
+  min-height: 36px; padding: 0 13px;
+  display: inline-flex; align-items: center;
   background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-  color: var(--text-sub); font-size: 12px;
+  color: var(--text-sub); font-size: 12.5px;
   cursor: pointer; white-space: nowrap;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }

@@ -169,7 +169,14 @@ export function calendarEl(entries, month, today, onPick) {
     const dow = i % 7;
     const holiday = holidayName(date);
 
-    const cell = el('div', 'cal__day');
+    // 記録がある日はマスごと押せるようにする（札だけだと指の的が小さすぎる）
+    const cell = el(hits.length ? 'button' : 'div', 'cal__day');
+    if (hits.length) {
+      cell.type = 'button';
+      const names = hits.map((h) => h.shrine || UNKNOWN_SHRINE).join('、');
+      cell.setAttribute('aria-label', `${date} ${names}`);
+      cell.addEventListener('click', () => onPick(hits[0]));
+    }
     if (outside) cell.classList.add('is-outside');
     if (date === today) cell.classList.add('is-today');
     if (hits.length) cell.classList.add('has-visit');
@@ -186,14 +193,11 @@ export function calendarEl(entries, month, today, onPick) {
       cell.appendChild(h);
     }
 
+    // 札は見た目だけ。押す的はマス全体（上の button）が引き受ける
     hits.forEach((entry) => {
-      const chip = el('button', 'cal__chip', chipLabel(entry));
-      chip.type = 'button';
+      const chip = el('span', 'cal__chip', chipLabel(entry));
       chip.classList.add(chipKind(entry));
-      const label = `${date} ${entry.shrine || UNKNOWN_SHRINE}`;
-      chip.setAttribute('aria-label', label);
-      chip.title = label;
-      chip.addEventListener('click', () => onPick(entry));
+      chip.title = `${date} ${entry.shrine || UNKNOWN_SHRINE}`;
       cell.appendChild(chip);
     });
 
@@ -364,7 +368,7 @@ export function detailEl(entry, options = {}) {
   }
 
   if (isUnreadable(entry)) {
-    inner.appendChild(el('p', 'd-warn', 'この記録は写真の印字が読み取れず、本文が入っていません。撮り直して書き足せます。'));
+    inner.appendChild(el('p', 'd-warn', '写真の印字が薄く、本文を読み取れませんでした。「直す」から書き足せます。'));
   }
 
   // お参りそのものの記録
@@ -424,16 +428,15 @@ export function detailEl(entry, options = {}) {
   if (entry.dateEstimated) notes.push(`日付は推定です。${entry.dateNote || ''}`.trim());
   if (entry.timeSource === 'photo') notes.push('時刻は写真を撮った時刻です。参拝そのものの時刻とは限りません。');
   [entry.fortuneNote, entry.shrineNote, entry.note].forEach((n) => { if (n) notes.push(n); });
-  if (entry.sourcePhotos && entry.sourcePhotos.length) {
-    notes.push(`書き起こしの元にした写真: ${entry.sourcePhotos.join(' / ')}`);
-  }
+  // sourcePhotos（元写真のファイル名）は画面に出さない。記録者本人には要らない情報で、
+  // データの確かさにも関わらないため。控えは data/omikuji.json に残っている。
   if (notes.length || onRevert) {
     const wrap = el('div', 'd-section');
     wrap.appendChild(el('p', 'd-label', 'この記録について'));
-    if (onRevert) wrap.appendChild(el('p', 'd-note', 'この記録は書き起こしのあとに手直しされています。'));
+    if (onRevert) wrap.appendChild(el('p', 'd-note', 'あとから手直しされています。'));
     notes.forEach((n) => wrap.appendChild(el('p', 'd-note', n)));
     if (onRevert) {
-      const b = el('button', 'linkbtn', '書き起こしたときの内容に戻す');
+      const b = el('button', 'linkbtn', 'もとの内容に戻す');
       b.type = 'button';
       b.addEventListener('click', onRevert);
       wrap.appendChild(b);

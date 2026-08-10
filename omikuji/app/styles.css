@@ -43,6 +43,11 @@
 
   --appbar-h: 56px;
   --tabbar-h: 60px;
+  --fab-size: 56px;
+  --fab-gap: 18px;
+  /* 画面の下端に置く余白。タブバーだけでなく＋ボタンの高さも見る。
+     見ていないと、最後の1行が＋ボタンの下に隠れる。 */
+  --bottom-space: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--fab-size) + var(--fab-gap) + 20px);
 }
 
 * { box-sizing: border-box; }
@@ -83,7 +88,7 @@ svg { fill: currentColor; stroke: none; display: block; }
 /* ---------- 画面 ---------- */
 
 .view {
-  padding: 16px 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 28px);
+  padding: 16px 16px var(--bottom-space);
   max-width: 640px; margin: 0 auto;
 }
 .view[hidden] { display: none; }
@@ -639,8 +644,8 @@ svg { fill: currentColor; stroke: none; display: block; }
 
 .fab {
   position: fixed; right: 18px; z-index: 45;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 18px);
-  width: 56px; height: 56px; padding: 15px;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--fab-gap));
+  width: var(--fab-size); height: var(--fab-size); padding: 15px;
   background: var(--primary); color: #fff;
   border: 0; border-radius: 18px;
   box-shadow: var(--shadow-fab); cursor: pointer;

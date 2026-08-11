@@ -29,6 +29,8 @@ const $ = (id) => document.getElementById(id);
 const FILTER_VISIT = '参拝';
 const FILTER_OTHER = 'その他';
 const FILTER_NO_FORTUNE = '吉凶なし';
+/** 神社の記載がない記録をまとめる見出し。絞り込みの値としても使う。 */
+const UNKNOWN_SHRINE = '場所の記載なし';
 
 /** 書き起こし記録に重ねられる項目。日付を直したら「推定」の印も外す。 */
 const OVERRIDABLE = [
@@ -62,7 +64,8 @@ const dom = {
 
   list: $('list'), empty: $('empty'), emptyTitle: $('empty-title'),
   emptyBody: $('empty-body'), emptyReset: $('empty-reset'),
-  summary: $('summary'), search: $('search'), searchClear: $('search-clear'), chips: $('chips'),
+  summary: $('summary'), search: $('search'), searchClear: $('search-clear'),
+  filterShrine: $('filter-shrine'), filterFortune: $('filter-fortune'),
 
   detail: $('detail'), detailBody: $('detail-body'), detailClose: $('detail-close'),
   detailDelete: $('detail-delete'), detailEdit: $('detail-edit'), detailBarLabel: $('d-barlabel'),
@@ -162,7 +165,7 @@ function visibleEntries() {
   return allEntries().filter((e) => (
     matchesFilter(e, state.filter)
     && matchesQuery(e, state.query)
-    && (!state.shrine || (e.shrine || '場所の記載なし') === state.shrine)
+    && (!state.shrine || (e.shrine || UNKNOWN_SHRINE) === state.shrine)
   ));
 }
 
@@ -249,48 +252,63 @@ function countsOf(entries) {
   return c;
 }
 
-function renderChips() {
-  const entries = allEntries();
-  const counts = countsOf(entries);
+/** 神社ごとの件数。記載がないものは1つにまとめる。 */
+function shrineCountsOf(entries) {
+  const c = new Map();
+  entries.forEach((e) => {
+    const key = e.shrine || UNKNOWN_SHRINE;
+    c.set(key, (c.get(key) || 0) + 1);
+  });
+  return c;
+}
 
-  const keys = FORTUNE_ORDER.filter((f) => counts.has(f));
-  [FILTER_NO_FORTUNE, FILTER_VISIT, FILTER_OTHER].forEach((k) => { if (counts.has(k)) keys.push(k); });
+/**
+ * プルダウンの中身を組み直す。空文字を「すべて」に割り当て、state 側の null と対応させる。
+ * option は textContent で作る（本文と同じく innerHTML は使わない）。
+ */
+function fillSelect(select, current, allLabel, items) {
+  select.textContent = '';
 
-  dom.chips.textContent = '';
+  const all = document.createElement('option');
+  all.value = '';
+  all.textContent = allLabel;
+  select.appendChild(all);
 
-  if (state.shrine) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'chip chip--shrine is-on';
-    b.textContent = state.shrine;
-    const x = document.createElement('span');
-    x.className = 'chip__x';
-    x.textContent = '✕';
-    b.appendChild(x);
-    b.setAttribute('aria-label', `${state.shrine}での絞り込みを外す`);
-    b.addEventListener('click', () => setState({ shrine: null }));
-    dom.chips.appendChild(b);
+  let found = false;
+  items.forEach(([value, count]) => {
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = `${value}（${count}）`;
+    select.appendChild(o);
+    if (value === current) found = true;
+  });
+
+  // 絞り込んだまま最後の1件を消すと、選んでいた値が候補から消える。
+  // 黙って「すべて」に戻ると絞り込みが外れたことに気づけないので、0件として残す。
+  if (current && !found) {
+    const o = document.createElement('option');
+    o.value = current;
+    o.textContent = `${current}（0）`;
+    select.appendChild(o);
   }
 
-  const makeChip = (label, value, count) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    const on = state.filter === value;
-    b.className = 'chip' + (on ? ' is-on' : '');
-    b.setAttribute('aria-pressed', String(on));
-    b.textContent = label;
-    if (count != null) {
-      const n = document.createElement('span');
-      n.className = 'chip__n';
-      n.textContent = count;
-      b.appendChild(n);
-    }
-    b.addEventListener('click', () => setState({ filter: on ? null : value }));
-    return b;
-  };
+  select.value = current || '';
+  select.classList.toggle('is-on', Boolean(current));
+}
 
-  dom.chips.appendChild(makeChip('すべて', null, entries.length));
-  keys.forEach((k) => dom.chips.appendChild(makeChip(k, k, counts.get(k))));
+function renderFilters() {
+  const entries = allEntries();
+
+  // 多く行っている神社ほど選ぶ回数が多いので、件数の多い順に並べる。
+  const shrines = [...shrineCountsOf(entries).entries()]
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+  fillSelect(dom.filterShrine, state.shrine, `すべて（${entries.length}）`, shrines);
+
+  const counts = countsOf(entries);
+  const keys = FORTUNE_ORDER.filter((f) => counts.has(f));
+  [FILTER_NO_FORTUNE, FILTER_VISIT, FILTER_OTHER].forEach((k) => { if (counts.has(k)) keys.push(k); });
+  fillSelect(dom.filterFortune, state.filter, `すべて（${entries.length}）`,
+    keys.map((k) => [k, counts.get(k)]));
 }
 
 function renderList() {
@@ -435,7 +453,7 @@ function renderShrineSuggestions() {
 function render() {
   renderTop();
   renderVisits();
-  renderChips();
+  renderFilters();
   renderList();
   renderSettings();
   renderInstall();
@@ -455,7 +473,7 @@ function setBackgroundInert(on) {
 
 /** 訪問記録タブの各行からも、同じ寺社の一覧を開けるようにする。 */
 function shrineOf(entry) {
-  return entry.shrine || '場所の記載なし';
+  return entry.shrine || UNKNOWN_SHRINE;
 }
 
 // ---------- 詳細 ----------
@@ -1011,7 +1029,7 @@ function askDelete() {
   if (entry.type === TYPE_OMIKUJI) {
     ask({
       title: 'この記録をどうしますか',
-      body: `${formatDate(entry.date)}　${entry.shrine || '場所の記載なし'} のお参りの記録でもあります。`
+      body: `${formatDate(entry.date)}　${entry.shrine || UNKNOWN_SHRINE} のお参りの記録でもあります。`
         + `おみくじだけを消せば、お参りに行ったことは残ります。${wording.note}`,
       // builtin は配布ファイルを消せないため「隠す」だけ。文言でその差を出す
       payload: { id: entry.id },
@@ -1279,6 +1297,14 @@ function bind() {
   dom.emptyReset.addEventListener('click', () => {
     dom.search.value = '';
     setState({ query: '', filter: null, shrine: null });
+  });
+
+  // 神社と吉凶は別々に効かせる（両方選べば掛け合わせになる）
+  dom.filterShrine.addEventListener('change', () => {
+    setState({ shrine: dom.filterShrine.value || null });
+  });
+  dom.filterFortune.addEventListener('change', () => {
+    setState({ filter: dom.filterFortune.value || null });
   });
 
   dom.visitSearch.addEventListener('input', (e) => setState({ visitQuery: e.target.value.trim() }));

@@ -76,7 +76,7 @@ const dom = {
 
   fDate: $('f-date'), fTime: $('f-time'), fShrine: $('f-shrine'), fPurpose: $('f-purpose'),
   fOffering: $('f-offering'), fPurchases: $('f-purchases'),
-  fPreset: $('f-preset'),
+  fPreset: $('f-preset'), presetNote: $('preset-note'),
   fNumber: $('f-number'), fNumberOther: $('f-number-other'), numberOtherField: $('number-other-field'),
   fFortune: $('f-fortune'), fPoem: $('f-poem'), fTeaching: $('f-teaching'),
   fOverview: $('f-overview'), fItems: $('f-items'), fMemo: $('f-memo'),
@@ -431,7 +431,8 @@ function setBackgroundInert(on) {
   [dom.appbar, dom.tabbar, dom.viewTop, dom.viewVisits, dom.viewList,
     dom.viewFortune, dom.viewSettings, dom.fab]
     .forEach((node) => { if (node) node.inert = on; });
-  dom.fab.hidden = on;
+  // 閉じたときに戻すが、暦と相性のタブでは出したままにしない
+  dom.fab.hidden = on || state.view === 'fortune';
 }
 
 /** 訪問記録タブの各行からも、同じ寺社の一覧を開けるようにする。 */
@@ -642,17 +643,39 @@ function readNumber() {
 }
 
 /** 型を選んだら、項目名だけを流し込む。すでに書いてあるものは消さない。 */
+/** 型の説明と、その項目をどこで確かめたか。推測で埋めた型と区別が付くようにする */
+const PRESET_SOURCE = {
+  photo: '実物から書き起こし',
+  doc: '項目を載せた資料で確認（実物は未確認）',
+  common: '広く使われている並び',
+};
+
 function applyPreset(id, { force = false } = {}) {
   const preset = findPreset(id);
-  if (!preset) return;
+  if (!preset) {
+    dom.presetNote.hidden = true;
+    return;
+  }
+
+  dom.presetNote.textContent = `${preset.note}（${PRESET_SOURCE[preset.source] || '出どころ不明'}）`;
+  dom.presetNote.hidden = false;
 
   if (preset.shrine && (force || !dom.fShrine.value.trim())) {
     dom.fShrine.value = preset.shrine;
   }
-  const current = dom.fItems.value.trim();
-  if (preset.items.length && (force || !current)) {
+  // 前の型のテンプレが残っているだけなら入れ替える。
+  // 「中身があれば触らない」だけで判定すると、自分が入れた空のテンプレも
+  // 中身と見なされ、型を選び直しても項目が変わらなくなる。
+  if (preset.items.length && (force || isItemsUntouched())) {
     dom.fItems.value = preset.items.map((label) => `${label}: `).join('\n');
   }
+}
+
+/** 判断の項目が、まだ何も書かれていないか（ラベルだけの状態か） */
+function isItemsUntouched() {
+  const text = dom.fItems.value.trim();
+  if (!text) return true;
+  return text.split('\n').every((line) => /^[^:：]*[:：]?\s*$/.test(line));
 }
 
 function clearErrors() {
@@ -675,6 +698,7 @@ function resetForm() {
   setKind(TYPE_OMIKUJI);
   setNumberValue('');
   dom.fPreset.value = '';
+  dom.presetNote.hidden = true;
   clearErrors();
   state = { ...state, editingId: null };
   dom.formHeading.textContent = '記録する';
@@ -1022,6 +1046,8 @@ function switchView(name) {
   dom.viewFortune.hidden = name !== 'fortune';
   dom.viewSettings.hidden = name !== 'settings';
   dom.appbarTitle.textContent = VIEW_TITLE[name] || 'おみくじ帳';
+  // 暦と相性のタブに記録を足す用はない。置いておくと結果の札に重なる
+  dom.fab.hidden = name === 'fortune';
   document.querySelectorAll('.tab').forEach((tab) => {
     const on = tab.dataset.view === name;
     tab.classList.toggle('is-active', on);

@@ -795,35 +795,84 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 
 /* 5-05 関係する入力を1枚の面にまとめる */
 .card-block {
-  display: flex; flex-direction: column; gap: var(--space-4);
-  padding: 18px;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4);
   background: var(--surface); border: var(--card-border); border-radius: var(--r-3);
 }
 .card-block[hidden] { display: none; }
 
-.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
 .field--row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.field--row > div { display: flex; flex-direction: column; gap: var(--space-2); }
+.field--row > div { display: flex; flex-direction: column; gap: var(--space-1); }
+
+/* 短い入力はラベルを左に置く。ラベルを上に積むと1項目に80px使い、
+   1画面に4つしか入らなかった。横に並べると1項目 44px で倍入る。 */
+.field--inline {
+  /* 1fr のままだと grid の既定（min-width:auto）で中身の固有幅が優先され、
+     iOS の date が親を突き破る。minmax(0,1fr) で縮められるようにする */
+  display: grid; grid-template-columns: 4.5em minmax(0, 1fr);
+  align-items: center; gap: var(--space-3);
+  min-height: var(--tap-min);
+}
+.field--inline[hidden] { display: none; }
+.field--inline > label { padding-top: 0; }
 
 .field label, .field__label { font-size: var(--text-caption); color: var(--text-sub); letter-spacing: 0.04em; }
+/* 「必須」は補助でしかない。白抜きの赤にすると画面でいちばん強い要素になる */
 .req {
-  font-size: var(--text-caption-2); color: #fff; background: var(--danger);
-  border-radius: var(--r-1); padding: 1px 5px; margin-left: 6px;
+  font-size: var(--text-caption-2); color: var(--danger); font-weight: 700;
+  margin-left: 3px;
 }
 .req[hidden] { display: none; }
 
 .field input, .field select, .field textarea {
-  width: 100%; padding: 10px 12px;
+  width: 100%; padding: var(--space-2) var(--space-3);
   background: var(--surface); border: 1px solid var(--line-str);
   border-radius: var(--r-2); outline: none;
+  font-size: var(--text-subhead);
+  text-align: left;
+  /* iOS の date/time は固有の幅を持ち、width:100% でも親を突き破って
+     画面の外へはみ出す。min-width を殺さないと枠が切れる（実機で発生） */
+  min-width: 0;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
+/* iOS の日付・時刻は中身が縦に伸びるので、高さだけ揃えておく */
+.field input[type="date"], .field input[type="time"] { min-height: 38px; }
+/* Safari は入れ物の text-align を見ないので、中の値そのものに指定する。
+   appearance:none で消す手もあるが、ピッカーの見た目まで変わるので使わない */
+.field input::-webkit-date-and-time-value { text-align: left; }
 .field input:focus, .field select:focus, .field textarea:focus {
   border-color: var(--bar);
   box-shadow: 0 0 0 3px rgba(27, 75, 122, 0.16);
 }
 .field textarea { resize: vertical; font-family: var(--mincho); line-height: 1.8; }
-.field__hint { margin: 0; font-size: var(--text-caption-2); color: var(--text-weak); line-height: 1.6; }
+
+/* 使う回のほうが少ない項目。消さずに畳んでおく（5-05） */
+.more {
+  background: var(--surface); border: var(--card-border); border-radius: var(--r-3);
+}
+.more__head {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  min-height: var(--tap-min); padding: var(--space-3) var(--space-4);
+  font-size: var(--text-subhead); color: var(--text); cursor: pointer;
+  list-style: none;
+}
+.more__head::-webkit-details-marker { display: none; }
+/* 開閉が分かるように三角を自前で描く */
+.more__head::after {
+  content: ''; margin-left: auto;
+  width: 8px; height: 8px;
+  border-right: 2px solid var(--text-sub); border-bottom: 2px solid var(--text-sub);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform var(--dur) var(--ease);
+}
+.more[open] .more__head::after { transform: rotate(-135deg) translateY(-2px); }
+.more__sub { font-size: var(--text-caption-2); color: var(--text-weak); }
+.more[open] .more__sub { display: none; }
+.more__body {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
+}
 
 /* 4-07 エラーの表現方法 */
 .field__error { margin: 0; font-size: var(--text-caption); color: var(--danger); }

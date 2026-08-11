@@ -282,81 +282,56 @@
         </div>
       </div>
 
-      <!-- いつ・どこ・なぜ -->
+      <!-- いつ・どこ。
+           31件の記録で埋まっていたのは日付100%・時刻94%・場所94%。
+           目的・賽銭額・購入品は0%だったので、下の「詳しく書く」へ回した。 -->
       <div class="card-block">
         <p class="card-block__title">お参り</p>
-        <div class="field field--row">
-          <div>
-            <label for="f-date">日付 <span class="req">必須</span></label>
-            <input type="date" id="f-date" required>
-          </div>
-          <div>
-            <label for="f-time">時間</label>
-            <input type="time" id="f-time">
-          </div>
+        <div class="field field--inline">
+          <label for="f-date">日付 <span class="req">必須</span></label>
+          <input type="date" id="f-date" required>
         </div>
         <p class="field__error" id="e-date" hidden></p>
 
-        <div class="field">
-          <label for="f-shrine">場所（寺社名） <span class="req" id="shrine-req" hidden>必須</span></label>
-          <input type="text" id="f-shrine" list="shrine-list" placeholder="例: 東京大神宮" autocomplete="off">
+        <div class="field field--inline">
+          <label for="f-time">時刻</label>
+          <input type="time" id="f-time">
+        </div>
+
+        <div class="field field--inline">
+          <label for="f-shrine">場所 <span class="req" id="shrine-req" hidden>必須</span></label>
+          <input type="text" id="f-shrine" list="shrine-list" placeholder="東京大神宮" autocomplete="off">
           <datalist id="shrine-list"></datalist>
-          <p class="field__error" id="e-shrine" hidden></p>
         </div>
-
-        <div class="field">
-          <label for="f-purpose">目的</label>
-          <input type="text" id="f-purpose" list="purpose-list" placeholder="例: 月次参拝／初詣／合格祈願" autocomplete="off">
-          <datalist id="purpose-list">
-            <option value="月次参拝"></option>
-            <option value="初詣"></option>
-            <option value="お礼参り"></option>
-            <option value="合格祈願"></option>
-            <option value="厄除け"></option>
-            <option value="縁結び"></option>
-            <option value="旅行先で立ち寄り"></option>
-            <option value="御朱印"></option>
-          </datalist>
-        </div>
-
-        <div class="field field--row">
-          <div>
-            <label for="f-offering">賽銭額</label>
-            <input type="number" id="f-offering" min="0" step="1" inputmode="numeric" placeholder="例: 105">
-          </div>
-          <div>
-            <label for="f-purchases">購入品</label>
-            <input type="text" id="f-purchases" placeholder="例: 御守／御朱印" autocomplete="off">
-          </div>
-        </div>
+        <p class="field__error" id="e-shrine" hidden></p>
       </div>
 
-      <!-- おみくじ -->
+      <!-- おみくじ。型を選ぶと下の項目が丸ごと変わるので、いちばん上に置く -->
       <div id="omikuji-fields" class="card-block">
         <p class="card-block__title">おみくじ</p>
 
-        <div class="field">
-          <label for="f-preset">おみくじの型</label>
+        <div class="field field--inline">
+          <label for="f-preset">型</label>
           <select id="f-preset"></select>
         </div>
+        <p class="field__hint" id="preset-note" hidden></p>
 
-        <div class="field field--row">
-          <div>
-            <label for="f-number">番号</label>
-            <select id="f-number"></select>
-          </div>
-          <div>
-            <label for="f-fortune">吉凶</label>
-            <select id="f-fortune">
-              <option value="">記載なし</option>
-              <option>大吉</option><option>吉</option><option>中吉</option>
-              <option>小吉</option><option>末吉</option><option>凶</option><option>大凶</option>
-            </select>
-          </div>
+        <div class="field field--inline">
+          <label for="f-number">番号</label>
+          <select id="f-number"></select>
         </div>
-        <div class="field" id="number-other-field" hidden>
-          <label for="f-number-other">番号（そのまま書く）</label>
-          <input type="text" id="f-number-other" placeholder="例: 第11番／第三〇番" autocomplete="off">
+        <div class="field field--inline" id="number-other-field" hidden>
+          <label for="f-number-other">自由記入</label>
+          <input type="text" id="f-number-other" placeholder="第11番／第三〇番" autocomplete="off">
+        </div>
+
+        <div class="field field--inline">
+          <label for="f-fortune">吉凶</label>
+          <select id="f-fortune">
+            <option value="">記載なし</option>
+            <option>大吉</option><option>吉</option><option>中吉</option>
+            <option>小吉</option><option>末吉</option><option>凶</option><option>大凶</option>
+          </select>
         </div>
 
         <div class="field">
@@ -364,14 +339,14 @@
           <textarea id="f-poem" rows="2" placeholder="おみくじに載っていた和歌"></textarea>
         </div>
 
-        <div class="field">
+        <div class="field field--inline">
           <label for="f-teaching">訓</label>
-          <input type="text" id="f-teaching" placeholder="「善良なるしつけは、まづ家庭に始まるべし。」など">
+          <input type="text" id="f-teaching" placeholder="善良なるしつけは、まづ家庭に…">
         </div>
 
         <div class="field">
           <label for="f-overview">運勢・本文</label>
-          <textarea id="f-overview" rows="5" placeholder="本文をそのまま書きうつします"></textarea>
+          <textarea id="f-overview" rows="4" placeholder="本文をそのまま書きうつします"></textarea>
         </div>
 
         <div class="field">
@@ -380,12 +355,44 @@
         </div>
       </div>
 
-      <div class="card-block">
-        <p class="card-block__title">メモ</p>
-        <div class="field">
-          <textarea id="f-memo" rows="3" placeholder="そのとき思ったこと、天気、誰と行ったかなど" aria-label="メモ"></textarea>
+      <!-- 使う回のほうが少ない項目。消さずに畳んでおく -->
+      <details class="more">
+        <summary class="more__head">
+          <span>詳しく書く</span>
+          <span class="more__sub">目的・賽銭額・購入品・メモ</span>
+        </summary>
+        <div class="more__body">
+          <div class="field field--inline">
+            <label for="f-purpose">目的</label>
+            <input type="text" id="f-purpose" list="purpose-list" placeholder="月次参拝／初詣" autocomplete="off">
+            <datalist id="purpose-list">
+              <option value="月次参拝"></option>
+              <option value="初詣"></option>
+              <option value="お礼参り"></option>
+              <option value="合格祈願"></option>
+              <option value="厄除け"></option>
+              <option value="縁結び"></option>
+              <option value="旅行先で立ち寄り"></option>
+              <option value="御朱印"></option>
+            </datalist>
+          </div>
+
+          <div class="field field--inline">
+            <label for="f-offering">賽銭額</label>
+            <input type="number" id="f-offering" min="0" step="1" inputmode="numeric" placeholder="105">
+          </div>
+
+          <div class="field field--inline">
+            <label for="f-purchases">購入品</label>
+            <input type="text" id="f-purchases" placeholder="御守／御朱印" autocomplete="off">
+          </div>
+
+          <div class="field">
+            <label for="f-memo">メモ</label>
+            <textarea id="f-memo" rows="3" placeholder="そのとき思ったこと、天気、誰と行ったかなど"></textarea>
+          </div>
         </div>
-      </div>
+      </details>
 
       <div class="form__actions">
         <button type="submit" class="btn btn--primary" id="form-submit">保存する</button>

@@ -831,9 +831,12 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
   border-radius: var(--r-2); outline: none;
   font-size: var(--text-subhead);
   text-align: left;
-  /* iOS の date/time は固有の幅を持ち、width:100% でも親を突き破って
-     画面の外へはみ出す。min-width を殺さないと枠が切れる（実機で発生） */
-  min-width: 0;
+  /* iOS の date/time は shadow DOM 側が固有の幅を持ち、width:100% でも
+     親を突き破って画面の外へはみ出す（実機で発生）。
+     min-width だけでは足りないので max-width で頭を押さえる。
+     なお Playwright の WebKit はデスクトップ相当の描画で、
+     この症状を再現しない。効いているかは実機でしか確かめられない。 */
+  min-width: 0; max-width: 100%;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 /* iOS の日付・時刻は中身が縦に伸びるので、高さだけ揃えておく */

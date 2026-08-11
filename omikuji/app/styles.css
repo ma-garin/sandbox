@@ -264,6 +264,41 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 .cal__chip:hover { opacity: 0.85; }
 
 
+/* ---------- 寺社ごとの訪問日 ---------- */
+
+.shrine__name {
+  margin: 0 0 4px;
+  font-family: var(--mincho);
+  font-size: 24px; font-weight: 600; letter-spacing: 0.06em;
+}
+.shrine__count {
+  margin: 0 0 16px;
+  font-size: 12.5px; color: var(--text-sub); font-variant-numeric: tabular-nums;
+}
+/* 座標は持たず、寺社名で地図アプリに探させる */
+.shrine__map {
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding: 0 18px; margin-bottom: 20px;
+  background: var(--surface); border: 1px solid var(--line-str);
+  border-radius: var(--radius);
+  color: var(--text); font-size: 13.5px; text-decoration: none;
+  transition: background var(--dur) var(--ease);
+}
+.shrine__map:hover { background: var(--surface-2); }
+
+.shrine__days { list-style: none; margin: 0; padding: 0; }
+.shrine__day {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 52px; padding: 10px 2px;
+  background: none; border: 0; border-bottom: 1px solid var(--line);
+  text-align: left; cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.shrine__day:hover { background: var(--surface); }
+.shrine__date { font-size: 14px; font-variant-numeric: tabular-nums; }
+.shrine__what { display: inline-flex; align-items: center; gap: 8px; }
+.shrine__no { font-family: var(--mincho); font-size: 13.5px; color: var(--text-sub); }
+
 /* ---------- 訪問記録の一覧 ---------- */
 
 .vlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -809,20 +844,6 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 .toast[hidden] { display: none; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 
-/* ---------- 初回の案内（4-13） ---------- */
-
-.intro {
-  margin: 0 0 18px; padding: 13px 15px;
-  background: var(--surface); border-left: 3px solid var(--bar);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  font-size: 12.5px; color: var(--text-sub); line-height: 1.75;
-  display: flex; align-items: flex-start; gap: 12px;
-}
-.intro p { margin: 0; flex: 1; }
-.intro button {
-  flex: 0 0 auto; background: none; border: 0; padding: 2px 4px;
-  color: var(--bar); font-size: 12px; font-weight: 600; cursor: pointer;
-}
 
 /* ---------- 動きを減らす設定への配慮 ---------- */
 

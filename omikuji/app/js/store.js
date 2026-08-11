@@ -11,7 +11,6 @@
 
 const KEY_ENTRIES = 'omikuji.entries.v1';
 const KEY_OVERRIDES = 'omikuji.overrides.v1';
-const KEY_INTRO = 'omikuji.introSeen.v1';
 
 /** 吉凶の並び順。神社本庁の一例に合わせる（大吉→吉→中吉→小吉→末吉→凶） */
 export const FORTUNE_ORDER = ['大吉', '吉', '中吉', '小吉', '末吉', '凶', '大凶'];
@@ -151,13 +150,6 @@ export function unhideAll(overrides) {
   return next;
 }
 
-export function introSeen() {
-  return localStorage.getItem(KEY_INTRO) === '1';
-}
-
-export function markIntroSeen() {
-  localStorage.setItem(KEY_INTRO, '1');
-}
 
 /** localStorage が一杯かどうかは書いてみないと分からないので、呼び出し側でこれを使う。 */
 export function isQuotaError(err) {

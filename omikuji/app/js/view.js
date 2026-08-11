@@ -271,6 +271,22 @@ export function calendarEl(entries, month, today, onPick) {
 }
 
 
+export function calendarLegendEl(entries) {
+  const kinds = new Set(entries.map(chipKind));
+  const wrap = el('div', 'legend');
+  [
+    ['is-omikuji', 'おみくじを引いた日'],
+    ['is-visit', 'お参りだけした日'],
+    ['is-other', 'その他の記録'],
+  ].forEach(([cls, label]) => {
+    if (!kinds.has(cls)) return;
+    const item = el('span', 'legend__item');
+    item.append(el('i', `legend__chip ${cls}`), el('span', null, label));
+    wrap.appendChild(item);
+  });
+  return wrap;
+}
+
 /* ============================================================
    訪問記録
    ============================================================ */
@@ -332,6 +348,57 @@ export function visitsEl(stats, onPick) {
     frag.appendChild(li);
   });
   return frag;
+}
+
+/**
+ * ひとつの寺社について、いつ行ったかを並べる。
+ * 座標は持たない（こちらで書くと誤った場所を指しかねない）。
+ * 地図は寺社名で開き、検索は地図アプリに任せる。
+ */
+export function shrineSheetEl(name, entries, onOpen) {
+  const inner = el('div', 'sheet__inner');
+
+  const visits = entries
+    .filter((e) => isVisit(e) && (e.shrine || UNKNOWN_SHRINE) === name)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+  const days = [...new Set(visits.map((e) => e.date))];
+
+  inner.appendChild(el('h2', 'shrine__name', name));
+  inner.appendChild(el('p', 'shrine__count', `${days.length}日 ・ ${visits.length}件`));
+
+  if (name !== UNKNOWN_SHRINE) {
+    const a = el('a', 'shrine__map', '地図で開く');
+    a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    inner.appendChild(a);
+  }
+
+  const list = el('ul', 'shrine__days');
+  visits.forEach((entry) => {
+    const li = el('li');
+    const btn = el('button', 'shrine__day');
+    btn.type = 'button';
+
+    const left = el('span', 'shrine__date', formatDate(entry.date) + (entry.time ? ` ${entry.time}` : ''));
+    btn.appendChild(left);
+
+    const right = el('span', 'shrine__what');
+    if (entry.type === TYPE_OMIKUJI) {
+      right.appendChild(badgeEl(entry));
+      if (entry.number) right.appendChild(el('span', 'shrine__no', entry.number));
+    } else {
+      right.appendChild(el('span', 'shrine__no', entry.purpose || 'お参り'));
+    }
+    btn.appendChild(right);
+
+    btn.addEventListener('click', () => onOpen(entry));
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+  inner.appendChild(list);
+
+  return inner;
 }
 
 /** 訪問記録タブの1行。日付・時間・場所・目的・おみくじ・賽銭・購入品・メモ。 */

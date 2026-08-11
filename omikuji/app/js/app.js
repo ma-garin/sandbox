@@ -8,12 +8,12 @@ import {
   loadOverrides, setOverride, clearOverride, applyOverrides, hiddenIds, unhideAll,
   buildBundle, parseBundle, replaceAll,
   isQuotaError, makeId, parseItems, formatItems, shrineSuggestions,
-  introSeen, markIntroSeen,
   normalizeText, numberKey, sameNumberEntries, todayISO,
 } from './store.js';
 import {
   cardEl, detailEl, yearHeaderEl, formatDate,
-  calendarEl, visitsEl, visitStats, visitRowEl, statsEl,
+  calendarEl, calendarLegendEl, visitsEl, visitStats, visitRowEl, statsEl,
+  shrineSheetEl,
 } from './view.js';
 import { OMIKUJI_PRESETS, findPreset, guessPreset, numberOptions } from './presets.js';
 import {
@@ -34,6 +34,7 @@ const OVERRIDABLE = [
 ];
 
 const OTHER_NUMBER = '__other__';
+const RECENT_COUNT = 3;
 
 const VIEW_TITLE = { top: 'おみくじ帳', visits: '訪問記録', list: 'おみくじ', settings: '設定' };
 
@@ -41,11 +42,11 @@ const dom = {
   appbarTitle: $('appbar-title'),
   viewTop: $('view-top'), viewVisits: $('view-visits'), viewList: $('view-list'), viewSettings: $('view-settings'),
 
-  calendar: $('calendar'),
+  calendar: $('calendar'), calLegend: $('cal-legend'), calSub: $('cal-sub'),
   calMonth: $('cal-month'), calPrev: $('cal-prev'), calNext: $('cal-next'),
   calJump: $('cal-jump'), calYear: $('cal-year'), calMonthSel: $('cal-monthsel'),
   calJumpClose: $('cal-jump-close'),
-  visits: $('visits'),
+  recent: $('recent'), visits: $('visits'), visitSub: $('visit-sub'),
 
   visitList: $('visit-list'), visitSearch: $('visit-search'),
   visitSearchClear: $('visit-search-clear'), visitSummary: $('visit-summary'), visitEmpty: $('visit-empty'),
@@ -59,6 +60,7 @@ const dom = {
   detailPrev: $('detail-prev'), detailNext: $('detail-next'),
   prevLabel: $('prev-label'), nextLabel: $('next-label'),
 
+  shrine: $('shrine'), shrineBody: $('shrine-body'), shrineClose: $('shrine-close'),
   formSheet: $('form-sheet'), formClose: $('form-close'), fab: $('fab'),
   confirm: $('confirm'), confirmActions: $('confirm-actions'),
   confirmTitle: $('c-title'), confirmBody: $('c-body'),
@@ -66,7 +68,7 @@ const dom = {
 
   fDate: $('f-date'), fTime: $('f-time'), fShrine: $('f-shrine'), fPurpose: $('f-purpose'),
   fOffering: $('f-offering'), fPurchases: $('f-purchases'),
-  fPreset: $('f-preset'), presetNote: $('preset-note'),
+  fPreset: $('f-preset'),
   fNumber: $('f-number'), fNumberOther: $('f-number-other'), numberOtherField: $('number-other-field'),
   fFortune: $('f-fortune'), fPoem: $('f-poem'), fTeaching: $('f-teaching'),
   fOverview: $('f-overview'), fItems: $('f-items'), fMemo: $('f-memo'),
@@ -76,7 +78,7 @@ const dom = {
   exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'),
   backupStat: $('backup-stat'), stats: $('stats'),
   hiddenBlock: $('hidden-block'), hiddenText: $('hidden-text'), unhideBtn: $('unhide-btn'),
-  installBlock: $('install-block'), installText: $('install-text'), installSteps: $('install-steps'),
+  installBlock: $('install-block'), installSteps: $('install-steps'),
   installActions: $('install-actions'), installBtn: $('install-btn'),
   promo: $('install-promo'), promoLater: $('promo-later'), promoAdd: $('promo-add'),
   promoBody: $('promo-body'),
@@ -166,7 +168,6 @@ function shiftMonth(ym, delta) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/** TOP はカレンダーだけ。ほかは各タブが持っているので、ここには置かない。 */
 function renderTop() {
   const entries = allEntries();
   const month = currentMonth();
@@ -174,23 +175,27 @@ function renderTop() {
 
   dom.calendar.textContent = '';
   dom.calendar.appendChild(calendarEl(entries, month, todayISO(), openDetail));
+  dom.calLegend.textContent = '';
+  dom.calLegend.appendChild(calendarLegendEl(entries));
   dom.calMonth.textContent = `${cy}年${cm}月`;
+
+  const inMonth = entries.filter((e) => e.date.startsWith(month));
+  dom.calSub.textContent = inMonth.length ? `この月 ${inMonth.length}件` : 'この月の記録はありません';
+
+  dom.recent.textContent = '';
+  entries.slice(0, RECENT_COUNT).forEach((e) => dom.recent.appendChild(cardEl(e, openDetail)));
+
+  // 寺社ごとの回数。押すと、その寺社にいつ行ったかを見せる
+  const stats = visitStats(entries);
+  dom.visits.textContent = '';
+  dom.visits.appendChild(visitsEl(stats, openShrine));
+  dom.visitSub.textContent = `${stats.namedShrines}社・${stats.totalDays}日`;
 }
 
 // ---------- 訪問記録 ----------
 
 function renderVisits() {
   const entries = allEntries();
-
-  // 寺社ごとの回数。押すとその寺社で一覧を絞り込む
-  const stats = visitStats(entries);
-  dom.visits.textContent = '';
-  dom.visits.appendChild(visitsEl(stats, (shrine) => {
-    setState({ shrine, filter: null, query: '' });
-    dom.search.value = '';
-    switchView('list');
-  }));
-
   const rows = entries
     .filter((e) => e.type === TYPE_OMIKUJI || e.type === TYPE_VISIT)
     .filter((e) => matchesQuery(e, state.visitQuery));
@@ -355,21 +360,18 @@ function renderSettings() {
 function renderInstall() {
   if (isStandalone()) {
     dom.installBlock.hidden = false;
-    dom.installText.textContent = 'ホーム画面から開いています。電波がなくても記録を読み返せます。';
     dom.installSteps.hidden = true;
     dom.installActions.hidden = true;
     return;
   }
   if (canPrompt()) {
     dom.installBlock.hidden = false;
-    dom.installText.textContent = 'アプリのように開けるようになり、電波がなくても読み返せます。';
     dom.installSteps.hidden = true;
     dom.installActions.hidden = false;
     return;
   }
   if (needsManualHint()) {
     dom.installBlock.hidden = false;
-    dom.installText.textContent = 'この端末では、Safari の共有メニューから置けます。';
     dom.installSteps.textContent = '';
     IOS_STEPS.forEach((step) => {
       const li = document.createElement('li');
@@ -421,6 +423,11 @@ function setBackgroundInert(on) {
   [dom.appbar, dom.tabbar, dom.viewTop, dom.viewVisits, dom.viewList, dom.viewSettings, dom.fab]
     .forEach((node) => { if (node) node.inert = on; });
   dom.fab.hidden = on;
+}
+
+/** 訪問記録タブの各行からも、同じ寺社の一覧を開けるようにする。 */
+function shrineOf(entry) {
+  return entry.shrine || '場所の記載なし';
 }
 
 // ---------- 詳細 ----------
@@ -498,6 +505,31 @@ function closeDetail({ pop = true } = {}) {
   lastFocused = null;
 
   if (pop && hashId()) history.back();
+}
+
+// ---------- 寺社ごとの訪問日 ----------
+
+/** 寺社を押したら、その社にいつ行ったかを見せる。おみくじの一覧へは飛ばさない。 */
+function openShrine(name) {
+  lastFocused = document.activeElement;
+  dom.shrineBody.textContent = '';
+  dom.shrineBody.appendChild(shrineSheetEl(name, allEntries(), (entry) => {
+    closeShrine({ restoreFocus: false });
+    openDetail(entry);
+  }));
+  dom.shrineBody.scrollTop = 0;
+  dom.shrine.hidden = false;
+  setBackgroundInert(true);
+  document.body.style.overflow = 'hidden';
+  dom.shrineClose.focus();
+}
+
+function closeShrine({ restoreFocus = true } = {}) {
+  if (dom.shrine.hidden) return;
+  dom.shrine.hidden = true;
+  setBackgroundInert(false);
+  document.body.style.overflow = '';
+  if (restoreFocus && lastFocused && lastFocused.isConnected) lastFocused.focus();
 }
 
 // ---------- トースト ----------
@@ -603,7 +635,6 @@ function readNumber() {
 /** 型を選んだら、項目名だけを流し込む。すでに書いてあるものは消さない。 */
 function applyPreset(id, { force = false } = {}) {
   const preset = findPreset(id);
-  dom.presetNote.textContent = preset ? preset.note : '';
   if (!preset) return;
 
   if (preset.shrine && (force || !dom.fShrine.value.trim())) {
@@ -635,7 +666,6 @@ function resetForm() {
   setKind(TYPE_OMIKUJI);
   setNumberValue('');
   dom.fPreset.value = '';
-  dom.presetNote.textContent = '';
   clearErrors();
   state = { ...state, editingId: null };
   dom.formHeading.textContent = '記録する';
@@ -677,7 +707,6 @@ function startEdit(entry) {
 
   const guessed = guessPreset(entry);
   dom.fPreset.value = guessed || '';
-  dom.presetNote.textContent = guessed ? (findPreset(guessed)?.note || '') : '';
 
   dom.formHeading.textContent = '記録を直す';
   dom.formSubmit.textContent = '書きかえる';
@@ -992,21 +1021,6 @@ function switchView(name) {
   window.scrollTo(0, scrollByView.get(name) || 0);
 }
 
-// ---------- 初回の案内（4-13） ----------
-
-function showIntroIfFirstTime() {
-  if (introSeen()) return;
-  const box = document.createElement('div');
-  box.className = 'intro';
-  const p = document.createElement('p');
-  p.textContent = 'これまでの記録が入っています。カレンダーの日を押すとその回を読めます。新しく引いたら右下の＋から足せます。';
-  const close = document.createElement('button');
-  close.type = 'button';
-  close.textContent = '閉じる';
-  close.addEventListener('click', () => { markIntroSeen(); box.remove(); });
-  box.append(p, close);
-  dom.viewTop.insertBefore(box, dom.viewTop.firstChild);
-}
 
 // ---------- 電波の状態を伝える（4-06） ----------
 
@@ -1069,6 +1083,7 @@ function bind() {
   dom.calMonthSel.addEventListener('change', jump);
   dom.calJumpClose.addEventListener('click', () => { dom.calJump.hidden = true; dom.calMonth.focus(); });
 
+  dom.shrineClose.addEventListener('click', () => closeShrine());
   dom.detailClose.addEventListener('click', closeDetail);
   dom.detailDelete.addEventListener('click', askDelete);
   dom.detailEdit.addEventListener('click', () => {
@@ -1125,6 +1140,7 @@ function bind() {
       if (!dom.confirm.hidden) closeConfirm();
       else if (!dom.formSheet.hidden) { resetForm(); closeForm(); }
       else if (!dom.detail.hidden) closeDetail();
+      else if (!dom.shrine.hidden) closeShrine();
       return;
     }
     if (dom.detail.hidden || !dom.confirm.hidden) return;
@@ -1162,7 +1178,6 @@ async function main() {
   try {
     const builtin = await loadBuiltIn();
     setState({ builtin, overrides, user });
-    showIntroIfFirstTime();
     // URL で名指しされた記録があれば開く（共有されたリンクから来た場合）
     const id = hashId();
     if (id) {

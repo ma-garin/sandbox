@@ -49,6 +49,10 @@
 <!-- ============ TOP ============ -->
 <section class="view" id="view-top">
   <section class="block">
+    <div class="block__head">
+      <h2>参拝カレンダー</h2>
+      <p class="block__sub" id="cal-sub"></p>
+    </div>
     <div class="cal">
       <div class="cal__head">
         <button type="button" class="cal__nav" id="cal-prev" aria-label="前の月">
@@ -67,6 +71,23 @@
       </div>
       <div class="cal__grid" id="calendar"></div>
     </div>
+    <div class="cal-legend" id="cal-legend"></div>
+  </section>
+
+  <section class="block">
+    <div class="block__head">
+      <h2>直近の記録</h2>
+      <button type="button" class="block__more" data-view="list">すべて見る</button>
+    </div>
+    <ul class="cards" id="recent"></ul>
+  </section>
+
+  <section class="block">
+    <div class="block__head">
+      <h2>訪問記録</h2>
+      <p class="block__sub" id="visit-sub"></p>
+    </div>
+    <ul class="visits" id="visits"></ul>
   </section>
 </section>
 
@@ -82,7 +103,6 @@
     </div>
     <p class="filters__count" id="visit-summary"></p>
   </div>
-  <ul class="visits" id="visits"></ul>
   <ul class="vlist" id="visit-list"></ul>
   <div class="empty" id="visit-empty" hidden>
     <p class="empty__title">見つかりませんでした</p>
@@ -118,11 +138,6 @@
   <section class="block">
     <div class="block__head"><h2>記録の持ち出し</h2></div>
     <div class="panel">
-      <p class="panel__text">
-        もとから入っている記録はアプリに含まれているので、この端末から消えることはありません。
-        <strong>この端末にしかないのは、自分で足した記録と、その手直し・非表示だけ</strong>です。
-        機種を変えるときやブラウザのデータを消す前に、書き出して控えてください。
-      </p>
       <p class="panel__stat" id="backup-stat"></p>
       <div class="panel__actions">
         <button type="button" class="btn btn--ghost" id="export-btn">
@@ -139,7 +154,6 @@
   <section class="block" id="install-block" hidden>
     <div class="block__head"><h2>ホーム画面に置く</h2></div>
     <div class="panel">
-      <p class="panel__text" id="install-text"></p>
       <ol class="steps" id="install-steps" hidden></ol>
       <div class="panel__actions panel__actions--single" id="install-actions" hidden>
         <button type="button" class="btn btn--ghost" id="install-btn">ホーム画面に追加する</button>
@@ -164,20 +178,6 @@
     </div>
   </section>
 
-  <section class="block">
-    <div class="block__head"><h2>この帳面について</h2></div>
-    <div class="panel">
-      <p class="panel__text">
-        もとから入っている記録には、日付や神社名を推定したもの、読み取れなかった箇所があります。
-        どこが確かでないかは、各記録の「この記録について」に理由つきで書いてあります。
-        写し間違いを見つけたら、詳細画面の「直す」から直せます。
-      </p>
-      <p class="panel__text" style="margin-top:12px">
-        時刻は写真を撮った時刻で、参拝そのものの時刻ではありません。
-        祝日は計算で出しています（2021年以降。春分・秋分は近似計算のため、遠い先の年で暦と1日ずれることがあります）。
-      </p>
-    </div>
-  </section>
 </section>
 
 <!-- ============ 詳細 ============ -->
@@ -203,6 +203,18 @@
       <span id="next-label"></span><svg aria-hidden="true"><use href="#i-next"/></svg>
     </button>
   </nav>
+</div>
+
+<!-- ============ 寺社ごとの訪問日 ============ -->
+<div class="sheet" id="shrine" hidden role="dialog" aria-modal="true" aria-labelledby="shrine-bar-label">
+  <header class="sheet__bar">
+    <button type="button" class="iconbtn" id="shrine-close" aria-label="閉じる">
+      <svg aria-hidden="true"><use href="#i-back"/></svg>
+    </button>
+    <p class="sheet__title" id="shrine-bar-label">訪問記録</p>
+    <span class="iconbtn" aria-hidden="true"></span>
+  </header>
+  <div class="sheet__scroll" id="shrine-body"></div>
 </div>
 
 <!-- ============ 記録フォーム（＋から開く） ============ -->
@@ -287,7 +299,6 @@
         <div class="field">
           <label for="f-preset">おみくじの型</label>
           <select id="f-preset"></select>
-          <p class="field__hint" id="preset-note"></p>
         </div>
 
         <div class="field field--row">
@@ -327,7 +338,6 @@
         <div class="field">
           <label for="f-items">判断の項目</label>
           <textarea id="f-items" rows="6" placeholder="願望: 叶う&#10;待人: 来る"></textarea>
-          <p class="field__hint">1行に1項目。型を選ぶと項目名が入ります。</p>
         </div>
       </div>
 

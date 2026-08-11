@@ -56,6 +56,11 @@
   --today-bg:   #DCE8F7;
   --today-line: rgba(23, 65, 107, 0.30);
 
+  /* 吉日の印。5px の点なので、青い地の上でも沈まない濃さにする。
+     色だけで意味を伝えないよう、凡例と title を必ず添えること */
+  --ichiryu: #B8860B;
+  --tensha:  #C0392B;
+
   /* ---- 段階層: 余白（Radix の9段階） ---- */
   --space-1: 4px;
   --space-2: 8px;
@@ -319,12 +324,35 @@ body.is-offline { padding-top: calc(var(--appbar-h) + var(--safe-top) + 38px); }
 /* 記録のある日はマス全体を押せるようにする。
    1マスの幅は48px程度しかなく、中の札だけを的にすると 44×19px にしかならない。 */
 .cal__day {
-  min-height: 62px;
+  min-height: 76px;
+  position: relative;
   display: flex; flex-direction: column; gap: var(--space-1);
   padding: 4px 2px;
   border: 0; border-top: 1px solid var(--line);
   background: none; font-family: inherit; text-align: center;
 }
+
+/* 六曜。毎日出るので地の文より弱く置き、大安と仏滅だけ差をつける */
+.cal__roku {
+  font-size: var(--text-caption-2); line-height: 1.2; color: var(--text-weak);
+  white-space: nowrap;
+}
+.cal__roku.is-taian { color: var(--primary); font-weight: 600; }
+.cal__roku.is-butsumetsu { opacity: 0.6; }
+
+/* 月相。変わり目の4日だけ六曜の右に添える。
+   色は六曜から継がせる。単独で濃くすると吉日の点と紛れる */
+.cal__moon { font-style: normal; margin-left: 2px; }
+
+/* 吉日の印。文字を足すと札が押し出されるので、右上に小さく置く */
+.cal__marks { position: absolute; top: 3px; right: 3px; display: flex; }
+.cal__mark {
+  width: 5px; height: 5px; border-radius: var(--r-pill);
+  display: block;
+}
+.cal__mark + .cal__mark { margin-left: 2px; }
+.cal__mark.is-ichiryu { background: var(--ichiryu); }
+.cal__mark.is-tensha { background: var(--tensha); }
 button.cal__day { cursor: pointer; }
 button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 /* 祝日の名前。狭いので1行に収め、全文は title で見せる */
@@ -382,6 +410,10 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
   font-size: var(--text-caption-2); line-height: var(--lh-caption-2);
   color: var(--text-sub);
 }
+/* 凡例の吉日の印。マスの5pxでは凡例で見えないので少し大きくする */
+.legend__mark { width: 8px; height: 8px; }
+.legend__note { color: var(--text-weak); }
+
 .legend__chip {
   width: 10px; height: 10px; border-radius: var(--r-1);
   display: block; flex: 0 0 auto;

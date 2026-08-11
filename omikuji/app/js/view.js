@@ -5,9 +5,32 @@
 
 import { TYPE_OMIKUJI, TYPE_VISIT } from './store.js';
 import { holidayName } from './holidays.js';
+import { dayInfo, moonEvent } from './koyomi.js';
 
 const TOP_FORTUNE = '大吉';
 const UNKNOWN_SHRINE = '場所の記載なし';
+
+/* ---------- 暦注（六曜・吉日・月の満ち欠け） ---------- */
+
+// 旧暦は反復計算なので、同じ日を何度も引かないよう覚えておく。
+const koyomiCache = new Map();
+
+// 中間の呼び名（三日月・十三夜など）まで並べると1マスに毎日文字が入り、
+// 記録の札が読めなくなるので、節目の4つだけにする。
+const MOON_MARKS = { 新月: '●', 上弦: '◐', 満月: '○', 下弦: '◑' };
+
+function koyomiOf(date) {
+  let hit = koyomiCache.get(date);
+  if (!hit) {
+    const [y, m, d] = date.split('-').map(Number);
+    const phase = moonEvent(y, m, d);
+    hit = { ...dayInfo(date), phase, mark: phase ? MOON_MARKS[phase] : null };
+    koyomiCache.set(date, hit);
+  }
+  return hit;
+}
+
+const ROKUYOU_CLASS = { 大安: 'is-taian', 仏滅: 'is-butsumetsu' };
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -193,6 +216,32 @@ export function calendarEl(entries, month, today, onPick) {
       cell.appendChild(h);
     }
 
+    // 暦注。六曜は毎日、吉日は印、月相は変わり目の日だけ
+    const koyomi = koyomiOf(date);
+    const roku = el('span', `cal__roku ${ROKUYOU_CLASS[koyomi.rokuyou] || ''}`.trim(), koyomi.rokuyou);
+    if (koyomi.mark) {
+      const moonEl = el('i', 'cal__moon', koyomi.mark);
+      moonEl.title = koyomi.phase;
+      roku.appendChild(moonEl);
+    }
+    roku.title = `${koyomi.rokuyou}／旧暦${koyomi.kyureki.leap ? '閏' : ''}${koyomi.kyureki.month}月${koyomi.kyureki.day}日${koyomi.phase ? `／${koyomi.phase}` : ''}`;
+    cell.appendChild(roku);
+
+    if (koyomi.ichiryu || koyomi.tensha) {
+      const marks = el('span', 'cal__marks');
+      if (koyomi.tensha) {
+        const t = el('i', 'cal__mark is-tensha');
+        t.title = '天赦日';
+        marks.appendChild(t);
+      }
+      if (koyomi.ichiryu) {
+        const g = el('i', 'cal__mark is-ichiryu');
+        g.title = '一粒万倍日';
+        marks.appendChild(g);
+      }
+      cell.appendChild(marks);
+    }
+
     // 札は見た目だけ。押す的はマス全体（上の button）が引き受ける
     hits.forEach((entry) => {
       const chip = el('span', 'cal__chip', chipLabel(entry));
@@ -221,6 +270,19 @@ export function calendarLegendEl(entries) {
     item.append(el('i', `legend__chip ${cls}`), el('span', null, label));
     wrap.appendChild(item);
   });
+
+  // 暦注の印。色だけでは何を指すか分からないので必ず添える
+  [
+    ['is-ichiryu', '一粒万倍日'],
+    ['is-tensha', '天赦日'],
+  ].forEach(([cls, label]) => {
+    const item = el('span', 'legend__item');
+    item.append(el('i', `legend__mark cal__mark ${cls}`), el('span', null, label));
+    wrap.appendChild(item);
+  });
+
+  const note = el('span', 'legend__item legend__note', '● 新月 ◐ 上弦 ○ 満月 ◑ 下弦');
+  wrap.appendChild(note);
   return wrap;
 }
 

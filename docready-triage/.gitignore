@@ -1,0 +1,13 @@
+# このフォルダ固有の除外設定をここに書く
+
+# 例: Python
+# venv/
+# __pycache__/
+# *.pyc
+
+# 例: Node.js
+# node_modules/
+# dist/
+
+# 例: 共通
+# .env

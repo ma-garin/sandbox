@@ -380,17 +380,16 @@ export function shrineSheetEl(name, entries, onOpen) {
     const btn = el('button', 'shrine__day');
     btn.type = 'button';
 
-    const left = el('span', 'shrine__date', formatDate(entry.date) + (entry.time ? ` ${entry.time}` : ''));
-    btn.appendChild(left);
+    // 日付・吉凶・番号を別々の列に置く。まとめて右へ寄せると幅の差で行がガタつく。
+    btn.appendChild(el('span', 'shrine__date', formatDate(entry.date) + (entry.time ? ` ${entry.time}` : '')));
 
-    const right = el('span', 'shrine__what');
     if (entry.type === TYPE_OMIKUJI) {
-      right.appendChild(badgeEl(entry));
-      if (entry.number) right.appendChild(el('span', 'shrine__no', entry.number));
+      btn.appendChild(badgeEl(entry));
+      btn.appendChild(el('span', 'shrine__no', entry.number || ''));
     } else {
-      right.appendChild(el('span', 'shrine__no', entry.purpose || 'お参り'));
+      btn.appendChild(el('span', null, ''));   // 吉凶の列は空けておく
+      btn.appendChild(el('span', 'shrine__no', entry.purpose || 'お参り'));
     }
-    btn.appendChild(right);
 
     btn.addEventListener('click', () => onOpen(entry));
     li.appendChild(btn);

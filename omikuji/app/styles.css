@@ -287,8 +287,14 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 .shrine__map:hover { background: var(--surface-2); }
 
 .shrine__days { list-style: none; margin: 0; padding: 0; }
+
+/* 桁を揃える。右揃えにすると「小吉」と「吉」、「第五番」と「第二十八番」の
+   幅の差がそのまま左右のズレになり、行がガタつく。
+   列幅を決めて、日付・吉凶・番号をそれぞれ同じ位置から始める。 */
 .shrine__day {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: grid;
+  grid-template-columns: auto 4.6em 1fr;
+  align-items: center; gap: 14px;
   width: 100%; min-height: 52px; padding: 10px 2px;
   background: none; border: 0; border-bottom: 1px solid var(--line);
   text-align: left; cursor: pointer;
@@ -296,8 +302,15 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 }
 .shrine__day:hover { background: var(--surface); }
 .shrine__date { font-size: 14px; font-variant-numeric: tabular-nums; }
-.shrine__what { display: inline-flex; align-items: center; gap: 8px; }
-.shrine__no { font-family: var(--mincho); font-size: 13.5px; color: var(--text-sub); }
+/* 吉凶は文字数が1〜2字で変わるので、枠の幅を固定して中央に置く */
+.shrine__day .fortune {
+  width: 100%; padding: 3px 0; text-align: center;
+  letter-spacing: 0.06em;
+}
+.shrine__no {
+  font-family: var(--mincho); font-size: 13.5px; color: var(--text-sub);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* ---------- 訪問記録の一覧 ---------- */
 

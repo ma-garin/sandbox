@@ -1158,6 +1158,11 @@ async function main() {
   watchInstall();
   onAvailable(renderInstall);
 
+  // 上まで戻っているときは罫を消し、地と一続きに見せる
+  const syncBarLine = () => dom.appbar.classList.toggle('is-scrolled', window.scrollY > 4);
+  syncBarLine();
+  window.addEventListener('scroll', syncBarLine, { passive: true });
+
   const { entries: user, warning } = loadUser();
   if (warning) toast(warning);
   const overrides = loadOverrides();

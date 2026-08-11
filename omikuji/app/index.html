@@ -49,10 +49,6 @@
 <!-- ============ TOP ============ -->
 <section class="view" id="view-top">
   <section class="block">
-    <div class="block__head">
-      <h2>参拝カレンダー</h2>
-      <p class="block__sub" id="cal-sub"></p>
-    </div>
     <div class="cal">
       <div class="cal__head">
         <button type="button" class="cal__nav" id="cal-prev" aria-label="前の月">
@@ -71,23 +67,6 @@
       </div>
       <div class="cal__grid" id="calendar"></div>
     </div>
-    <div class="cal-legend" id="cal-legend"></div>
-  </section>
-
-  <section class="block">
-    <div class="block__head">
-      <h2>直近の記録</h2>
-      <button type="button" class="block__more" data-view="list">すべて見る</button>
-    </div>
-    <ul class="cards" id="recent"></ul>
-  </section>
-
-  <section class="block">
-    <div class="block__head">
-      <h2>訪問記録</h2>
-      <p class="block__sub" id="visit-sub"></p>
-    </div>
-    <ul class="visits" id="visits"></ul>
   </section>
 </section>
 
@@ -103,6 +82,7 @@
     </div>
     <p class="filters__count" id="visit-summary"></p>
   </div>
+  <ul class="visits" id="visits"></ul>
   <ul class="vlist" id="visit-list"></ul>
   <div class="empty" id="visit-empty" hidden>
     <p class="empty__title">見つかりませんでした</p>

@@ -13,7 +13,7 @@ import {
 } from './store.js';
 import {
   cardEl, detailEl, yearHeaderEl, formatDate,
-  calendarEl, calendarLegendEl, visitsEl, visitStats, visitRowEl, statsEl,
+  calendarEl, visitsEl, visitStats, visitRowEl, statsEl,
 } from './view.js';
 import { OMIKUJI_PRESETS, findPreset, guessPreset, numberOptions } from './presets.js';
 import {
@@ -33,7 +33,6 @@ const OVERRIDABLE = [
   'number', 'fortune', 'poem', 'teaching', 'overview', 'items', 'memo',
 ];
 
-const RECENT_COUNT = 3;
 const OTHER_NUMBER = '__other__';
 
 const VIEW_TITLE = { top: 'おみくじ帳', visits: '訪問記録', list: 'おみくじ', settings: '設定' };
@@ -42,11 +41,11 @@ const dom = {
   appbarTitle: $('appbar-title'),
   viewTop: $('view-top'), viewVisits: $('view-visits'), viewList: $('view-list'), viewSettings: $('view-settings'),
 
-  calendar: $('calendar'), calLegend: $('cal-legend'), calSub: $('cal-sub'),
+  calendar: $('calendar'),
   calMonth: $('cal-month'), calPrev: $('cal-prev'), calNext: $('cal-next'),
   calJump: $('cal-jump'), calYear: $('cal-year'), calMonthSel: $('cal-monthsel'),
   calJumpClose: $('cal-jump-close'),
-  recent: $('recent'), visits: $('visits'), visitSub: $('visit-sub'),
+  visits: $('visits'),
 
   visitList: $('visit-list'), visitSearch: $('visit-search'),
   visitSearchClear: $('visit-search-clear'), visitSummary: $('visit-summary'), visitEmpty: $('visit-empty'),
@@ -167,6 +166,7 @@ function shiftMonth(ym, delta) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** TOP はカレンダーだけ。ほかは各タブが持っているので、ここには置かない。 */
 function renderTop() {
   const entries = allEntries();
   const month = currentMonth();
@@ -174,18 +174,15 @@ function renderTop() {
 
   dom.calendar.textContent = '';
   dom.calendar.appendChild(calendarEl(entries, month, todayISO(), openDetail));
-  dom.calLegend.textContent = '';
-  dom.calLegend.appendChild(calendarLegendEl(entries));
   dom.calMonth.textContent = `${cy}年${cm}月`;
+}
 
-  const inMonth = entries.filter((e) => e.date.startsWith(month));
-  dom.calSub.textContent = inMonth.length
-    ? `この月 ${inMonth.length}件`
-    : 'この月の記録はありません';
+// ---------- 訪問記録 ----------
 
-  dom.recent.textContent = '';
-  entries.slice(0, RECENT_COUNT).forEach((e) => dom.recent.appendChild(cardEl(e, openDetail)));
+function renderVisits() {
+  const entries = allEntries();
 
+  // 寺社ごとの回数。押すとその寺社で一覧を絞り込む
   const stats = visitStats(entries);
   dom.visits.textContent = '';
   dom.visits.appendChild(visitsEl(stats, (shrine) => {
@@ -193,13 +190,8 @@ function renderTop() {
     dom.search.value = '';
     switchView('list');
   }));
-  dom.visitSub.textContent = `${stats.namedShrines}社・${stats.totalDays}日`;
-}
 
-// ---------- 訪問記録 ----------
-
-function renderVisits() {
-  const rows = allEntries()
+  const rows = entries
     .filter((e) => e.type === TYPE_OMIKUJI || e.type === TYPE_VISIT)
     .filter((e) => matchesQuery(e, state.visitQuery));
 

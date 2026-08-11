@@ -88,6 +88,69 @@ export function cardEl(entry, onOpen) {
   return li;
 }
 
+/* ============================================================
+   TOP の見出し
+   数を並べるのではなく、いちばん言いたい1つを大きく出す。
+   ============================================================ */
+
+const FORTUNE_RANK = ['大吉', '吉', '中吉', '小吉', '末吉', '凶', '大凶'];
+
+/** 続いている月数を主役にする。続いていなければ、通った日数を出す。 */
+export function heroCopy(summary) {
+  if (summary.streak >= 2) {
+    const from = summary.streakFrom ? nextMonthLabel(summary.streakFrom) : null;
+    return {
+      eyebrow: 'つづいています',
+      num: summary.streak,
+      unit: 'か月',
+      note: from ? `${from}から欠かさずお参りしています` : '毎月お参りしています',
+    };
+  }
+  return {
+    eyebrow: 'これまでに',
+    num: summary.days,
+    unit: '日',
+    note: summary.lastVisit ? `最後にお参りしたのは ${formatDate(summary.lastVisit)}` : '',
+  };
+}
+
+function nextMonthLabel(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  return `${ny}年${nm}月`;
+}
+
+/** 吉凶の割合を帯で見せる。数字の表より、偏りが一目で分かる。 */
+export function fortuneBarsEl(summary, onPick) {
+  const total = [...summary.fortunes.values()].reduce((a, b) => a + b, 0);
+  const wrap = el('div', 'bars__inner');
+  if (!total) return wrap;
+
+  const track = el('div', 'bars__track');
+  const legend = el('div', 'bars__legend');
+
+  FORTUNE_RANK.filter((f) => summary.fortunes.has(f)).forEach((f, i) => {
+    const n = summary.fortunes.get(f);
+    const pct = (n / total) * 100;
+
+    const seg = el('button', `bars__seg is-r${i}`);
+    seg.type = 'button';
+    seg.style.width = `${pct}%`;
+    seg.title = `${f} ${n}回`;
+    seg.setAttribute('aria-label', `${f} ${n}回。押すと絞り込みます`);
+    if (onPick) seg.addEventListener('click', () => onPick(f));
+    track.appendChild(seg);
+
+    const item = el('span', 'bars__item');
+    item.append(el('i', `bars__dot is-r${i}`), el('span', 'bars__name', f), el('span', 'bars__n', n));
+    legend.appendChild(item);
+  });
+
+  wrap.append(track, legend);
+  return wrap;
+}
+
 /** 年の区切り見出し（5-10 一覧を見やすくする） */
 export function yearHeaderEl(year, count) {
   const li = el('li', 'year');
@@ -207,22 +270,6 @@ export function calendarEl(entries, month, today, onPick) {
   return grid;
 }
 
-export function calendarLegendEl(entries) {
-  const kinds = new Set(entries.map(chipKind));
-  const wrap = el('div', 'legend');
-  [
-    ['is-omikuji', 'おみくじを引いた日'],
-    ['is-visit', 'お参りだけした日'],
-    ['is-other', 'その他の記録'],
-  ].forEach(([cls, label]) => {
-    if (!kinds.has(cls)) return;
-    const item = el('span', 'legend__item');
-    item.append(el('i', `legend__chip ${cls}`), el('span', null, label));
-    wrap.appendChild(item);
-  });
-  wrap.appendChild(el('span', 'legend__note', '札は社名の頭2文字。押すとその記録が開きます'));
-  return wrap;
-}
 
 /* ============================================================
    訪問記録

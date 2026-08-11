@@ -39,6 +39,22 @@
   --sun: #B23A2E;
   --sat: #2C6094;
 
+  /* 文字の物差し。差を大胆につけないと階層が立たない。
+     11〜21px の狭い範囲に収めていたのが、平板に見える原因だった。 */
+  --fs-hero:  68px;
+  --fs-title: 28px;
+  --fs-lead:  21px;
+  --fs-body:  15px;
+  --fs-sub:   12.5px;
+  --fs-note:  11px;
+
+  /* 余白の物差し。すべて16px前後で並べると緩急が消える */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 28px;
+  --sp-5: 48px;
+
   --radius:    8px;
   --radius-lg: 12px;
   /* 面を浮かせずに罫で区切る。帳面は影で成り立っていない */
@@ -132,7 +148,7 @@ body.is-offline { padding-top: calc(var(--appbar-h) + var(--safe-top) + 38px); }
 .view[hidden] { display: none; }
 
 /* TOP と設定のまとまり */
-.block { margin-bottom: 26px; }
+.block { margin-bottom: var(--sp-5); }
 .block__head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
   padding: 0 2px 10px;
@@ -247,14 +263,6 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 .cal__chip.is-other { background: var(--text-weak); }
 .cal__chip:hover { opacity: 0.85; }
 
-.cal-legend { margin-top: 10px; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.legend__item { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-sub); }
-.legend__chip { width: 11px; height: 11px; border-radius: 3px; display: block; }
-.legend__chip.is-omikuji { background: var(--primary); }
-.legend__chip.is-visit { background: var(--bar); }
-.legend__chip.is-other { background: var(--text-weak); }
-.legend__note { font-size: 11px; color: var(--text-weak); flex-basis: 100%; }
 
 /* ---------- 訪問記録の一覧 ---------- */
 

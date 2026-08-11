@@ -659,6 +659,34 @@ function syncNumberOther() {
  * 勝手には入れない。押したときだけ引き写す。
  */
 
+/**
+ * 書いた本文を下書きへ控える。同じ社の同じ番号は入れ替える（書き直しが正）。
+ * 中身が何も無いものは控えない。番号だけ並んでも下敷きにならない。
+ */
+function rememberToLibrary(fields) {
+  if (fields.type !== TYPE_OMIKUJI || !fields.number) return;
+  const hasBody = fields.poem || fields.overview || fields.teaching
+    || (fields.items || []).some((i) => i.value);
+  if (!hasBody) return;
+
+  const key = numberKey(fields.number);
+  const shrine = fields.shrine || '';
+  const rest = state.library.filter((x) => !(numberKey(x.number) === key && (x.shrine || '') === shrine));
+  const next = [...rest, {
+    preset: dom.fPreset.value || '',
+    shrine,
+    number: fields.number,
+    fortune: fields.fortune || '',
+    poem: fields.poem || '',
+    teaching: fields.teaching || '',
+    overview: fields.overview || '',
+    items: fields.items || [],
+    source: '自分で書いた記録',
+  }];
+  saveLibrary(next);
+  state = { ...state, library: next };
+}
+
 function fillFrom(src) {
   if (src.fortune) dom.fFortune.value = src.fortune;
   if (src.poem) dom.fPoem.value = src.poem;
@@ -680,7 +708,11 @@ function syncRecall() {
 
   const parts = [];
   if (mine.length) parts.push(`前に引いています（${mine.map((e) => formatDate(e.date)).join('、')}）`);
-  if (drafts.length) parts.push(`集めた下書きがあります`);
+  // 自分で書いたものと、web から写したものを言い分ける
+  const own = drafts.filter((d) => d.source === '自分で書いた記録').length;
+  const found = drafts.length - own;
+  if (own && !mine.length) parts.push('前に書いた控えがあります');
+  if (found) parts.push('集めた下書きがあります');
   dom.recallText.textContent = `${number} — ${parts.join('。')}`;
 
   mine.slice(0, 2).forEach((e) => {
@@ -695,7 +727,7 @@ function syncRecall() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn--ghost btn--small';
-    btn.textContent = '下書きから';
+    btn.textContent = d.source === '自分で書いた記録' ? '前の控えから' : '下書きから';
     btn.title = `出典: ${d.source}`;
     btn.addEventListener('click', () => fillFrom(d));
     dom.recallActions.appendChild(btn);
@@ -873,6 +905,10 @@ function onSubmit(event) {
 
   const fields = readForm();
   const editing = state.editingId ? findEntry(state.editingId) : null;
+
+  // 一度書いたものは、次に同じ番号を引いたとき使えるように控えておく。
+  // 記録そのものを消しても、こちらは残る。
+  rememberToLibrary(fields);
 
   try {
     if (editing && editing.source === 'builtin') {

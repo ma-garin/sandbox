@@ -190,6 +190,26 @@
     </div>
   </section>
 
+  <!-- 集めておいた本文。寺社の著作物なので公開する data には置かず、
+       この端末の中にだけ持つ -->
+  <section class="block">
+    <div class="block__head"><h2>下書き</h2></div>
+    <div class="panel">
+      <p class="panel__stat" id="library-stat"></p>
+      <p class="field__hint">
+        番号ごとの本文を控えておくと、記録するとき引き写せる。
+        この端末の中にだけ置き、書き出したファイルにも公開先にも含めない。
+      </p>
+      <div class="panel__actions">
+        <button type="button" class="btn btn--ghost" id="library-import-btn">
+          <svg aria-hidden="true"><use href="#i-upload"/></svg>下書きを読み込む
+        </button>
+        <button type="button" class="btn btn--ghost" id="library-clear-btn" hidden>すべて消す</button>
+        <input type="file" id="library-file" accept="application/json,.json" hidden>
+      </div>
+    </div>
+  </section>
+
   <section class="block" id="install-block" hidden>
     <div class="block__head"><h2>ホーム画面に置く</h2></div>
     <div class="panel">
@@ -323,6 +343,13 @@
         <div class="field field--inline" id="number-other-field" hidden>
           <label for="f-number-other">自由記入</label>
           <input type="text" id="f-number-other" placeholder="第11番／第三〇番" autocomplete="off">
+        </div>
+
+        <!-- 同じ番号を前に引いていたか、集めた下書きがあれば知らせる。
+             勝手には入れず、押したときだけ引き写す -->
+        <div class="recall" id="recall" hidden>
+          <p class="recall__text" id="recall-text"></p>
+          <div class="recall__actions" id="recall-actions"></div>
         </div>
 
         <div class="field field--inline">

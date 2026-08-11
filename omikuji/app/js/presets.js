@@ -56,20 +56,24 @@ export const OMIKUJI_PRESETS = [
   {
     id: 'kawasaki-daishi',
     name: '川崎大師 平間寺',
-    note: '漢詩と御託宣が付く。走り人・貸借など、いまは珍しい項目が残る。',
+    note: '漢詩と御託宣が付く。走り人・貸借など、いまは珍しい項目が残る。一番から九十九番まで。',
     source: 'doc',
     shrine: '川崎大師',
     hasPoem: true,
+    maxNumber: 99,
     items: ['願望', '悦び事', '交友', '恋愛', '婚姻', '出生', '職業', '住居', '造作', '旅行',
       '方角', '訴訟', '勝負', '売買', '貸借', '待ち人', '失せ物', '走り人', '疾病'],
   },
   {
     id: 'daijingu-koi',
     name: '東京大神宮 恋みくじ',
-    note: '赤い波線枠に「恋の歌」と「愛情運」。相性の見方が並ぶ。',
+    note: '赤い波線枠に「恋の歌」と「愛情運」。相性の見方が並ぶ。一番から五十番まで。',
     source: 'photo',
     shrine: '東京大神宮',
     hasPoem: true,
+    // 五十番までであることは、恋みくじの仕様を書いた記事で確認した
+    // https://ameblo.jp/omikuji-jiten/entry-12740698432.html
+    maxNumber: 50,
     items: ['星座', '血液型', '年令差', '十二支', '方位', '待ち合せ', '縁談', '結婚', '学問'],
   },
   {
@@ -186,9 +190,11 @@ export function kanjiNumber(n) {
 }
 
 /**
- * 番号の選択肢。元三大師百籤が百番までなので、第一番〜第百番を並べる。
+ * 番号の選択肢。既定は元三大師百籤に合わせて百番まで。
+ * 型ごとに上限が分かっているものは、その数だけ並べる（恋みくじは五十番まで）。
  * これに当てはまらない書き方（第11番、第三〇番など）は自由記入で受ける。
  */
-export function numberOptions() {
-  return Array.from({ length: 100 }, (_, i) => `第${kanjiNumber(i + 1)}番`);
+export function numberOptions(max = 100) {
+  const n = Number.isFinite(max) && max > 0 ? Math.floor(max) : 100;
+  return Array.from({ length: n }, (_, i) => `第${kanjiNumber(i + 1)}番`);
 }

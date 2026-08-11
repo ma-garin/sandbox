@@ -10,6 +10,7 @@ import {
   isQuotaError, makeId, parseItems, formatItems, shrineSuggestions,
   normalizeText, numberKey, sameNumberEntries, todayISO,
   loadProfile, saveProfile,
+  loadLibrary, saveLibrary, parseLibrary, libraryFor,
 } from './store.js';
 import {
   cardEl, detailEl, yearHeaderEl, formatDate,
@@ -77,6 +78,7 @@ const dom = {
   fDate: $('f-date'), fTime: $('f-time'), fShrine: $('f-shrine'), fPurpose: $('f-purpose'),
   fOffering: $('f-offering'), fPurchases: $('f-purchases'),
   fPreset: $('f-preset'), presetNote: $('preset-note'),
+  recall: $('recall'), recallText: $('recall-text'), recallActions: $('recall-actions'),
   fNumber: $('f-number'), fNumberOther: $('f-number-other'), numberOtherField: $('number-other-field'),
   fFortune: $('f-fortune'), fPoem: $('f-poem'), fTeaching: $('f-teaching'),
   fOverview: $('f-overview'), fItems: $('f-items'), fMemo: $('f-memo'),
@@ -85,6 +87,8 @@ const dom = {
 
   exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'),
   backupStat: $('backup-stat'), stats: $('stats'),
+  libraryStat: $('library-stat'), libraryImportBtn: $('library-import-btn'),
+  libraryClearBtn: $('library-clear-btn'), libraryFile: $('library-file'),
   hiddenBlock: $('hidden-block'), hiddenText: $('hidden-text'), unhideBtn: $('unhide-btn'),
   installBlock: $('install-block'), installSteps: $('install-steps'),
   installActions: $('install-actions'), installBtn: $('install-btn'),
@@ -107,6 +111,8 @@ let state = {
   openId: null,
   editingId: null,
   pending: null,
+  /** 集めておいた本文。この端末の中だけにあり、公開物には含まれない */
+  library: [],
 };
 
 let toastTimer = null;
@@ -329,6 +335,13 @@ function renderSettings() {
     ? `自分の記録 ${mine}件・手直し ${edited}件・一覧から外した記録 ${hidden.length}件が、この端末にあります。`
     : 'この端末だけの記録はまだありません。書き出すものがないので、いまは控えを取る必要はありません。';
   dom.exportBtn.disabled = !hasOwn;
+
+  const lib = state.library;
+  const numbers = new Set(lib.map((x) => x.number));
+  dom.libraryStat.textContent = lib.length
+    ? `${numbers.size}種類の番号ぶん、控えてあります。`
+    : '下書きはまだありません。';
+  dom.libraryClearBtn.hidden = !lib.length;
 
   dom.hiddenBlock.hidden = hidden.length === 0;
   if (hidden.length) {
@@ -584,12 +597,21 @@ function buildFormOptions() {
     dom.fPreset.appendChild(opt);
   });
 
+  buildNumberOptions();
+}
+
+/**
+ * 番号の選択肢。型によって上限が違う（恋みくじは五十番まで）。
+ * 選び直しても、いま入っている番号は失わせない。
+ */
+function buildNumberOptions(max) {
+  const keep = dom.fNumber.value;
   dom.fNumber.textContent = '';
   const none = document.createElement('option');
   none.value = '';
   none.textContent = '記載なし';
   dom.fNumber.appendChild(none);
-  numberOptions().forEach((label) => {
+  numberOptions(max).forEach((label) => {
     const opt = document.createElement('option');
     opt.value = label;
     opt.textContent = label;
@@ -599,7 +621,12 @@ function buildFormOptions() {
   other.value = OTHER_NUMBER;
   other.textContent = 'この中にない（自分で書く）';
   dom.fNumber.appendChild(other);
+  // 上限を縮めても、選んでいた番号が残っていれば選び直す
+  if (keep && [...dom.fNumber.options].some((o) => o.value === keep)) dom.fNumber.value = keep;
+}
 
+/** 起動時に組む、カレンダーの年月の選択肢 */
+function buildCalendarOptions() {
   // 年月を直接選べるようにする（2年前まで月送りで戻るのは骨が折れる）
   const thisYear = new Date().getFullYear();
   dom.calYear.textContent = '';
@@ -620,6 +647,60 @@ function buildFormOptions() {
 
 function syncNumberOther() {
   dom.numberOtherField.hidden = dom.fNumber.value !== OTHER_NUMBER;
+  syncRecall();
+}
+
+/* ---------- 同じ番号の下敷き ----------
+ *
+ * 毎月引いていると同じ番号に当たる。そのとき本文を打ち直させない。
+ * 出どころは2つあり、どちらか分かるように書き分ける。
+ *   自分の記録 — 前に引いたときに自分で書いたもの
+ *   集めた下書き — web から写して取り込んだもの（出典を必ず出す）
+ * 勝手には入れない。押したときだけ引き写す。
+ */
+
+function fillFrom(src) {
+  if (src.fortune) dom.fFortune.value = src.fortune;
+  if (src.poem) dom.fPoem.value = src.poem;
+  if (src.teaching) dom.fTeaching.value = src.teaching;
+  if (src.overview) dom.fOverview.value = src.overview;
+  if ((src.items || []).length) dom.fItems.value = formatItems(src.items);
+  toast('引き写しました。中身は直せます');
+}
+
+function syncRecall() {
+  const number = readNumber();
+  const shrine = dom.fShrine.value.trim();
+  dom.recallActions.textContent = '';
+  if (!number) { dom.recall.hidden = true; return; }
+
+  const mine = sameNumberEntries(visibleEntries(), { id: state.editingId, number, shrine });
+  const drafts = libraryFor(state.library, { shrine, number });
+  if (!mine.length && !drafts.length) { dom.recall.hidden = true; return; }
+
+  const parts = [];
+  if (mine.length) parts.push(`前に引いています（${mine.map((e) => formatDate(e.date)).join('、')}）`);
+  if (drafts.length) parts.push(`集めた下書きがあります`);
+  dom.recallText.textContent = `${number} — ${parts.join('。')}`;
+
+  mine.slice(0, 2).forEach((e) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--ghost btn--small';
+    btn.textContent = `${formatDate(e.date)} の記録から`;
+    btn.addEventListener('click', () => fillFrom(e));
+    dom.recallActions.appendChild(btn);
+  });
+  drafts.slice(0, 2).forEach((d) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--ghost btn--small';
+    btn.textContent = '下書きから';
+    btn.title = `出典: ${d.source}`;
+    btn.addEventListener('click', () => fillFrom(d));
+    dom.recallActions.appendChild(btn);
+  });
+  dom.recall.hidden = false;
 }
 
 function setNumberValue(value) {
@@ -659,6 +740,10 @@ function applyPreset(id, { force = false } = {}) {
 
   dom.presetNote.textContent = `${preset.note}（${PRESET_SOURCE[preset.source] || '出どころ不明'}）`;
   dom.presetNote.hidden = false;
+
+  // 型によって番号の上限が違う。恋みくじに百番は無い
+  buildNumberOptions(preset.maxNumber);
+  syncRecall();
 
   if (preset.shrine && (force || !dom.fShrine.value.trim())) {
     dom.fShrine.value = preset.shrine;
@@ -1033,6 +1118,33 @@ function onImportFile(event) {
   reader.readAsText(file);
 }
 
+/**
+ * 下書きの取り込み。記録そのものではないので、確認を挟まずに入れ替える。
+ * 中身は localStorage にだけ入り、書き出しファイルにも公開先にも出ない。
+ */
+function onLibraryFile(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const { items, dropped } = parseLibrary(String(reader.result));
+      saveLibrary(items);
+      setState({ library: items });
+      const numbers = new Set(items.map((x) => x.number)).size;
+      toast(dropped
+        ? `${numbers}種類を読み込みました（出典のない ${dropped}件は入れていません）`
+        : `${numbers}種類を読み込みました`);
+    } catch (err) {
+      toast(err.message);
+    }
+  };
+  reader.onerror = () => toast('ファイルを読めませんでした。');
+  reader.readAsText(file);
+}
+
 // ---------- タブ ----------
 
 function switchView(name) {
@@ -1171,6 +1283,9 @@ function bind() {
   });
   dom.fPreset.addEventListener('change', () => applyPreset(dom.fPreset.value));
   dom.fNumber.addEventListener('change', syncNumberOther);
+  dom.fNumberOther.addEventListener('input', syncRecall);
+  dom.fShrine.addEventListener('input', syncRecall);
+  dom.fNumber.addEventListener('change', syncNumberOther);
 
   dom.unhideBtn.addEventListener('click', () => {
     setState({ overrides: unhideAll(state.overrides) });
@@ -1179,6 +1294,14 @@ function bind() {
   dom.exportBtn.addEventListener('click', onExport);
   dom.importBtn.addEventListener('click', () => dom.importFile.click());
   dom.importFile.addEventListener('change', onImportFile);
+
+  dom.libraryImportBtn.addEventListener('click', () => dom.libraryFile.click());
+  dom.libraryFile.addEventListener('change', onLibraryFile);
+  dom.libraryClearBtn.addEventListener('click', () => {
+    saveLibrary([]);
+    setState({ library: [] });
+    toast('下書きを消しました');
+  });
 
   const add = async () => {
     dom.promo.hidden = true;
@@ -1226,6 +1349,7 @@ function bind() {
 async function main() {
   bind();
   buildFormOptions();
+  buildCalendarOptions();
   resetForm();
   registerServiceWorker();
 
@@ -1264,6 +1388,7 @@ async function main() {
 
   // 相性の欄は記録を読んでから組む。読めなかった場合も欄自体は出す
   bindFortune();
+  setState({ library: loadLibrary() });
 }
 
 main();

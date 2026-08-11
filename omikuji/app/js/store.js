@@ -331,3 +331,76 @@ export function saveProfile(profile) {
     blood: profile.blood || '',
   }));
 }
+
+/* ---------- 下書き（集めておいた本文） ----------
+ *
+ * おみくじの本文は寺社の著作物なので、公開する app/data には置かない。
+ * この端末の localStorage にだけ持ち、記録するときの下敷きに使う。
+ * 出典の無いものは受け取らない。どこから写したか分からない文が
+ * 自分の記録に混ざると、後から区別できなくなる。
+ */
+
+const KEY_LIBRARY = 'omikuji.library.v1';
+
+export function loadLibrary() {
+  try {
+    const raw = localStorage.getItem(KEY_LIBRARY);
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data?.items) ? data.items : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLibrary(items) {
+  localStorage.setItem(KEY_LIBRARY, JSON.stringify({
+    app: 'omikuji-cho-library',
+    version: 1,
+    items,
+  }));
+}
+
+/** 取り込むファイルは境界で検める。出典の無い項目は落とす。 */
+export function parseLibrary(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('JSON として読めないファイルです。');
+  }
+  if (!data || typeof data !== 'object' || !Array.isArray(data.items)) {
+    throw new Error('下書きのファイルではないようです（items がありません）。');
+  }
+  const kept = [];
+  let dropped = 0;
+  data.items.forEach((raw) => {
+    if (!raw || typeof raw !== 'object') { dropped += 1; return; }
+    if (!raw.number || !raw.source) { dropped += 1; return; }
+    kept.push({
+      preset: String(raw.preset || ''),
+      shrine: String(raw.shrine || ''),
+      number: String(raw.number),
+      fortune: String(raw.fortune || ''),
+      poem: String(raw.poem || ''),
+      teaching: String(raw.teaching || ''),
+      overview: String(raw.overview || ''),
+      items: Array.isArray(raw.items)
+        ? raw.items.filter((i) => i && i.label).map((i) => ({ label: String(i.label), value: String(i.value || '') }))
+        : [],
+      source: String(raw.source),
+    });
+  });
+  if (!kept.length) throw new Error('取り込めるものがありませんでした（番号と出典が要ります）。');
+  return { items: kept, dropped };
+}
+
+/** 番号に合う下書きを探す。社が分かっていればそれも見る。 */
+export function libraryFor(library, { shrine, number }) {
+  const key = numberKey(number);
+  if (key == null) return [];
+  return library.filter((x) => (
+    numberKey(x.number) === key
+    && (!shrine || !x.shrine || x.shrine === shrine)
+  ));
+}

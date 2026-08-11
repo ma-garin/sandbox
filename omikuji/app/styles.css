@@ -793,29 +793,41 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 
 .form { display: flex; flex-direction: column; gap: var(--space-3); max-width: 640px; margin: 0 auto; }
 
-/* 5-05 関係する入力を1枚の面にまとめる */
+/* 5-05 関係する入力を1枚の面にまとめる。
+   面ぜんたいで1つの格子にして、ラベル列と入力列を全行で分け合う。
+   項目ごとに格子を作ると、行ごとに列幅が決まるので、iOS のように
+   date 入力が固有の幅を持つ環境で日付の行だけ長くなる（実機で発生）。 */
 .card-block {
-  display: flex; flex-direction: column; gap: var(--space-2);
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
   padding: var(--space-4);
   background: var(--surface); border: var(--card-border); border-radius: var(--r-3);
 }
 .card-block[hidden] { display: none; }
+/* 見出し・縦積みの項目・エラー・注記は行いっぱいを使う */
+.card-block > .card-block__title,
+.card-block > .field:not(.field--inline),
+.card-block > .field__error,
+.card-block > .field__hint { grid-column: 1 / -1; }
 
 .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .field--row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .field--row > div { display: flex; flex-direction: column; gap: var(--space-1); }
 
 /* 短い入力はラベルを左に置く。ラベルを上に積むと1項目に80px使い、
-   1画面に4つしか入らなかった。横に並べると1項目 44px で倍入る。 */
-.field--inline {
-  /* 1fr のままだと grid の既定（min-width:auto）で中身の固有幅が優先され、
-     iOS の date が親を突き破る。minmax(0,1fr) で縮められるようにする */
-  display: grid; grid-template-columns: 4.5em minmax(0, 1fr);
-  align-items: center; gap: var(--space-3);
-  min-height: var(--tap-min);
-}
+   1画面に4つしか入らなかった。横に並べると1項目 44px で倍入る。
+   自前の箱を持たず、親の格子へラベルと入力を直に載せる（display: contents）。
+   こうしないと列が行ごとに決まり、右端が揃わない。 */
+.field--inline { display: contents; }
 .field--inline[hidden] { display: none; }
 .field--inline > label { padding-top: 0; }
+/* display: contents では自分の高さを持てないので、タップ領域は入力側で確保する。
+   select は appearance: menulist のとき padding を見ないので、高さを直に指定する
+   （WebKit で 25px しかなく、指の的として足りなかった） */
+.field--inline > input { min-height: var(--tap-min); }
+.field--inline > select { height: var(--tap-min); }
 
 .field label, .field__label { font-size: var(--text-caption); color: var(--text-sub); letter-spacing: 0.04em; }
 /* 「必須」は補助でしかない。白抜きの赤にすると画面でいちばん強い要素になる */
@@ -872,10 +884,16 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 .more[open] .more__head::after { transform: rotate(-135deg) translateY(-2px); }
 .more__sub { font-size: var(--text-caption-2); color: var(--text-weak); }
 .more[open] .more__sub { display: none; }
+/* 中身も card-block と同じ格子にする。flex のままだと display: contents の
+   ラベルと入力が別々の項目として縦に割れる */
 .more__body {
-  display: flex; flex-direction: column; gap: var(--space-2);
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
   padding: 0 var(--space-4) var(--space-4);
 }
+.more__body > .field:not(.field--inline) { grid-column: 1 / -1; }
 
 /* 4-07 エラーの表現方法 */
 .field__error { margin: 0; font-size: var(--text-caption); color: var(--danger); }

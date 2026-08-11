@@ -307,3 +307,27 @@ export function shrineSuggestions(entries) {
   });
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
 }
+
+/* ---------- この端末の持ち主（占いの計算に使う） ---------- */
+
+const KEY_PROFILE = 'omikuji.profile.v1';
+
+/** 生年月日と血液型。入れていなければ null を返す */
+export function loadProfile() {
+  try {
+    const raw = localStorage.getItem(KEY_PROFILE);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p || typeof p !== 'object') return null;
+    return { birth: p.birth || '', blood: p.blood || '' };
+  } catch {
+    return null;
+  }
+}
+
+export function saveProfile(profile) {
+  localStorage.setItem(KEY_PROFILE, JSON.stringify({
+    birth: profile.birth || '',
+    blood: profile.blood || '',
+  }));
+}

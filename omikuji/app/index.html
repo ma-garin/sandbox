@@ -31,6 +31,7 @@
   <symbol id="i-settings" viewBox="0 -960 960 960"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm0-80q-25 0-42.5-17.5T422-480q0-25 17.5-42.5T482-540q25 0 42.5 17.5T542-480q0 25-17.5 42.5T482-420Zm-2-60Zm-40 320h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Z"/></symbol>
   <symbol id="i-download" viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T760-160H240Z"/></symbol>
   <symbol id="i-upload" viewBox="0 -960 960 960"><path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T760-160H240Z"/></symbol>
+  <symbol id="i-star" viewBox="0 -960 960 960"><path d="m354-247 126-76 126 77-33-144 111-96-146-13-58-136-58 135-146 13 111 97-33 143ZM233-80l65-281L80-550l288-25 112-265 112 265 288 25-218 189 65 281-247-149L233-80Zm247-355Z"/></symbol>
   <symbol id="i-torii" viewBox="0 -960 960 960"><path d="M160-760v-80h640v80H160Zm40 640v-360h-80v-80h720v80h-80v360h-80v-360H520v360h-80v-360H280v360h-80Zm80-440h400v-80H280v80Z"/></symbol>
 </svg>
 </head>
@@ -134,6 +135,44 @@
 </section>
 
 <!-- ============ 設定 ============ -->
+<section class="view" id="view-fortune" hidden>
+  <section class="block">
+    <div class="block__head"><h2>生まれた日</h2></div>
+    <div class="panel">
+      <div class="field">
+        <label for="fortune-birth">生年月日</label>
+        <input type="date" id="fortune-birth" min="1900-01-01">
+      </div>
+      <div class="field">
+        <label for="fortune-blood">血液型</label>
+        <select id="fortune-blood">
+          <option value="">選ぶ</option>
+          <option value="A">A型</option>
+          <option value="B">B型</option>
+          <option value="AB">AB型</option>
+          <option value="O">O型</option>
+        </select>
+        <p class="field__hint">繭気属性の計算にだけ使う。ほかの3つは生年月日だけで出る。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="fortune-result-block" hidden>
+    <div class="block__head"><h2>この生年月日から出るもの</h2></div>
+    <div id="fortune-cards"></div>
+  </section>
+
+  <section class="block" id="fortune-compat-block" hidden>
+    <div class="block__head"><h2>参拝先との相性</h2></div>
+    <div id="fortune-compat"></div>
+  </section>
+
+  <section class="block">
+    <div class="block__head"><h2>この計算の出どころ</h2></div>
+    <div class="surface" id="fortune-source"></div>
+  </section>
+</section>
+
 <section class="view" id="view-settings" hidden>
   <section class="block">
     <div class="block__head"><h2>記録の持ち出し</h2></div>
@@ -381,6 +420,10 @@
   <button type="button" class="tab" data-view="list">
     <span class="tab__icon"><svg aria-hidden="true"><use href="#i-list"/></svg></span>
     <span>おみくじ</span>
+  </button>
+  <button type="button" class="tab" data-view="fortune">
+    <span class="tab__icon"><svg aria-hidden="true"><use href="#i-star"/></svg></span>
+    <span>暦と相性</span>
   </button>
   <button type="button" class="tab" data-view="settings">
     <span class="tab__icon"><svg aria-hidden="true"><use href="#i-settings"/></svg></span>

@@ -5,7 +5,8 @@
 
 import { TYPE_OMIKUJI, TYPE_VISIT } from './store.js';
 import { holidayName } from './holidays.js';
-import { dayInfo, moonEvent } from './koyomi.js';
+import { dayInfo, moonEvent, eto } from './koyomi.js';
+import { rokusei, honmeisei, kenki, compat, SHRINE_ATTR } from './fortune.js';
 
 const TOP_FORTUNE = '大吉';
 const UNKNOWN_SHRINE = '場所の記載なし';
@@ -566,4 +567,108 @@ export function statsEl(rows) {
     frag.appendChild(el('dd', null, value));
   });
   return frag;
+}
+
+/* ---------- 暦と相性 ---------- */
+
+/** ラベルと値を1行に。一覧の行は .row に寄せる決まりなので、それに従う */
+function factRow(label, value, weak) {
+  const row = el('div', 'row row--flat row--fact');
+  row.append(el('span', 'row__label', label), el('span', `row__value${weak ? ' is-weak' : ''}`, value));
+  return row;
+}
+
+/** 生年月日から出る4つ。血液型がなくても3つは出す */
+export function fortuneCardsEl(birth, blood) {
+  const [y, m, d] = birth.split('-').map(Number);
+  const r = rokusei(y, m, d);
+  const k = honmeisei(y, m, d);
+  const ken = kenki(birth, blood);
+
+  const wrap = el('div', 'surface');
+  wrap.appendChild(factRow('六星占術', r.reigo ? `${r.name}（霊合星人）` : r.name));
+  wrap.appendChild(factRow('九星（本命星）', k.name));
+  wrap.appendChild(factRow('生まれた日の干支', `${eto(y, m, d)}（星数 ${r.starNumber}）`));
+  wrap.appendChild(factRow('繭気属性', ken ? `${ken.attr}（${ken.number}）` : '血液型を選ぶと出る', !ken));
+
+  if (k.beforeRisshun) {
+    wrap.appendChild(el('p', 'surface__note', `九星は立春で年が変わる。この日は立春より前なので ${k.year} 年として数えている。`));
+  }
+  return wrap;
+}
+
+/** 参拝した社と、その属性・相性。属性が分からない社も隠さず出す */
+export function fortuneCompatEl(entries, mine) {
+  const counts = new Map();
+  entries.forEach((e) => {
+    const name = e.shrine;
+    if (!name) return;
+    counts.set(name, (counts.get(name) || 0) + 1);
+  });
+
+  const wrap = el('div', 'surface');
+  if (!counts.size) {
+    wrap.appendChild(el('p', 'surface__note', '場所を記録すると、ここに相性が出る。'));
+    return wrap;
+  }
+
+  // 社名は省略したくないので、社名と回数で1行、属性と相性で次の行に分ける。
+  // 1行に押し込むと「神田明神（江戸総鎮守）」のような長い名が折り返して値とぶつかる。
+  [...counts.entries()].sort((a, b) => b[1] - a[1]).forEach(([name, n]) => {
+    const info = SHRINE_ATTR[name];
+    const row = el('div', 'row row--flat row--shrine');
+    row.appendChild(el('span', 'row__label', name));
+    row.appendChild(el('span', 'row__sub', `${n}回`));
+
+    if (!info) {
+      row.appendChild(el('span', 'row__value is-weak', '資料で確認できず'));
+    } else {
+      const c = compat(mine, info.attr);
+      const val = el('span', 'row__value');
+      val.append(el('b', `attr attr--${info.attr}`, info.attr));
+      if (mine) val.append(el('span', `compat is-${c.level}`, c.label));
+      row.appendChild(val);
+    }
+    if (info && (info.note || info.unverified)) {
+      row.appendChild(el('p', 'row__note', info.unverified ? `${info.note}（未確認）` : info.note));
+    }
+    wrap.appendChild(row);
+  });
+
+  if (!mine) {
+    wrap.appendChild(el('p', 'surface__note', '生年月日と血液型を入れると、相性も出る。'));
+  }
+  return wrap;
+}
+
+/**
+ * 出どころ。3つで典拠の強さがまるで違うので、それを隠さずに書く。
+ * ここを削ると、確かめた話と占い師が決めた話が同じ顔で並ぶことになる。
+ */
+export function fortuneSourceEl() {
+  const wrap = document.createDocumentFragment();
+  [
+    ['六星占術',
+      '細木数子が考案した占術。運命数表（1950〜2030年）の972値すべてが「生まれた日の干支」と一致することを確かめたので、表は持たず干支から出している。',
+      'https://fortune.netoff.co.jp/rokusei/keisan/'],
+    ['九星（本命星）',
+      '算法が公開されている。西暦の各桁を足して1桁にし、11から引く。立春で年が変わる。月命星は算法を確かめていないので入れていない。',
+      null],
+    ['繭気属性',
+      '「最近になって占い師が考え出したもので、ほとんどの神職や僧侶は自分の社寺の属性を知らない」と資料自身が書いている。提唱者も初出も確かめられなかった。神社の属性は書き手の解釈で、神社が定めたものではない。',
+      'https://jinjabukkaku-arekore.com/tokyo-daijingu-attributes/'],
+  ].forEach(([title, body, url]) => {
+    const box = el('div', 'source');
+    box.appendChild(el('h3', 'source__title', title));
+    box.appendChild(el('p', 'source__body', body));
+    if (url) {
+      const a = el('a', 'source__link', url.replace(/^https?:\/\//, '').split('/')[0]);
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      box.appendChild(a);
+    }
+    wrap.appendChild(box);
+  });
+  return wrap;
 }

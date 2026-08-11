@@ -1,10 +1,24 @@
-import { toKyureki, rokuyou, eto, setsuIndex, isIchiryuManbaibi, isTenshabi, moonEvent, longitudeOfSun, longitudeOfMoon } from '../app/js/koyomi.js';
+/**
+ * 旧暦と暦注の検算。node scripts/verify-koyomi.mjs
+ *
+ * 期待値の出どころは高野英明 QREKI.AWK の Python 移植（qreki_py）。
+ * 2021-01-01〜2130-12-31 の全 40,176 日を突き合わせて不一致 0 を確認した上で、
+ * ここにはその代表を残している。
+ */
+
+import {
+  toKyureki, rokuyou, eto, setsuIndex, isIchiryuManbaibi, isTenshabi,
+  moonEvent, longitudeOfSun, longitudeOfMoon,
+} from '../app/js/koyomi.js';
+
+let ng = 0;
+const fail = (msg) => { ng += 1; console.log(`  ${msg}`); };
 
 // ---- 1. 黄経が原典と一致するか ----
 //
-// 期待値は qreki_py に出させたもの。t が負（2000年以前）の点を必ず含める。
-// JS の % は負の符号を残すため、ここを正規化し忘れると黄経が負になり、
-// 朔の分岐判定が狂って旧暦が1朔ぶんずれる（実際に起きた）。
+// t が負（2000年以前）の点を必ず含める。JS の % は負の符号を残すため、
+// ここを正規化し忘れると黄経が負になり、朔の分岐判定が狂って
+// 旧暦が1朔ぶんずれる（実際に起きた）。
 // 引数で別のサンプル列を渡せば、そちらを使う。
 const DEFAULT_SAMPLES = [
   [-0.5, 280.0108039354, 61.4111172447],
@@ -15,47 +29,53 @@ const DEFAULT_SAMPLES = [
   [1.30117, 324.7876997414, 36.4212307203],
 ];
 const sunSamples = process.argv[2] ? JSON.parse(process.argv[2]) : DEFAULT_SAMPLES;
-let worstS = 0, worstM = 0;
+let worstS = 0;
+let worstM = 0;
 for (const [t, s, m] of sunSamples) {
   worstS = Math.max(worstS, Math.abs(longitudeOfSun(t) - s));
   worstM = Math.max(worstM, Math.abs(longitudeOfMoon(t) - m));
 }
+const TOL = 1e-6;
+if (worstS > TOL || worstM > TOL) fail(`黄経が原典とずれている（太陽 ${worstS} / 月 ${worstM}）`);
 console.log(`黄経の差   太陽 ${worstS.toExponential(2)}°  月 ${worstM.toExponential(2)}°`);
 
 // ---- 2. 六曜（市販カレンダーとの照合） ----
-const rokuCases = [['2026-03-05','大安'], ['2026-07-19','大安']];
-for (const [d, want] of rokuCases) {
-  const [y,m,dd] = d.split('-').map(Number);
-  const got = rokuyou(y,m,dd);
-  console.log(`六曜 ${d}: ${got} ${got===want?'✓':'✗ 期待 '+want}`);
-}
+[['2026-03-05', '大安'], ['2026-07-19', '大安']].forEach(([d, want]) => {
+  const [y, m, dd] = d.split('-').map(Number);
+  const got = rokuyou(y, m, dd);
+  if (got !== want) fail(`六曜 ${d}: ${got} ≠ ${want}`);
+  console.log(`六曜 ${d}: ${got} ${got === want ? '✓' : '✗'}`);
+});
 
 // ---- 3. 天赦日（2026年の4日） ----
-const tensha = [['2026-03-05','戊寅'],['2026-07-19','甲午'],['2026-10-01','戊申'],['2026-12-16','甲子']];
-for (const [d, want] of tensha) {
-  const [y,m,dd] = d.split('-').map(Number);
-  const e = eto(y,m,dd), t = isTenshabi(y,m,dd), i = isIchiryuManbaibi(y,m,dd);
-  console.log(`天赦 ${d}: 干支${e} ${e===want?'✓':'✗ 期待'+want} / 天赦${t?'○':'×'} / 一粒${i?'○':'×'}`);
-}
+[['2026-03-05', '戊寅'], ['2026-07-19', '甲午'], ['2026-10-01', '戊申'], ['2026-12-16', '甲子']]
+  .forEach(([d, want]) => {
+    const [y, m, dd] = d.split('-').map(Number);
+    const e = eto(y, m, dd);
+    const t = isTenshabi(y, m, dd);
+    if (e !== want || !t) fail(`天赦 ${d}: 干支${e}（期待${want}） 天赦${t ? '○' : '×'}`);
+    console.log(`天赦 ${d}: 干支${e} ${e === want ? '✓' : '✗'} / 天赦${t ? '○' : '×'} / 一粒${isIchiryuManbaibi(y, m, dd) ? '○' : '×'}`);
+  });
 
 // ---- 4. 2026年の一粒万倍日の数 ----
 let n = 0;
-for (let m = 1; m <= 12; m++) {
+for (let m = 1; m <= 12; m += 1) {
   const last = new Date(2026, m, 0).getDate();
-  for (let d = 1; d <= last; d++) if (isIchiryuManbaibi(2026, m, d)) n++;
+  for (let d = 1; d <= last; d += 1) if (isIchiryuManbaibi(2026, m, d)) n += 1;
 }
-console.log(`2026年の一粒万倍日: ${n}日 ${n===64?'✓':'✗ 期待 64'}`);
+if (n !== 64) fail(`2026年の一粒万倍日が ${n} 日（期待 64）`);
+console.log(`2026年の一粒万倍日: ${n}日 ${n === 64 ? '✓' : '✗'}`);
 
 // ---- 5. 節の切り替わり ----
-console.log(`節 2026-02-03: ${setsuIndex(2026,2,3)} → 2026-02-04(立春): ${setsuIndex(2026,2,4)} ${setsuIndex(2026,2,3)===11&&setsuIndex(2026,2,4)===0?'✓':'✗'}`);
-console.log(`節 2026-03-04: ${setsuIndex(2026,3,4)} → 2026-03-05(啓蟄): ${setsuIndex(2026,3,5)} ${setsuIndex(2026,3,4)===0&&setsuIndex(2026,3,5)===1?'✓':'✗'}`);
+[[2026, 2, 3, 11], [2026, 2, 4, 0], [2026, 3, 4, 0], [2026, 3, 5, 1]].forEach(([y, m, d, want]) => {
+  const got = setsuIndex(y, m, d);
+  if (got !== want) fail(`節 ${y}-${m}-${d}: ${got} ≠ ${want}`);
+});
+console.log(`節の境（立春 2026-02-04 / 啓蟄 03-05）: ${setsuIndex(2026, 2, 3)}→${setsuIndex(2026, 2, 4)} / ${setsuIndex(2026, 3, 4)}→${setsuIndex(2026, 3, 5)}`);
 
 // ---- 6. 旧暦（原典との照合） ----
 //
-// 期待値は qreki_py（高野英明 QREKI.AWK の Python 移植）に出させたもの。
-// 2021-01-01〜2130-12-31 の全 40,176 日で突き合わせて不一致 0 を確認済み。
-// ここに残すのは、その中から閏月の朔日10件と年またぎ・端の代表を抜いた分。
-//
+// 閏月の朔日10件と、年またぎ・端の代表。
 // 満月＝旧暦15日という当てはめは検算に使えない。朔から望までは
 // 月の運動が不均一なため 14〜17 日に散る（2026-09-27 は原典でも 8月17日）。
 const KYUREKI_CASES = [
@@ -81,8 +101,8 @@ let ok = 0;
 for (const [iso, wy, wm, wl, wd] of KYUREKI_CASES) {
   const [y, m, dd] = iso.split('-').map(Number);
   const k = toKyureki(y, m, dd);
-  if (k.year === wy && k.month === wm && (k.leap ? 1 : 0) === wl && k.day === wd) ok++;
-  else console.log(`  ${iso} → ${k.year}/${k.leap ? '閏' : ''}${k.month}/${k.day} ✗ 期待 ${wy}/${wl ? '閏' : ''}${wm}/${wd}`);
+  if (k.year === wy && k.month === wm && (k.leap ? 1 : 0) === wl && k.day === wd) ok += 1;
+  else fail(`${iso} → ${k.year}/${k.leap ? '閏' : ''}${k.month}/${k.day} ≠ ${wy}/${wl ? '閏' : ''}${wm}/${wd}`);
 }
 console.log(`旧暦（閏月10件を含む）: ${ok}/${KYUREKI_CASES.length} ${ok === KYUREKI_CASES.length ? '✓' : '✗'}`);
 
@@ -92,7 +112,6 @@ console.log(`旧暦（閏月10件を含む）: ${ok}/${KYUREKI_CASES.length} ${o
 // moon() の「いちばん近い相」で節目を出すと朔の2日前が新月になる（実際に起きた）。
 const PHASE_RANGE = { 新月: [1, 1], 上弦: [6, 9], 満月: [14, 17], 下弦: [21, 24] };
 const counts = { 新月: 0, 上弦: 0, 満月: 0, 下弦: 0 };
-let phaseBad = 0;
 for (let m = 1; m <= 12; m += 1) {
   const last = new Date(2026, m, 0).getDate();
   for (let d = 1; d <= last; d += 1) {
@@ -102,10 +121,13 @@ for (let m = 1; m <= 12; m += 1) {
     const k = toKyureki(2026, m, d);
     const [lo, hi] = PHASE_RANGE[name];
     if (k.day < lo || k.day > hi) {
-      phaseBad += 1;
-      console.log(`  2026-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${name} → 旧暦${k.month}/${k.day} ✗ 期待 ${lo}〜${hi}日`);
+      fail(`2026-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${name} → 旧暦${k.month}/${k.day}（期待 ${lo}〜${hi}日）`);
     }
   }
 }
 const total = Object.values(counts).reduce((a, b) => a + b, 0);
-console.log(`2026年の朔弦望: ${JSON.stringify(counts)} 計${total}回  範囲外 ${phaseBad} 件 ${phaseBad === 0 && total >= 48 ? '✓' : '✗'}`);
+if (total < 48) fail(`2026年の朔弦望が ${total} 回しかない（48回以上あるはず）`);
+console.log(`2026年の朔弦望: ${JSON.stringify(counts)} 計${total}回`);
+
+console.log(ng === 0 ? '\nすべて通過' : `\n${ng} 件の不一致`);
+if (ng) process.exit(1);

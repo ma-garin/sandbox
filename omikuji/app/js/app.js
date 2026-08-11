@@ -9,13 +9,15 @@ import {
   buildBundle, parseBundle, replaceAll,
   isQuotaError, makeId, parseItems, formatItems, shrineSuggestions,
   normalizeText, numberKey, sameNumberEntries, todayISO,
+  loadProfile, saveProfile,
 } from './store.js';
 import {
   cardEl, detailEl, yearHeaderEl, formatDate,
   calendarEl, calendarLegendEl, visitsEl, visitStats, visitRowEl, statsEl,
-  shrineSheetEl,
+  shrineSheetEl, fortuneCardsEl, fortuneCompatEl, fortuneSourceEl,
 } from './view.js';
 import { OMIKUJI_PRESETS, findPreset, guessPreset, numberOptions } from './presets.js';
+import { kenki } from './fortune.js';
 import {
   watch as watchInstall, onAvailable, canPrompt, promptInstall,
   needsManualHint, isStandalone, dismissed, markDismissed, IOS_STEPS,
@@ -36,11 +38,17 @@ const OVERRIDABLE = [
 const OTHER_NUMBER = '__other__';
 const RECENT_COUNT = 3;
 
-const VIEW_TITLE = { top: 'おみくじ帳', visits: '訪問記録', list: 'おみくじ', settings: '設定' };
+const VIEW_TITLE = { top: 'おみくじ帳', visits: '訪問記録', list: 'おみくじ', fortune: '暦と相性', settings: '設定' };
 
 const dom = {
   appbarTitle: $('appbar-title'),
-  viewTop: $('view-top'), viewVisits: $('view-visits'), viewList: $('view-list'), viewSettings: $('view-settings'),
+  viewTop: $('view-top'), viewVisits: $('view-visits'), viewList: $('view-list'),
+  viewFortune: $('view-fortune'), viewSettings: $('view-settings'),
+
+  fortuneBirth: $('fortune-birth'), fortuneBlood: $('fortune-blood'),
+  fortuneCards: $('fortune-cards'), fortuneResultBlock: $('fortune-result-block'),
+  fortuneCompat: $('fortune-compat'), fortuneCompatBlock: $('fortune-compat-block'),
+  fortuneSource: $('fortune-source'),
 
   calendar: $('calendar'), calLegend: $('cal-legend'), calSub: $('cal-sub'),
   calMonth: $('cal-month'), calPrev: $('cal-prev'), calNext: $('cal-next'),
@@ -420,7 +428,8 @@ function render() {
 // ---------- 前面に出したときの背景の扱い ----------
 
 function setBackgroundInert(on) {
-  [dom.appbar, dom.tabbar, dom.viewTop, dom.viewVisits, dom.viewList, dom.viewSettings, dom.fab]
+  [dom.appbar, dom.tabbar, dom.viewTop, dom.viewVisits, dom.viewList,
+    dom.viewFortune, dom.viewSettings, dom.fab]
     .forEach((node) => { if (node) node.inert = on; });
   dom.fab.hidden = on;
 }
@@ -1010,6 +1019,7 @@ function switchView(name) {
   dom.viewTop.hidden = name !== 'top';
   dom.viewVisits.hidden = name !== 'visits';
   dom.viewList.hidden = name !== 'list';
+  dom.viewFortune.hidden = name !== 'fortune';
   dom.viewSettings.hidden = name !== 'settings';
   dom.appbarTitle.textContent = VIEW_TITLE[name] || 'おみくじ帳';
   document.querySelectorAll('.tab').forEach((tab) => {
@@ -1021,6 +1031,40 @@ function switchView(name) {
   window.scrollTo(0, scrollByView.get(name) || 0);
 }
 
+
+// ---------- 暦と相性 ----------
+
+function renderFortune() {
+  const birth = dom.fortuneBirth.value;
+  const blood = dom.fortuneBlood.value;
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(birth);
+
+  dom.fortuneResultBlock.hidden = !valid;
+  if (valid) {
+    dom.fortuneCards.replaceChildren(fortuneCardsEl(birth, blood));
+  }
+
+  // 相性の欄は生年月日がなくても出す。属性が分かっている社の一覧としても読める
+  const mine = valid ? (kenki(birth, blood) || {}).attr || null : null;
+  dom.fortuneCompatBlock.hidden = false;
+  dom.fortuneCompat.replaceChildren(fortuneCompatEl(allEntries(), mine));
+}
+
+function bindFortune() {
+  const saved = loadProfile();
+  if (saved) {
+    dom.fortuneBirth.value = saved.birth;
+    dom.fortuneBlood.value = saved.blood;
+  }
+  const onChange = () => {
+    saveProfile({ birth: dom.fortuneBirth.value, blood: dom.fortuneBlood.value });
+    renderFortune();
+  };
+  dom.fortuneBirth.addEventListener('change', onChange);
+  dom.fortuneBlood.addEventListener('change', onChange);
+  dom.fortuneSource.replaceChildren(fortuneSourceEl());
+  renderFortune();
+}
 
 // ---------- 電波の状態を伝える（4-06） ----------
 
@@ -1191,6 +1235,9 @@ async function main() {
     dom.emptyBody.textContent = `${err.message} 通信を確認して画面を開き直してください。`;
     dom.emptyReset.hidden = true;
   }
+
+  // 相性の欄は記録を読んでから組む。読めなかった場合も欄自体は出す
+  bindFortune();
 }
 
 main();

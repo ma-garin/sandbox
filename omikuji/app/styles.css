@@ -912,7 +912,9 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  /* 列数をタブの数だけ自動で作る。repeat(4, 1fr) と書いていたとき、
+     5つ目を足した瞬間に最後の1つが2行目へ落ちた */
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   background: var(--surface); box-shadow: var(--shadow-up);
@@ -992,4 +994,81 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 /* iOS のフォーカス時ズームを防ぐため、実機幅では入力を 16px にする */
 @media (max-width: 430px) {
   .search input, .field input, .field select, .field textarea { font-size: var(--text-headline); }
+}
+
+/* ---- 暦と相性 ---- */
+
+/* ラベルと値を1行に。行の実体（地・枠・余白）は .row が持つ */
+.row--fact {
+  display: grid; grid-template-columns: 1fr auto auto;
+  align-items: baseline; gap: var(--space-1) var(--space-3);
+}
+.row--fact .row__label { font-size: var(--text-body); color: var(--text); }
+.row--fact .row__value {
+  font-size: var(--text-body); font-weight: 600; color: var(--text);
+  display: inline-flex; align-items: baseline; gap: var(--space-2);
+}
+.row--fact .row__value.is-weak { font-weight: 400; color: var(--text-weak); }
+.row--fact .row__sub {
+  font-size: var(--text-caption); color: var(--text-weak);
+  font-variant-numeric: tabular-nums;
+}
+/* 但し書きは行の全幅を使う */
+.row--fact .row__note,
+.row--shrine .row__note {
+  grid-column: 1 / -1; margin: 0;
+  font-size: var(--text-caption-2); line-height: var(--lh-caption-2); color: var(--text-weak);
+}
+
+/* 参拝先の行。社名は省略せず全幅に置き、属性と相性は次の行へ回す */
+.row--shrine {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: baseline; gap: var(--space-1) var(--space-3);
+}
+.row--shrine .row__label { font-size: var(--text-body); color: var(--text); }
+.row--shrine .row__sub {
+  font-size: var(--text-caption); color: var(--text-weak);
+  font-variant-numeric: tabular-nums;
+}
+.row--shrine .row__value {
+  grid-column: 1 / -1;
+  font-size: var(--text-subhead); font-weight: 600; color: var(--text);
+  display: inline-flex; align-items: baseline; gap: var(--space-2);
+}
+.row--shrine .row__value.is-weak { font-weight: 400; color: var(--text-weak); }
+
+/* 属性の文字。五行の色は付けない（色が意味を持つと凡例が要る上、
+   属性そのものに典拠がないので、色で権威づけしたくない） */
+.attr {
+  font-weight: 700;
+  min-width: 1.5em; text-align: center;
+}
+.compat { font-size: var(--text-caption); font-weight: 400; }
+.compat.is-good { color: var(--primary); }
+.compat.is-plain { color: var(--text-weak); }
+
+.surface__note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-caption); line-height: var(--lh-caption); color: var(--text-weak);
+}
+
+/* 出どころ。ここは読ませたいので本文と同じ大きさにする */
+.source { padding: var(--space-3) 0; border-bottom: 1px solid var(--line); }
+.source:last-child { border-bottom: 0; }
+.source__title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-subhead); line-height: var(--lh-subhead); font-weight: 700; color: var(--text);
+}
+.source__body {
+  margin: 0;
+  font-size: var(--text-caption); line-height: var(--lh-caption); color: var(--text-sub);
+}
+.source__link {
+  display: inline-block; margin-top: var(--space-1);
+  font-size: var(--text-caption-2); color: var(--primary);
+}
+
+.field__hint {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-caption-2); line-height: var(--lh-caption-2); color: var(--text-weak);
 }

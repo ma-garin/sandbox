@@ -35,6 +35,14 @@ jobs:
           done
           echo "構文 OK"
 
+      # 暦と占いは目で見ても正しさが分からない。
+      # 旧暦は原典（qreki_py）と、六星占術は出典の運命数表と突き合わせる。
+      - name: 旧暦と暦注の検算
+        run: node omikuji/scripts/verify-koyomi.mjs
+
+      - name: 占いの検算
+        run: node omikuji/scripts/verify-fortune.mjs
+
   deploy:
     # main への push のときだけ公開する
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

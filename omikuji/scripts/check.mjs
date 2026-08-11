@@ -120,7 +120,37 @@ if (envUses.length > declared) {
 }
 note(`safe-area の使用 ${envUses.length} 箇所（うち定義 ${declared}）`);
 
-// ---------- 6. manifest ----------
+// ---------- 6. 物差しを通しているか ----------
+//
+// トークンを定義しても、使わなければ意味がない。実際に font-size 19種・
+// gap 12種・border-radius 6種まで散らかった。直値を書いたら落とす。
+
+const tokenBody = css.split('* { box-sizing')[1] || '';
+const rawChecks = [
+  ['font-size', /font-size:\s*[0-9.]+px/g, '--text-* を使う'],
+  ['gap', /(?<!row-)gap:\s*[0-9]+px/g, '--space-* を使う'],
+  ['border-radius', /border-radius:\s*[0-9]+px/g, '--r-* を使う'],
+];
+rawChecks.forEach(([label, re, hint]) => {
+  const hits = tokenBody.match(re) || [];
+  if (hits.length) {
+    fail(`styles.css で ${label} を直値で書いている（${hits.length}箇所: ${[...new Set(hits)].slice(0, 4).join(', ')}）。${hint}`);
+  }
+});
+
+// 同じ役割の部品が増えていないか。増えたら共通の .row / .surface へ寄せる。
+// 見るのは「行の実体（背景・枠・余白）を自前で持っているか」で、
+// 中の並べ方（grid-template-columns など）だけを足すのは重複ではない。
+const ROW_BODY = /(background|border|padding)\s*:/;
+['card', 'vrow', 'visit', 'shrine__day'].forEach((name) => {
+  const m = css.match(new RegExp(`\\n\\.${name} \\{([^}]*)\\}`));
+  if (m && ROW_BODY.test(m[1])) {
+    fail(`.${name} が行の見た目を自前で持っている（背景・枠・余白）。.row に寄せる`);
+  }
+});
+note(`直値の検査 ${rawChecks.length} 種と、部品の重複を確認`);
+
+// ---------- 7. manifest ----------
 
 const manifest = JSON.parse(read('manifest.webmanifest'));
 ['name', 'start_url', 'display', 'icons'].forEach((k) => {

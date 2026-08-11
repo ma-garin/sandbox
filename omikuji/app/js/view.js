@@ -55,7 +55,7 @@ function isUnreadable(entry) {
 
 export function cardEl(entry, onOpen) {
   const li = el('li');
-  const btn = el('button', 'card');
+  const btn = el('button', 'row card');
   btn.type = 'button';
   btn.dataset.id = entry.id;
 
@@ -86,69 +86,6 @@ export function cardEl(entry, onOpen) {
   btn.addEventListener('click', () => onOpen(entry));
   li.appendChild(btn);
   return li;
-}
-
-/* ============================================================
-   TOP の見出し
-   数を並べるのではなく、いちばん言いたい1つを大きく出す。
-   ============================================================ */
-
-const FORTUNE_RANK = ['大吉', '吉', '中吉', '小吉', '末吉', '凶', '大凶'];
-
-/** 続いている月数を主役にする。続いていなければ、通った日数を出す。 */
-export function heroCopy(summary) {
-  if (summary.streak >= 2) {
-    const from = summary.streakFrom ? nextMonthLabel(summary.streakFrom) : null;
-    return {
-      eyebrow: 'つづいています',
-      num: summary.streak,
-      unit: 'か月',
-      note: from ? `${from}から欠かさずお参りしています` : '毎月お参りしています',
-    };
-  }
-  return {
-    eyebrow: 'これまでに',
-    num: summary.days,
-    unit: '日',
-    note: summary.lastVisit ? `最後にお参りしたのは ${formatDate(summary.lastVisit)}` : '',
-  };
-}
-
-function nextMonthLabel(ym) {
-  const [y, m] = ym.split('-').map(Number);
-  const ny = m === 12 ? y + 1 : y;
-  const nm = m === 12 ? 1 : m + 1;
-  return `${ny}年${nm}月`;
-}
-
-/** 吉凶の割合を帯で見せる。数字の表より、偏りが一目で分かる。 */
-export function fortuneBarsEl(summary, onPick) {
-  const total = [...summary.fortunes.values()].reduce((a, b) => a + b, 0);
-  const wrap = el('div', 'bars__inner');
-  if (!total) return wrap;
-
-  const track = el('div', 'bars__track');
-  const legend = el('div', 'bars__legend');
-
-  FORTUNE_RANK.filter((f) => summary.fortunes.has(f)).forEach((f, i) => {
-    const n = summary.fortunes.get(f);
-    const pct = (n / total) * 100;
-
-    const seg = el('button', `bars__seg is-r${i}`);
-    seg.type = 'button';
-    seg.style.width = `${pct}%`;
-    seg.title = `${f} ${n}回`;
-    seg.setAttribute('aria-label', `${f} ${n}回。押すと絞り込みます`);
-    if (onPick) seg.addEventListener('click', () => onPick(f));
-    track.appendChild(seg);
-
-    const item = el('span', 'bars__item');
-    item.append(el('i', `bars__dot is-r${i}`), el('span', 'bars__name', f), el('span', 'bars__n', n));
-    legend.appendChild(item);
-  });
-
-  wrap.append(track, legend);
-  return wrap;
 }
 
 /** 年の区切り見出し（5-10 一覧を見やすくする） */
@@ -328,7 +265,7 @@ export function visitsEl(stats, onPick) {
 
   stats.rows.forEach((row) => {
     const li = el('li');
-    const btn = el('button', 'visit');
+    const btn = el('button', 'row visit');
     btn.type = 'button';
 
     const head = el('div', 'visit__head');
@@ -377,7 +314,7 @@ export function shrineSheetEl(name, entries, onOpen) {
   const list = el('ul', 'shrine__days');
   visits.forEach((entry) => {
     const li = el('li');
-    const btn = el('button', 'shrine__day');
+    const btn = el('button', 'row row--flat shrine__day');
     btn.type = 'button';
 
     // 日付・吉凶・番号を別々の列に置く。まとめて右へ寄せると幅の差で行がガタつく。
@@ -403,7 +340,7 @@ export function shrineSheetEl(name, entries, onOpen) {
 /** 訪問記録タブの1行。日付・時間・場所・目的・おみくじ・賽銭・購入品・メモ。 */
 export function visitRowEl(entry, onOpen) {
   const li = el('li');
-  const btn = el('button', 'vrow');
+  const btn = el('button', 'row vrow');
   btn.type = 'button';
   btn.dataset.id = entry.id;
 

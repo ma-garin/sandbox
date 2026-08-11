@@ -10,7 +10,7 @@ import {
   isQuotaError, makeId, parseItems, formatItems, shrineSuggestions,
   normalizeText, numberKey, sameNumberEntries, todayISO,
   loadProfile, saveProfile,
-  loadLibrary, saveLibrary, parseLibrary, libraryFor,
+  loadLibrary, saveLibrary, parseLibrary, libraryFor, loadBuiltInLibrary,
 } from './store.js';
 import {
   cardEl, detailEl, yearHeaderEl, formatDate,
@@ -111,8 +111,10 @@ let state = {
   openId: null,
   editingId: null,
   pending: null,
-  /** 集めておいた本文。この端末の中だけにあり、公開物には含まれない */
+  /** この端末に取り込んだ・自分で書いた控え */
   library: [],
+  /** アプリに同梱してある控え（data/koi-drafts.json） */
+  libraryBuiltin: [],
 };
 
 let toastTimer = null;
@@ -336,12 +338,15 @@ function renderSettings() {
     : 'この端末だけの記録はまだありません。書き出すものがないので、いまは控えを取る必要はありません。';
   dom.exportBtn.disabled = !hasOwn;
 
-  const lib = state.library;
-  const numbers = new Set(lib.map((x) => x.number));
-  dom.libraryStat.textContent = lib.length
-    ? `${numbers.size}種類の番号ぶん、控えてあります。`
+  const numbers = new Set([...state.libraryBuiltin, ...state.library].map((x) => x.number));
+  const own = state.library.length;
+  dom.libraryStat.textContent = numbers.size
+    ? `${numbers.size}種類の番号ぶん、控えてあります`
+      + `（うちアプリに入っているもの ${new Set(state.libraryBuiltin.map((x) => x.number)).size}種類`
+      + `${own ? `、この端末で足したもの ${own}件` : ''}）。`
     : '下書きはまだありません。';
-  dom.libraryClearBtn.hidden = !lib.length;
+  // 消せるのはこの端末で足したぶんだけ。同梱のものは消えない
+  dom.libraryClearBtn.hidden = !own;
 
   dom.hiddenBlock.hidden = hidden.length === 0;
   if (hidden.length) {
@@ -703,7 +708,7 @@ function syncRecall() {
   if (!number) { dom.recall.hidden = true; return; }
 
   const mine = sameNumberEntries(visibleEntries(), { id: state.editingId, number, shrine });
-  const drafts = libraryFor(state.library, { shrine, number });
+  const drafts = libraryFor([...state.libraryBuiltin, ...state.library], { shrine, number });
   if (!mine.length && !drafts.length) { dom.recall.hidden = true; return; }
 
   const parts = [];
@@ -1424,7 +1429,7 @@ async function main() {
 
   // 相性の欄は記録を読んでから組む。読めなかった場合も欄自体は出す
   bindFortune();
-  setState({ library: loadLibrary() });
+  setState({ library: loadLibrary(), libraryBuiltin: await loadBuiltInLibrary() });
 }
 
 main();

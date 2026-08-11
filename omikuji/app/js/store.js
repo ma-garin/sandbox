@@ -28,6 +28,21 @@ export async function loadBuiltIn() {
   return json.entries.map((e) => Object.freeze({ ...e, source: 'builtin' }));
 }
 
+/**
+ * あらかじめ集めておいた本文。読めなくても画面は動くので、失敗したら空で返す。
+ * 端末に取り込んだ下書き（loadLibrary）とは別に持ち、上書きしない。
+ */
+export async function loadBuiltInLibrary() {
+  try {
+    const res = await fetch('data/koi-drafts.json', { cache: 'no-cache' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json?.items) ? json.items : [];
+  } catch {
+    return [];
+  }
+}
+
 /** この端末に足した記録を読む。壊れていたら握りつぶさず空にして警告を返す。 */
 export function loadUser() {
   const raw = localStorage.getItem(KEY_ENTRIES);

@@ -5,7 +5,7 @@
  * 画面の骨格も記録も最初にまとめて取りに行き、以後は通信なしで読める。
  */
 
-const VERSION = 'v7';
+const VERSION = 'v8';
 const SHELL = `omikuji-shell-${VERSION}`;
 
 const SHELL_FILES = [
@@ -22,6 +22,7 @@ const SHELL_FILES = [
   'js/fortune.js',
   'js/install.js',
   'data/omikuji.json',
+  'data/koi-drafts.json',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

@@ -1,0 +1,188 @@
+/* ============================================================
+   apple.css — Apple 風スタイル（HIG / iOS・macOS）
+   SF フォント、systemBlue、繊細な角丸と余白、iOS スイッチ、
+   セグメンテッドコントロール、グループ化された面。
+   ============================================================ */
+
+:root, :root[data-theme="light"] {
+  --ap-blue: #007AFF;
+  --ap-blue-press: #0062CC;
+  --ap-green: #34C759;
+  --ap-red: #FF3B30;
+  --ap-orange: #FF9500;
+
+  --ap-bg: #F2F2F7;
+  --ap-surface: #FFFFFF;
+  --ap-surface-2: #FFFFFF;
+  --ap-fill: rgba(120,120,128,.12);
+  --ap-fill-strong: rgba(120,120,128,.2);
+  --ap-label: #1C1C1E;
+  --ap-label-2: rgba(60,60,67,.6);
+  --ap-label-3: rgba(60,60,67,.3);
+  --ap-separator: rgba(60,60,67,.18);
+  --ap-tint: rgba(0,122,255,.12);
+
+  --sc-page-bg: var(--ap-bg);
+  --sc-surface: var(--ap-surface);
+  --sc-fg: var(--ap-label);
+  --sc-muted: var(--ap-label-2);
+  --sc-border: var(--ap-separator);
+  --sc-accent: var(--ap-blue);
+  --sc-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --sc-mono: "SF Mono", ui-monospace, monospace;
+  --sc-section-radius: 16px;
+  --sc-swatch-radius: 12px;
+  --sc-toast-radius: 12px;
+}
+
+:root[data-theme="dark"] {
+  --ap-blue: #0A84FF;
+  --ap-blue-press: #409CFF;
+  --ap-green: #30D158;
+  --ap-red: #FF453A;
+  --ap-orange: #FF9F0A;
+
+  --ap-bg: #000000;
+  --ap-surface: #1C1C1E;
+  --ap-surface-2: #2C2C2E;
+  --ap-fill: rgba(120,120,128,.24);
+  --ap-fill-strong: rgba(120,120,128,.36);
+  --ap-label: #FFFFFF;
+  --ap-label-2: rgba(235,235,245,.6);
+  --ap-label-3: rgba(235,235,245,.3);
+  --ap-separator: rgba(84,84,88,.6);
+  --ap-tint: rgba(10,132,255,.22);
+
+  --sc-page-bg: var(--ap-bg);
+  --sc-surface: var(--ap-surface);
+  --sc-fg: var(--ap-label);
+  --sc-muted: var(--ap-label-2);
+  --sc-border: var(--ap-separator);
+  --sc-accent: var(--ap-blue);
+}
+
+body { letter-spacing: -.01em; }
+.sc-section { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+:root[data-theme="dark"] .sc-section { box-shadow: none; border: 0.5px solid var(--ap-separator); }
+.sc-theme-btn { border-radius: 980px; background: var(--ap-fill); border: none; color: var(--ap-blue); }
+.sc-theme-btn:hover { background: var(--ap-fill-strong); }
+.sc-principles span { border-radius: 980px; border-color: var(--ap-separator); }
+.sc-header h1 { letter-spacing: -.02em; font-weight: 700; }
+.sc-eyebrow { color: var(--ap-blue); }
+
+/* タイポ */
+.ap-large { font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -.03em; }
+.ap-title { font-size: 26px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; }
+.ap-headline { font-size: 18px; line-height: 1.3; font-weight: 600; }
+.ap-body { font-size: 16px; line-height: 1.45; }
+.ap-foot { font-size: 13px; color: var(--ap-label-2); }
+
+/* ボタン */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; padding: 0 18px;
+  border: none; cursor: pointer; border-radius: 12px; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+  white-space: nowrap; transition: background .12s, transform .06s, opacity .12s; }
+.btn:active { transform: scale(.97); }
+.btn.compact { height: 32px; font-size: 14px; border-radius: 9px; padding: 0 14px; }
+.btn .ic { width: 17px; height: 17px; }
+.btn--primary { background: var(--ap-blue); color: #fff; }
+.btn--primary:hover { background: var(--ap-blue-press); }
+.btn--secondary { background: var(--ap-tint); color: var(--ap-blue); }
+.btn--tertiary { background: var(--ap-fill); color: var(--ap-label); }
+.btn--ghost { background: transparent; color: var(--ap-blue); }
+.btn--ghost:hover { background: var(--ap-fill); }
+.btn--danger { background: var(--ap-red); color: #fff; }
+.btn[disabled] { opacity: .38; cursor: not-allowed; }
+
+/* セグメンテッドコントロール（Apple の象徴） */
+.seg { display: inline-flex; padding: 2px; background: var(--ap-fill); border-radius: 9px; }
+.seg button { border: none; background: transparent; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500;
+  color: var(--ap-label); padding: 6px 16px; border-radius: 7px; transition: background .14s; }
+.seg button.is-active { background: var(--ap-surface); box-shadow: 0 1px 3px rgba(0,0,0,.14); font-weight: 600; }
+:root[data-theme="dark"] .seg button.is-active { background: #636366; }
+
+/* フォーム */
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field > label { font-size: 13px; color: var(--ap-label-2); font-weight: 500; margin-left: 2px; }
+.field input[type="text"], .field input[type="email"], .field input[type="date"], .field select, .field textarea {
+  font: inherit; font-size: 16px; color: var(--ap-label); background: var(--ap-fill); border: none;
+  border-radius: 10px; padding: 11px 14px; height: 44px; transition: box-shadow .12s; }
+.field textarea { height: auto; min-height: 88px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; box-shadow: 0 0 0 3.5px var(--ap-tint); }
+.field select { appearance: none; }
+
+.ck, .rd { appearance: none; width: 22px; height: 22px; flex: none; cursor: pointer;
+  border: 1.5px solid var(--ap-label-3); position: relative; transition: background .12s, border-color .12s; }
+.ck { border-radius: 6px; } .rd { border-radius: 50%; }
+.ck:checked, .rd:checked { background: var(--ap-blue); border-color: var(--ap-blue); }
+.ck:checked::after { content: ""; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.rd:checked::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #fff; }
+label.opt { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; cursor: pointer; }
+
+/* iOS スイッチ */
+.sw { appearance: none; cursor: pointer; width: 51px; height: 31px; border-radius: 980px; flex: none;
+  background: var(--ap-fill-strong); position: relative; transition: background .2s; }
+.sw::after { content: ""; position: absolute; left: 2px; top: 2px; width: 27px; height: 27px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.25); transition: transform .2s; }
+.sw:checked { background: var(--ap-green); }
+.sw:checked::after { transform: translateX(20px); }
+
+/* ピル/バッジ */
+.pill { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border-radius: 980px; font-size: 13px; font-weight: 600; }
+.pill--blue { background: var(--ap-tint); color: var(--ap-blue); }
+.pill--green { background: rgba(52,199,89,.15); color: #248A3D; }
+.pill--red { background: rgba(255,59,48,.15); color: #D70015; }
+.pill--gray { background: var(--ap-fill); color: var(--ap-label-2); }
+:root[data-theme="dark"] .pill--green { color: #30D158; } :root[data-theme="dark"] .pill--red { color: #FF453A; }
+
+/* カード（グループ化された面） */
+.card { background: var(--ap-surface); border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; }
+:root[data-theme="dark"] .card { box-shadow: none; border: 0.5px solid var(--ap-separator); }
+.card .card__media { height: 92px; background: linear-gradient(135deg, #5AC8FA, #007AFF); }
+.card .card__body { padding: 16px; }
+.card .card__body h4 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.card .card__body p { margin: 0 0 14px; font-size: 14px; color: var(--ap-label-2); }
+
+/* グループ化リスト（Apple らしいテーブル） */
+.data-table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 520px; }
+.data-table th { text-align: left; font-weight: 400; color: var(--ap-label-2); padding: 10px 16px; font-size: 13px; border-bottom: 0.5px solid var(--ap-separator); }
+.data-table td { padding: 13px 16px; border-bottom: 0.5px solid var(--ap-separator); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--ap-fill); }
+
+/* フィードバック（塗りの淡いバナー） */
+.note { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; border-radius: 12px; font-size: 14.5px; }
+.note .ic { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.note--info { background: var(--ap-tint); color: var(--ap-blue); }
+.note--success { background: rgba(52,199,89,.14); color: #248A3D; }
+.note--error { background: rgba(255,59,48,.14); color: #D70015; }
+:root[data-theme="dark"] .note--success { color: #30D158; } :root[data-theme="dark"] .note--error { color: #FF453A; }
+
+/* タブ */
+.tabs { display: flex; gap: 24px; border-bottom: 0.5px solid var(--ap-separator); }
+.tabs button { position: relative; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 15px; font-weight: 500;
+  color: var(--ap-label-2); padding: 12px 2px; }
+.tabs button.is-active { color: var(--ap-blue); font-weight: 600; }
+.tabs button.is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.5px; height: 2px; background: var(--ap-blue); border-radius: 2px; }
+.tab-panel { padding: 16px 2px; font-size: 15px; color: var(--ap-label-2); }
+
+/* プログレス */
+.progress { height: 6px; border-radius: 980px; background: var(--ap-fill-strong); overflow: hidden; }
+.progress > i { display: block; height: 100%; border-radius: 980px; background: var(--ap-blue); }
+.spinner { width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--ap-fill-strong); border-top-color: var(--ap-blue); animation: ap-spin .8s linear infinite; }
+@keyframes ap-spin { to { transform: rotate(360deg); } }
+
+/* モーダル（iOS アラート） */
+[data-modal] { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px;
+  background: rgba(0,0,0,.28); backdrop-filter: blur(2px); }
+[data-modal][hidden] { display: none; }
+.dialog { width: 100%; max-width: 300px; background: var(--ap-surface-2); border-radius: 16px; overflow: hidden; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+:root[data-theme="dark"] .dialog { background: #2C2C2E; }
+.dialog__body { padding: 20px 18px 16px; }
+.dialog h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.dialog p { margin: 0; font-size: 13px; color: var(--ap-label-2); }
+.dialog__actions { display: flex; border-top: 0.5px solid var(--ap-separator); }
+.dialog__actions button { flex: 1; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 17px;
+  color: var(--ap-blue); padding: 12px; }
+.dialog__actions button + button { border-left: 0.5px solid var(--ap-separator); }
+.dialog__actions button.destructive { color: var(--ap-red); font-weight: 600; }

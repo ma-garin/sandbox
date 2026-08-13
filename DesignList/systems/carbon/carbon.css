@@ -1,0 +1,217 @@
+/* ============================================================
+   carbon.css — IBM Carbon 風スタイル
+   直線的・角ばった形状（角丸ほぼ 0）、機能的グレー、Blue 60、
+   グリッド厳格・エンタープライズ寄り。White / Gray 100 テーマ。
+   ============================================================ */
+
+:root, :root[data-theme="light"] {
+  /* Carbon カラートークン（White テーマ） */
+  --cds-blue-60: #0F62FE;   /* interactive / primary */
+  --cds-blue-70: #0043CE;   /* hover */
+  --cds-blue-80: #002D9C;   /* active */
+  --cds-gray-10: #F4F4F4;   /* layer / field */
+  --cds-gray-20: #E0E0E0;   /* border-subtle */
+  --cds-gray-30: #C6C6C6;   /* disabled */
+  --cds-gray-50: #8D8D8D;   /* border-strong / placeholder */
+  --cds-gray-70: #525252;   /* text-secondary */
+  --cds-gray-80: #393939;   /* button secondary */
+  --cds-gray-100: #161616;  /* text-primary */
+  --cds-white: #FFFFFF;
+  --cds-red-60: #DA1E28;    /* danger */
+  --cds-red-70: #A2191F;
+  --cds-green-50: #24A148;  /* success */
+  --cds-support-info: #0043CE;
+
+  --cds-background: #FFFFFF;
+  --cds-layer: #F4F4F4;
+  --cds-layer-accent: #E0E0E0;
+  --cds-text-primary: #161616;
+  --cds-text-secondary: #525252;
+  --cds-border-subtle: #E0E0E0;
+  --cds-border-strong: #8D8D8D;
+
+  /* 共通スキャフォールドへの割当 */
+  --sc-page-bg: #F4F4F4;
+  --sc-surface: #FFFFFF;
+  --sc-fg: var(--cds-text-primary);
+  --sc-muted: var(--cds-text-secondary);
+  --sc-border: var(--cds-border-subtle);
+  --sc-accent: var(--cds-blue-60);
+  --sc-font: "IBM Plex Sans", "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  --sc-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --sc-section-radius: 0px;
+  --sc-swatch-radius: 0px;
+  --sc-toast-radius: 0px;
+}
+
+:root[data-theme="dark"] {
+  /* Gray 100 テーマ */
+  --cds-blue-60: #4589FF;
+  --cds-blue-70: #0F62FE;
+  --cds-gray-80: #393939;
+
+  --cds-background: #161616;
+  --cds-layer: #262626;
+  --cds-layer-accent: #393939;
+  --cds-text-primary: #F4F4F4;
+  --cds-text-secondary: #C6C6C6;
+  --cds-border-subtle: #393939;
+  --cds-border-strong: #6F6F6F;
+  --cds-gray-10: #262626;
+  --cds-gray-20: #393939;
+  --cds-gray-50: #6F6F6F;
+  --cds-red-60: #FA4D56;
+  --cds-green-50: #42BE65;
+
+  --sc-page-bg: #161616;
+  --sc-surface: #262626;
+  --sc-fg: var(--cds-text-primary);
+  --sc-muted: var(--cds-text-secondary);
+  --sc-border: var(--cds-border-subtle);
+  --sc-accent: var(--cds-blue-60);
+}
+
+body { letter-spacing: 0; }
+.sc-section { border-radius: 0; border: 1px solid var(--cds-border-subtle); background: var(--cds-surface, var(--sc-surface)); box-shadow: none; }
+.sc-theme-btn { border-radius: 0; border-color: var(--cds-border-strong); }
+.sc-theme-btn:hover { background: var(--cds-layer); }
+.sc-principles span { border-radius: 0; }
+.sc-header h1 { letter-spacing: -.5px; font-weight: 600; }
+.sc-eyebrow { color: var(--cds-blue-60); }
+
+/* ---------- タイポグラフィ ---------- */
+.cds-display { font-size: 42px; line-height: 1.1; font-weight: 300; letter-spacing: -.64px; }
+.cds-heading { font-size: 28px; line-height: 1.25; font-weight: 600; }
+.cds-title { font-size: 20px; line-height: 1.4; font-weight: 600; }
+.cds-body { font-size: 14px; line-height: 1.5; font-weight: 400; }
+.cds-label { font-size: 12px; line-height: 1.33; font-weight: 400; letter-spacing: .32px; color: var(--cds-text-secondary); }
+
+/* ---------- ボタン（角ばった / 背が高い / 左寄せ） ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 32px;
+  min-height: 48px; padding: 12px 16px 12px 16px; border: 1px solid transparent; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 400; letter-spacing: 0; border-radius: 0; white-space: nowrap;
+  transition: background .11s, border-color .11s, color .11s;
+}
+.btn.compact { min-height: 40px; }
+.btn .ic { width: 16px; height: 16px; }
+.btn:focus-visible { outline: 2px solid var(--cds-blue-60); outline-offset: -2px; }
+
+.btn--primary { background: var(--cds-blue-60); color: #fff; }
+.btn--primary:hover { background: var(--cds-blue-70); }
+.btn--primary:active { background: var(--cds-blue-80); }
+.btn--secondary { background: var(--cds-gray-80); color: #fff; }
+.btn--secondary:hover { background: #4c4c4c; }
+.btn--tertiary { background: transparent; color: var(--cds-blue-60); border-color: var(--cds-blue-60); }
+.btn--tertiary:hover { background: var(--cds-blue-60); color: #fff; }
+.btn--ghost { background: transparent; color: var(--cds-blue-60); }
+.btn--ghost:hover { background: var(--cds-layer); }
+.btn--danger { background: var(--cds-red-60); color: #fff; }
+.btn--danger:hover { background: var(--cds-red-70); }
+.btn[disabled] { cursor: not-allowed; background: var(--cds-gray-30); color: var(--cds-gray-50); border-color: transparent; }
+:root[data-theme="dark"] .btn[disabled] { background: #525252; color: #8d8d8d; }
+
+/* ---------- フォーム（Carbon は下線＋薄い塗り） ---------- */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-size: 12px; color: var(--cds-text-secondary); letter-spacing: .32px; }
+.field input[type="text"], .field input[type="email"], .field input[type="date"], .field select, .field textarea {
+  font: inherit; font-size: 14px; color: var(--cds-text-primary);
+  background: var(--cds-layer); border: none; border-bottom: 1px solid var(--cds-border-strong);
+  border-radius: 0; padding: 11px 16px; height: 48px; transition: outline .1s;
+}
+.field textarea { height: auto; min-height: 88px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: 2px solid var(--cds-blue-60); outline-offset: -2px; border-bottom-color: transparent;
+}
+.field select { appearance: none; }
+.field input::placeholder { color: var(--cds-gray-50); }
+
+.cds-check, .cds-radio {
+  appearance: none; width: 16px; height: 16px; flex: none; cursor: pointer;
+  border: 1px solid var(--cds-text-primary); position: relative; background: transparent; transition: background .1s;
+}
+.cds-check { border-radius: 0; }
+.cds-radio { border-radius: 50%; }
+.cds-check:checked { background: var(--cds-text-primary); }
+.cds-check:checked::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid var(--cds-background); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.cds-radio:checked::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--cds-text-primary); }
+.cds-check:focus-visible, .cds-radio:focus-visible { outline: 2px solid var(--cds-blue-60); outline-offset: 1px; }
+label.opt { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+
+/* Carbon トグル */
+.cds-toggle { appearance: none; cursor: pointer; width: 48px; height: 24px; border-radius: 100px; flex: none;
+  background: var(--cds-gray-50); position: relative; transition: background .1s; }
+.cds-toggle::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .1s; }
+.cds-toggle:checked { background: var(--cds-green-50); }
+.cds-toggle:checked::after { transform: translateX(24px); }
+.cds-toggle:focus-visible { outline: 2px solid var(--cds-blue-60); outline-offset: 2px; }
+
+/* ---------- タグ・バッジ（Carbon タグは角丸ピル） ---------- */
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 100px; font-size: 12px; font-weight: 400; }
+.tag--blue { background: #D0E2FF; color: #002D9C; }
+.tag--green { background: #A7F0BA; color: #044317; }
+.tag--red { background: #FFD7D9; color: #750E13; }
+.tag--gray { background: var(--cds-gray-20); color: var(--cds-text-primary); }
+:root[data-theme="dark"] .tag--blue { background: #002D9C; color: #D0E2FF; }
+:root[data-theme="dark"] .tag--green { background: #044317; color: #A7F0BA; }
+:root[data-theme="dark"] .tag--red { background: #750E13; color: #FFD7D9; }
+:root[data-theme="dark"] .tag--gray { background: #393939; color: #F4F4F4; }
+
+/* ステータス（四角い小ドット＋テキスト） */
+.status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.status::before { content: ""; width: 8px; height: 8px; }
+.status--progress::before { background: var(--cds-blue-60); }
+.status--done::before { background: var(--cds-green-50); }
+.status--over::before { background: var(--cds-red-60); }
+
+/* ---------- タイル（カード） ---------- */
+.tile { background: var(--cds-layer); border: 1px solid transparent; padding: 20px; transition: border-color .1s; }
+.tile:hover { border-color: var(--cds-blue-60); }
+.tile h4 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.tile p { margin: 0 0 16px; font-size: 13px; color: var(--cds-text-secondary); }
+.tile--bordered { background: var(--cds-background); border: 1px solid var(--cds-border-subtle); }
+
+/* ---------- データテーブル（構造的・ヘッダ濃色） ---------- */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+.data-table th { text-align: left; font-weight: 600; color: var(--cds-text-primary); background: var(--cds-layer-accent); padding: 13px 16px; font-size: 12px; letter-spacing: .16px; }
+:root[data-theme="dark"] .data-table th { background: #333333; }
+.data-table td { padding: 14px 16px; border-bottom: 1px solid var(--cds-border-subtle); background: var(--cds-layer); }
+.data-table tbody tr:hover td { background: var(--cds-layer-accent); }
+
+/* ---------- インライン通知（左に太いバー / Carbon の象徴） ---------- */
+.notification { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-left: 3px solid; }
+.notification .ic { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.notification .title { font-weight: 600; font-size: 13.5px; }
+.notification .msg { font-size: 13px; color: var(--cds-text-secondary); }
+.notification--info { background: #EDF5FF; border-color: var(--cds-support-info); color: #161616; }
+.notification--success { background: #DEFBE6; border-color: var(--cds-green-50); color: #161616; }
+.notification--error { background: #FFF1F1; border-color: var(--cds-red-60); color: #161616; }
+:root[data-theme="dark"] .notification--info { background: #1c2a3a; color: #f4f4f4; }
+:root[data-theme="dark"] .notification--success { background: #1a2e20; color: #f4f4f4; }
+:root[data-theme="dark"] .notification--error { background: #341a1c; color: #f4f4f4; }
+:root[data-theme="dark"] .notification .msg { color: #c6c6c6; }
+
+/* ---------- タブ ---------- */
+.tabs { display: flex; border-bottom: 1px solid var(--cds-border-subtle); }
+.tabs button { position: relative; border: none; background: transparent; cursor: pointer; font: inherit; font-size: 14px;
+  color: var(--cds-text-secondary); padding: 13px 16px; border-bottom: 2px solid transparent; }
+.tabs button:hover { color: var(--cds-text-primary); border-bottom-color: var(--cds-border-strong); }
+.tabs button.is-active { color: var(--cds-text-primary); font-weight: 600; border-bottom-color: var(--cds-blue-60); }
+.tab-panel { padding: 18px 4px; font-size: 14px; color: var(--cds-text-secondary); }
+
+/* ---------- プログレス ---------- */
+.progress { height: 4px; background: var(--cds-layer-accent); overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--cds-blue-60); }
+.spinner { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--cds-layer-accent); border-top-color: var(--cds-blue-60); animation: cds-spin .8s linear infinite; }
+@keyframes cds-spin { to { transform: rotate(360deg); } }
+
+/* ---------- モーダル（角ばり / フッタ全幅ボタン） ---------- */
+[data-modal] { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; background: rgba(22,22,22,.5); }
+[data-modal][hidden] { display: none; }
+.cds-modal { width: 100%; max-width: 480px; background: var(--cds-surface, var(--sc-surface)); border-radius: 0; }
+:root[data-theme="dark"] .cds-modal { background: #262626; }
+.cds-modal__head { padding: 20px 20px 8px; }
+.cds-modal__head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.cds-modal__body { padding: 8px 20px 40px; font-size: 14px; color: var(--cds-text-secondary); }
+.cds-modal__foot { display: flex; }
+.cds-modal__foot .btn { flex: 1; min-height: 64px; align-items: flex-start; }

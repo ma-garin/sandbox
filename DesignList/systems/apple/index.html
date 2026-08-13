@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apple 風（HIG）— DesignList</title>
+  <meta name="description" content="Apple 風のコンポーネント集。SFフォント・systemBlue・繊細な角丸・iOSスイッチ・セグメンテッドコントロール。">
+  <link rel="stylesheet" href="../_shared/showcase.css">
+  <link rel="stylesheet" href="apple.css">
+</head>
+<body>
+  <div class="showcase">
+
+    <div class="sc-topbar">
+      <a class="sc-back" href="../../index.html">← カタログに戻る</a>
+      <span class="spacer"></span>
+      <button class="sc-theme-btn" data-toggle-theme>◐ テーマ: <span data-theme-label>ライト</span></button>
+    </div>
+
+    <header class="sc-header">
+      <div class="sc-eyebrow">Design System 03</div>
+      <h1>Apple 風（HIG）</h1>
+      <p class="tagline">Apple の Human Interface Guidelines。SF フォント、systemBlue のアクセント、繊細な角丸と広い余白、明快なコントラスト。iOS スイッチやセグメンテッドコントロールなど、馴染みのある操作部品が特徴。</p>
+      <div class="sc-principles"><span>繊細な角丸</span><span>systemBlue</span><span>広い余白</span><span>iOS部品</span><span>SF Pro</span></div>
+    </header>
+
+    <section class="sc-section">
+      <h2>カラートークン</h2>
+      <p class="sc-hint">system カラー（クリックで値をコピー）。ダークでは各色が明るめのトーンに切り替わります。</p>
+      <div class="swatches">
+        <div class="swatch" data-copy="#007AFF"><div class="chip" style="background:var(--ap-blue)"></div><div class="meta"><div class="n">systemBlue</div><div class="v">#007AFF</div></div></div>
+        <div class="swatch" data-copy="#34C759"><div class="chip" style="background:var(--ap-green)"></div><div class="meta"><div class="n">systemGreen</div><div class="v">#34C759</div></div></div>
+        <div class="swatch" data-copy="#FF3B30"><div class="chip" style="background:var(--ap-red)"></div><div class="meta"><div class="n">systemRed</div><div class="v">#FF3B30</div></div></div>
+        <div class="swatch" data-copy="#FF9500"><div class="chip" style="background:var(--ap-orange)"></div><div class="meta"><div class="n">systemOrange</div><div class="v">#FF9500</div></div></div>
+        <div class="swatch" data-copy="#F2F2F7"><div class="chip" style="background:#F2F2F7;border-bottom:0.5px solid var(--ap-separator)"></div><div class="meta"><div class="n">groupedBg</div><div class="v">#F2F2F7</div></div></div>
+        <div class="swatch" data-copy="#1C1C1E"><div class="chip" style="background:#1C1C1E"></div><div class="meta"><div class="n">label</div><div class="v">#1C1C1E</div></div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>タイポグラフィ</h2>
+      <p class="sc-hint">San Francisco ベースのスケール（抜粋）。</p>
+      <div class="type-scale">
+        <div class="lbl">Large Title</div><div class="ap-large">タスクを、ひとつの土台で</div>
+        <div class="lbl">Title</div><div class="ap-title">今週の進捗と担当</div>
+        <div class="lbl">Headline</div><div class="ap-headline">リリースノート v5.0 のレビュー</div>
+        <div class="lbl">Body</div><div class="ap-body">優先度・期限・担当を体系的に管理し、迷わず今日やることに集中できます。</div>
+        <div class="lbl">Footnote</div><div class="ap-foot">補足テキスト / キャプション</div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>ボタン</h2>
+      <p class="sc-hint">Filled / Tinted / Gray / Plain / Destructive。押下でわずかに縮みます。</p>
+      <div class="sc-row">
+        <button class="btn btn--primary">Filled</button>
+        <button class="btn btn--secondary">Tinted</button>
+        <button class="btn btn--tertiary">Gray</button>
+        <button class="btn btn--ghost">Plain</button>
+        <button class="btn btn--danger">Destructive</button>
+        <button class="btn btn--primary" disabled>Disabled</button>
+      </div>
+      <div class="sc-subhead">セグメンテッドコントロール</div>
+      <div data-tabs>
+        <div class="seg">
+          <button data-tab="a" class="is-active">すべて</button>
+          <button data-tab="b">進行中</button>
+          <button data-tab="c">完了</button>
+        </div>
+        <div class="tab-panel" data-panel="a">すべてのタスク 14 件。</div>
+        <div class="tab-panel" data-panel="b" hidden>進行中のタスク 8 件。</div>
+        <div class="tab-panel" data-panel="c" hidden>完了したタスク 4 件。</div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>フォーム</h2>
+      <p class="sc-hint">塗りのテキストフィールド（フォーカスで青いリング）、チェック / ラジオ / iOS スイッチ。</p>
+      <div class="form-grid">
+        <div class="field"><label>タスク名</label><input type="text" placeholder="例: リリースノートのレビュー"></div>
+        <div class="field"><label>プロジェクト</label><select><option>AIDD Kit</option><option>QA監査ツール</option><option>Design</option></select></div>
+        <div class="field"><label>期限</label><input type="date" value="2026-07-12"></div>
+      </div>
+      <div class="sc-subhead">選択コントロール</div>
+      <div class="sc-row" style="gap:22px">
+        <label class="opt"><input class="ck" type="checkbox" checked> 期限リマインダー</label>
+        <label class="opt"><input class="ck" type="checkbox"> 週次サマリー</label>
+        <label class="opt"><input class="rd" type="radio" name="pri" checked> 高</label>
+        <label class="opt"><input class="rd" type="radio" name="pri"> 中</label>
+        <label class="opt"><input class="sw" type="checkbox" checked> 通知ON</label>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>ピル・バッジ</h2>
+      <p class="sc-hint">淡い塗りのステータスピル。</p>
+      <div class="sc-row">
+        <span class="pill pill--blue">進行中</span>
+        <span class="pill pill--green">完了</span>
+        <span class="pill pill--red">期限超過</span>
+        <span class="pill pill--gray">下書き</span>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>カード</h2>
+      <p class="sc-hint">柔らかい影と大きな角丸のカード。</p>
+      <div class="demo-grid">
+        <div class="card"><div class="card__media"></div><div class="card__body"><h4>メディアカード</h4><p>上部にビジュアル、下に本文とアクション。</p><button class="btn btn--primary compact">開く</button></div></div>
+        <div class="card"><div class="card__body"><h4>シンプルカード</h4><p>影で浮かせる基本のカード。</p><button class="btn btn--secondary compact">開く</button></div></div>
+        <div class="card"><div class="card__body"><h4>数値カード</h4><p>KPI 表示に。</p><div class="ap-title">71%</div></div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>リスト（テーブル）</h2>
+      <p class="sc-hint">ヘアラインで区切るグループ化リスト。</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>タスク</th><th>プロジェクト</th><th>優先度</th><th>状態</th></tr></thead>
+          <tbody>
+            <tr><td>リリースノート v5.0 のレビュー</td><td>AIDD Kit</td><td><span class="pill pill--red">高</span></td><td><span class="pill pill--blue">進行中</span></td></tr>
+            <tr><td>デザインシステムのダーク対応</td><td>Design</td><td><span class="pill pill--gray">中</span></td><td><span class="pill pill--blue">進行中</span></td></tr>
+            <tr><td>週次レトロの下書き</td><td>Process</td><td><span class="pill pill--gray">低</span></td><td><span class="pill pill--green">完了</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>フィードバック</h2>
+      <p class="sc-hint">淡い塗りのインラインバナー。</p>
+      <div class="sc-stack">
+        <div class="note note--info"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg><div>期限の24時間前にリマインダーを送ります。</div></div>
+        <div class="note note--success"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>タスクを作成しました。</div></div>
+        <div class="note note--error"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg><div>この操作は取り消せません。</div></div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>タブ</h2>
+      <p class="sc-hint">下線インジケータ。</p>
+      <div data-tabs>
+        <div class="tabs">
+          <button data-tab="x" class="is-active">概要</button>
+          <button data-tab="y">タスク</button>
+          <button data-tab="z">メンバー</button>
+        </div>
+        <div class="tab-panel" data-panel="x">プロジェクトの概要を表示しています。</div>
+        <div class="tab-panel" data-panel="y" hidden>タスク一覧を表示しています。</div>
+        <div class="tab-panel" data-panel="z" hidden>メンバー一覧を表示しています。</div>
+      </div>
+    </section>
+
+    <section class="sc-section">
+      <h2>プログレス</h2>
+      <p class="sc-hint">丸みのあるプログレスと円形インジケータ。</p>
+      <div class="sc-stack" style="max-width:420px">
+        <div class="progress"><i style="width:71%"></i></div>
+        <div class="progress"><i style="width:34%"></i></div>
+      </div>
+      <div class="sc-subhead">インジケータ</div>
+      <div class="spinner"></div>
+    </section>
+
+    <section class="sc-section">
+      <h2>オーバーレイ</h2>
+      <p class="sc-hint">iOS スタイルのアラート（ボタンはハアライン区切り）。</p>
+      <button class="btn btn--danger" data-open-modal="ap-alert">アラートを開く</button>
+    </section>
+
+  </div>
+
+  <div data-modal id="ap-alert" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog__body">
+        <h3>タスクを削除しますか？</h3>
+        <p>「リリースノート v5.0 のレビュー」を削除します。この操作は取り消せません。</p>
+      </div>
+      <div class="dialog__actions">
+        <button data-close-modal>キャンセル</button>
+        <button class="destructive" data-close-modal data-toast="削除しました">削除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../_shared/showcase.js"></script>
+</body>
+</html>

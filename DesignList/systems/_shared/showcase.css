@@ -1,0 +1,97 @@
+/* ============================================================
+   showcase.css — デザイン中立のレイアウト骨組み（全システム共通）
+   色・角丸・タイポなどの"見た目"は各システムの css が
+   --sc-* トークンと各コンポーネント class を上書きして与える。
+   ここではページ構造・間隔・グリッドのみを定義する。
+   ============================================================ */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--sc-page-bg, #fff);
+  color: var(--sc-fg, #111);
+  font-family: var(--sc-font, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  transition: background .2s, color .2s;
+}
+a { color: inherit; }
+svg { display: block; }
+
+.showcase { max-width: 1080px; margin: 0 auto; padding: 28px 24px 96px; }
+
+/* トップバー（戻る / テーマ切替） */
+.sc-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.sc-topbar .spacer { flex: 1; }
+.sc-back {
+  display: inline-flex; align-items: center; gap: 7px; text-decoration: none;
+  font-size: 13px; color: var(--sc-muted, #666); font-weight: 600;
+}
+.sc-back:hover { color: var(--sc-fg, #111); }
+.sc-theme-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600;
+  padding: 8px 14px; background: transparent;
+  color: var(--sc-fg); border: 1px solid var(--sc-border, #ddd);
+}
+
+/* ヘッダ */
+.sc-header { margin-bottom: 28px; }
+.sc-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--sc-accent, #666); font-weight: 700; }
+.sc-header h1 { margin: 8px 0 8px; font-size: 34px; line-height: 1.15; }
+.sc-header .tagline { margin: 0 0 16px; color: var(--sc-muted, #666); font-size: 15px; max-width: 640px; }
+.sc-principles { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-principles span {
+  font-size: 12px; font-weight: 600; padding: 5px 12px;
+  border: 1px solid var(--sc-border, #ddd); color: var(--sc-muted, #666);
+}
+
+/* セクション */
+.sc-section {
+  margin-top: 22px; padding: 24px;
+  background: var(--sc-surface, #fff);
+  border: 1px solid var(--sc-border, #e5e5e5);
+  border-radius: var(--sc-section-radius, 12px);
+}
+.sc-section > h2 { margin: 0 0 4px; font-size: 18px; }
+.sc-section > .sc-hint { margin: 0 0 18px; color: var(--sc-muted, #666); font-size: 13px; }
+.sc-subhead { font-size: 12px; font-weight: 700; color: var(--sc-muted, #666); margin: 18px 0 10px; text-transform: uppercase; letter-spacing: .05em; }
+.sc-subhead:first-of-type { margin-top: 4px; }
+
+/* レイアウトユーティリティ */
+.sc-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.sc-row.top { align-items: flex-start; }
+.sc-stack { display: flex; flex-direction: column; gap: 14px; }
+.sc-grid { display: grid; gap: 16px; }
+.demo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+
+/* カラースウォッチ */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.swatch { cursor: pointer; border: 1px solid var(--sc-border, #e5e5e5); overflow: hidden; border-radius: var(--sc-swatch-radius, 8px); }
+.swatch .chip { height: 62px; }
+.swatch .meta { padding: 8px 10px; font-size: 11.5px; }
+.swatch .meta .n { font-weight: 700; }
+.swatch .meta .v { color: var(--sc-muted, #777); font-family: var(--sc-mono, monospace); font-size: 11px; }
+
+/* タイポスケール見本 */
+.type-scale > * { margin: 0 0 12px; }
+.type-scale .lbl { font-size: 11px; color: var(--sc-muted, #777); font-family: var(--sc-mono, monospace); }
+
+/* トースト */
+.sc-toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px);
+  background: var(--sc-fg, #111); color: var(--sc-page-bg, #fff);
+  padding: 10px 18px; font-size: 13px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity .16s, transform .16s;
+  border-radius: var(--sc-toast-radius, 8px); z-index: 200;
+}
+.sc-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* テーブルの横スクロール保険 */
+.table-wrap { overflow-x: auto; }
+
+@media (max-width: 640px) {
+  .sc-header h1 { font-size: 27px; }
+  .showcase { padding: 20px 16px 80px; }
+}

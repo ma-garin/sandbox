@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Material Design 3 — DesignList</title>
+  <meta name="description" content="Material Design 3 風のコンポーネント集。丸みのある形状・トーナルカラー・状態レイヤー・エレベーション。">
+  <link rel="stylesheet" href="../_shared/showcase.css">
+  <link rel="stylesheet" href="material.css">
+</head>
+<body>
+  <div class="showcase">
+
+    <div class="sc-topbar">
+      <a class="sc-back" href="../../index.html">← カタログに戻る</a>
+      <span class="spacer"></span>
+      <button class="sc-theme-btn" data-toggle-theme>◐ テーマ: <span data-theme-label>ライト</span></button>
+    </div>
+
+    <header class="sc-header">
+      <div class="sc-eyebrow">Design System 01</div>
+      <h1>Material Design 3</h1>
+      <p class="tagline">Google のマテリアル。丸みの大きい形状、トーナルなカラーロール、タップに反応する状態レイヤー、エレベーション（影の階層）が特徴。親しみやすく、動きのあるUIに向く。</p>
+      <div class="sc-principles"><span>大きな角丸</span><span>トーナルカラー</span><span>状態レイヤー</span><span>エレベーション</span><span>Roboto</span></div>
+    </header>
+
+    <!-- カラートークン -->
+    <section class="sc-section">
+      <h2>カラートークン</h2>
+      <p class="sc-hint">M3 のカラーロール（ベースライン）。クリックで値をコピーします。テーマ切替で自動的にトーンが変わります。</p>
+      <div class="swatches">
+        <div class="swatch" data-copy="#6750A4"><div class="chip" style="background:var(--md-primary)"></div><div class="meta"><div class="n">primary</div><div class="v">#6750A4</div></div></div>
+        <div class="swatch" data-copy="#EADDFF"><div class="chip" style="background:var(--md-primary-container)"></div><div class="meta"><div class="n">primary-container</div><div class="v">#EADDFF</div></div></div>
+        <div class="swatch" data-copy="#625B71"><div class="chip" style="background:var(--md-secondary)"></div><div class="meta"><div class="n">secondary</div><div class="v">#625B71</div></div></div>
+        <div class="swatch" data-copy="#7D5260"><div class="chip" style="background:var(--md-tertiary)"></div><div class="meta"><div class="n">tertiary</div><div class="v">#7D5260</div></div></div>
+        <div class="swatch" data-copy="#B3261E"><div class="chip" style="background:var(--md-error)"></div><div class="meta"><div class="n">error</div><div class="v">#B3261E</div></div></div>
+        <div class="swatch" data-copy="#E7E0EC"><div class="chip" style="background:var(--md-surface-container-highest);border-bottom:1px solid var(--md-outline-variant)"></div><div class="meta"><div class="n">surface-variant</div><div class="v">#E6E0E9</div></div></div>
+      </div>
+    </section>
+
+    <!-- タイポグラフィ -->
+    <section class="sc-section">
+      <h2>タイポグラフィ</h2>
+      <p class="sc-hint">M3 タイプスケール（抜粋）。</p>
+      <div class="type-scale">
+        <div class="lbl">Display</div><div class="md-display">タスクを、ひとつの土台で</div>
+        <div class="lbl">Headline</div><div class="md-headline">今週の進捗と担当</div>
+        <div class="lbl">Title</div><div class="md-title">リリースノート v5.0 のレビュー</div>
+        <div class="lbl">Body</div><div class="md-body">優先度・期限・担当を体系的に管理し、迷わず今日やることに集中できます。</div>
+        <div class="lbl">Label</div><div class="md-label">ラベルテキスト / ボタン</div>
+      </div>
+    </section>
+
+    <!-- ボタン -->
+    <section class="sc-section">
+      <h2>ボタン</h2>
+      <p class="sc-hint">Filled / Tonal / Outlined / Text / Error、そして Material の象徴 FAB。ホバーで状態レイヤーが乗ります。</p>
+      <div class="sc-row">
+        <button class="btn btn--primary">Filled</button>
+        <button class="btn btn--secondary">Tonal</button>
+        <button class="btn btn--tertiary">Outlined</button>
+        <button class="btn btn--ghost">Text</button>
+        <button class="btn btn--danger">Error</button>
+        <button class="btn btn--primary" disabled>Disabled</button>
+      </div>
+      <div class="sc-subhead">Floating Action Button</div>
+      <div class="sc-row">
+        <button class="fab" aria-label="追加"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="fab fab--extended"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> 新規タスク</button>
+      </div>
+    </section>
+
+    <!-- フォーム -->
+    <section class="sc-section">
+      <h2>フォーム</h2>
+      <p class="sc-hint">Filled テキストフィールド（フォーカスで下線が primary に）、チェック / ラジオ / スイッチ。</p>
+      <div class="form-grid">
+        <div class="field"><label>タスク名</label><input type="text" placeholder="例: リリースノートのレビュー"></div>
+        <div class="field"><label>プロジェクト</label><select><option>AIDD Kit</option><option>QA監査ツール</option><option>Design</option></select></div>
+        <div class="field"><label>期限</label><input type="date" value="2026-07-12"></div>
+      </div>
+      <div class="sc-subhead">選択コントロール</div>
+      <div class="sc-row" style="gap:22px">
+        <label class="opt"><input class="md-check" type="checkbox" checked> 期限リマインダー</label>
+        <label class="opt"><input class="md-check" type="checkbox"> 週次サマリー</label>
+        <label class="opt"><input class="md-radio" type="radio" name="pri" checked> 高</label>
+        <label class="opt"><input class="md-radio" type="radio" name="pri"> 中</label>
+        <label class="opt"><input class="md-switch" type="checkbox" checked> 通知ON</label>
+      </div>
+    </section>
+
+    <!-- タグ・チップ・バッジ -->
+    <section class="sc-section">
+      <h2>チップ・バッジ</h2>
+      <p class="sc-hint">フィルタチップ（選択状態あり）とステータスバッジ。</p>
+      <div class="sc-row">
+        <button class="chip-a selected">すべて</button>
+        <button class="chip-a">進行中</button>
+        <button class="chip-a">完了</button>
+        <button class="chip-a">期限超過</button>
+      </div>
+      <div class="sc-subhead">バッジ</div>
+      <div class="sc-row">
+        <span class="badge badge--primary">進行中</span>
+        <span class="badge badge--success">完了</span>
+        <span class="badge badge--error">期限超過</span>
+        <span class="badge badge--neutral">下書き</span>
+      </div>
+    </section>
+
+    <!-- カード -->
+    <section class="sc-section">
+      <h2>カード</h2>
+      <p class="sc-hint">Elevated / Filled / Outlined の3種。</p>
+      <div class="demo-grid">
+        <div class="card"><div class="card__media"></div><div class="card__body"><h4>Elevated</h4><p>影で浮かせるカード。既定の見せ方。</p><button class="btn btn--primary">開く</button></div></div>
+        <div class="card card--filled"><div class="card__body"><h4>Filled</h4><p>面で表現する落ち着いたカード。</p><button class="btn btn--secondary">開く</button></div></div>
+        <div class="card card--outlined"><div class="card__body"><h4>Outlined</h4><p>境界線のみの軽いカード。</p><button class="btn btn--tertiary">開く</button></div></div>
+      </div>
+    </section>
+
+    <!-- テーブル -->
+    <section class="sc-section">
+      <h2>データテーブル</h2>
+      <p class="sc-hint">行区切りのみのシンプルな表。ホバーで淡いプライマリ。</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>タスク</th><th>プロジェクト</th><th>優先度</th><th>状態</th></tr></thead>
+          <tbody>
+            <tr><td>リリースノート v5.0 のレビュー</td><td>AIDD Kit</td><td><span class="badge badge--error">高</span></td><td><span class="badge badge--primary">進行中</span></td></tr>
+            <tr><td>デザインシステムのダーク対応</td><td>Design</td><td><span class="badge badge--neutral">中</span></td><td><span class="badge badge--primary">進行中</span></td></tr>
+            <tr><td>週次レトロの下書き</td><td>Process</td><td><span class="badge badge--neutral">低</span></td><td><span class="badge badge--success">完了</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- フィードバック -->
+    <section class="sc-section">
+      <h2>フィードバック</h2>
+      <p class="sc-hint">バナー（情報 / 成功 / エラー）。</p>
+      <div class="sc-stack">
+        <div class="banner banner--info"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg><div>期限の24時間前にリマインダーを送ります。</div></div>
+        <div class="banner banner--success"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><div>タスクを作成しました。</div></div>
+        <div class="banner banner--error"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg><div>この操作は取り消せません。</div></div>
+      </div>
+    </section>
+
+    <!-- タブ -->
+    <section class="sc-section">
+      <h2>タブ</h2>
+      <p class="sc-hint">下線インジケータ付き。切り替え可能です。</p>
+      <div data-tabs>
+        <div class="tabs">
+          <button data-tab="a" class="is-active">すべて</button>
+          <button data-tab="b">進行中</button>
+          <button data-tab="c">完了</button>
+        </div>
+        <div class="tab-panel" data-panel="a">すべてのタスク 14 件を表示しています。</div>
+        <div class="tab-panel" data-panel="b" hidden>進行中のタスク 8 件を表示しています。</div>
+        <div class="tab-panel" data-panel="c" hidden>完了したタスク 4 件を表示しています。</div>
+      </div>
+    </section>
+
+    <!-- プログレス -->
+    <section class="sc-section">
+      <h2>プログレス</h2>
+      <p class="sc-hint">リニアプログレスと円形インジケータ。</p>
+      <div class="sc-stack" style="max-width:420px">
+        <div class="progress"><i style="width:71%"></i></div>
+        <div class="progress"><i style="width:34%"></i></div>
+      </div>
+      <div class="sc-subhead">インジケータ</div>
+      <div class="spinner"></div>
+    </section>
+
+    <!-- オーバーレイ -->
+    <section class="sc-section">
+      <h2>オーバーレイ</h2>
+      <p class="sc-hint">大きな角丸（28px）のダイアログ。ボタンで開きます。</p>
+      <button class="btn btn--primary" data-open-modal="md-dialog">ダイアログを開く</button>
+    </section>
+
+  </div>
+
+  <div data-modal id="md-dialog" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h3>タスクを削除しますか？</h3>
+      <p>「リリースノート v5.0 のレビュー」を削除します。この操作は取り消せません。</p>
+      <div class="actions">
+        <button class="btn btn--ghost" data-close-modal>キャンセル</button>
+        <button class="btn btn--danger" data-close-modal data-toast="削除しました">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../_shared/showcase.js"></script>
+</body>
+</html>

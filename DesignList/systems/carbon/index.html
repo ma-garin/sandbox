@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IBM Carbon 風 — DesignList</title>
+  <meta name="description" content="IBM Carbon 風のコンポーネント集。直線的で角ばった形状・機能的グレー・Blue 60・エンタープライズ向け。">
+  <link rel="stylesheet" href="../_shared/showcase.css">
+  <link rel="stylesheet" href="carbon.css">
+</head>
+<body>
+  <div class="showcase">
+
+    <div class="sc-topbar">
+      <a class="sc-back" href="../../index.html">← カタログに戻る</a>
+      <span class="spacer"></span>
+      <button class="sc-theme-btn" data-toggle-theme>◐ テーマ: <span data-theme-label>ライト</span></button>
+    </div>
+
+    <header class="sc-header">
+      <div class="sc-eyebrow">Design System 02</div>
+      <h1>IBM Carbon 風</h1>
+      <p class="tagline">IBM のエンタープライズ向けデザイン。角丸をほぼ持たない直線的な形状、機能的なグレースケール、Blue 60 のアクセント、厳格なグリッド。情報密度が高く、業務システムに向く。</p>
+      <div class="sc-principles"><span>角ばった形状</span><span>機能的グレー</span><span>Blue 60</span><span>高い情報密度</span><span>IBM Plex</span></div>
+    </header>
+
+    <!-- カラートークン -->
+    <section class="sc-section">
+      <h2>カラートークン</h2>
+      <p class="sc-hint">Carbon のカラートークン（White テーマ）。クリックで値をコピーします。テーマ切替で Gray 100 テーマに変わります。</p>
+      <div class="swatches">
+        <div class="swatch" data-copy="#0F62FE"><div class="chip" style="background:var(--cds-blue-60)"></div><div class="meta"><div class="n">blue-60</div><div class="v">#0F62FE</div></div></div>
+        <div class="swatch" data-copy="#161616"><div class="chip" style="background:var(--cds-gray-100)"></div><div class="meta"><div class="n">gray-100</div><div class="v">#161616</div></div></div>
+        <div class="swatch" data-copy="#525252"><div class="chip" style="background:var(--cds-gray-70)"></div><div class="meta"><div class="n">gray-70</div><div class="v">#525252</div></div></div>
+        <div class="swatch" data-copy="#E0E0E0"><div class="chip" style="background:var(--cds-gray-20);border-bottom:1px solid var(--cds-gray-50)"></div><div class="meta"><div class="n">gray-20</div><div class="v">#E0E0E0</div></div></div>
+        <div class="swatch" data-copy="#DA1E28"><div class="chip" style="background:var(--cds-red-60)"></div><div class="meta"><div class="n">red-60</div><div class="v">#DA1E28</div></div></div>
+        <div class="swatch" data-copy="#24A148"><div class="chip" style="background:var(--cds-green-50)"></div><div class="meta"><div class="n">green-50</div><div class="v">#24A148</div></div></div>
+      </div>
+    </section>
+
+    <!-- タイポグラフィ -->
+    <section class="sc-section">
+      <h2>タイポグラフィ</h2>
+      <p class="sc-hint">IBM Plex ベースのタイプスケール（抜粋）。</p>
+      <div class="type-scale">
+        <div class="lbl">Display</div><div class="cds-display">タスクを、ひとつの土台で</div>
+        <div class="lbl">Heading</div><div class="cds-heading">今週の進捗と担当</div>
+        <div class="lbl">Title</div><div class="cds-title">リリースノート v5.0 のレビュー</div>
+        <div class="lbl">Body</div><div class="cds-body">優先度・期限・担当を体系的に管理し、迷わず今日やることに集中できます。</div>
+        <div class="lbl">Label</div><div class="cds-label">ラベルテキスト / キャプション</div>
+      </div>
+    </section>
+
+    <!-- ボタン -->
+    <section class="sc-section">
+      <h2>ボタン</h2>
+      <p class="sc-hint">Primary / Secondary / Tertiary / Ghost / Danger。背が高く角ばった Carbon のボタン。</p>
+      <div class="sc-row">
+        <button class="btn btn--primary">Primary</button>
+        <button class="btn btn--secondary">Secondary</button>
+        <button class="btn btn--tertiary">Tertiary</button>
+        <button class="btn btn--ghost">Ghost</button>
+        <button class="btn btn--danger">Danger</button>
+        <button class="btn btn--primary" disabled>Disabled</button>
+      </div>
+    </section>
+
+    <!-- フォーム -->
+    <section class="sc-section">
+      <h2>フォーム</h2>
+      <p class="sc-hint">薄い塗り＋下線のテキスト入力（フォーカスで青いアウトライン）、チェック / ラジオ / トグル。</p>
+      <div class="form-grid">
+        <div class="field"><label>タスク名</label><input type="text" placeholder="例: リリースノートのレビュー"></div>
+        <div class="field"><label>プロジェクト</label><select><option>AIDD Kit</option><option>QA監査ツール</option><option>Design</option></select></div>
+        <div class="field"><label>期限</label><input type="date" value="2026-07-12"></div>
+      </div>
+      <div class="sc-subhead">選択コントロール</div>
+      <div class="sc-row" style="gap:22px">
+        <label class="opt"><input class="cds-check" type="checkbox" checked> 期限リマインダー</label>
+        <label class="opt"><input class="cds-check" type="checkbox"> 週次サマリー</label>
+        <label class="opt"><input class="cds-radio" type="radio" name="pri" checked> 高</label>
+        <label class="opt"><input class="cds-radio" type="radio" name="pri"> 中</label>
+        <label class="opt"><input class="cds-toggle" type="checkbox" checked> 通知ON</label>
+      </div>
+    </section>
+
+    <!-- タグ・ステータス -->
+    <section class="sc-section">
+      <h2>タグ・ステータス</h2>
+      <p class="sc-hint">Carbon のタグ（角丸ピル）と、四角ドットのステータス表現。</p>
+      <div class="sc-row">
+        <span class="tag tag--blue">AIDD Kit</span>
+        <span class="tag tag--green">QA</span>
+        <span class="tag tag--red">期限超過</span>
+        <span class="tag tag--gray">下書き</span>
+      </div>
+      <div class="sc-subhead">ステータス</div>
+      <div class="sc-row" style="gap:22px">
+        <span class="status status--progress">進行中</span>
+        <span class="status status--done">完了</span>
+        <span class="status status--over">期限超過</span>
+      </div>
+    </section>
+
+    <!-- タイル -->
+    <section class="sc-section">
+      <h2>タイル（カード）</h2>
+      <p class="sc-hint">Carbon はカードを「タイル」と呼ぶ。フラットで角ばり、ホバーで青い枠。</p>
+      <div class="demo-grid">
+        <div class="tile"><h4>クリック可能タイル</h4><p>ホバーで枠線が青くなる基本タイル。</p><button class="btn btn--tertiary compact">開く</button></div>
+        <div class="tile tile--bordered"><h4>境界線タイル</h4><p>背景に溶けない、枠線付きのタイル。</p><button class="btn btn--ghost compact">開く</button></div>
+        <div class="tile"><h4>データタイル</h4><p>数値やKPIを載せる用途。</p><div class="cds-heading">71%</div></div>
+      </div>
+    </section>
+
+    <!-- テーブル -->
+    <section class="sc-section">
+      <h2>データテーブル</h2>
+      <p class="sc-hint">濃いヘッダ・行区切りの構造的な表。情報密度を重視。</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>タスク</th><th>プロジェクト</th><th>優先度</th><th>状態</th></tr></thead>
+          <tbody>
+            <tr><td>リリースノート v5.0 のレビュー</td><td><span class="tag tag--blue">AIDD Kit</span></td><td><span class="tag tag--red">高</span></td><td><span class="status status--progress">進行中</span></td></tr>
+            <tr><td>デザインシステムのダーク対応</td><td><span class="tag tag--gray">Design</span></td><td><span class="tag tag--gray">中</span></td><td><span class="status status--progress">進行中</span></td></tr>
+            <tr><td>週次レトロの下書き</td><td><span class="tag tag--gray">Process</span></td><td><span class="tag tag--gray">低</span></td><td><span class="status status--done">完了</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- フィードバック -->
+    <section class="sc-section">
+      <h2>フィードバック</h2>
+      <p class="sc-hint">インライン通知（左の太いバーが Carbon の象徴）。</p>
+      <div class="sc-stack">
+        <div class="notification notification--info"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg><div><div class="title">情報</div><div class="msg">期限の24時間前にリマインダーを送ります。</div></div></div>
+        <div class="notification notification--success"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="title">成功</div><div class="msg">タスクを作成しました。</div></div></div>
+        <div class="notification notification--error"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg><div><div class="title">エラー</div><div class="msg">この操作は取り消せません。</div></div></div>
+      </div>
+    </section>
+
+    <!-- タブ -->
+    <section class="sc-section">
+      <h2>タブ</h2>
+      <p class="sc-hint">下線 2px のアクティブ表現。切り替え可能です。</p>
+      <div data-tabs>
+        <div class="tabs">
+          <button data-tab="a" class="is-active">すべて</button>
+          <button data-tab="b">進行中</button>
+          <button data-tab="c">完了</button>
+        </div>
+        <div class="tab-panel" data-panel="a">すべてのタスク 14 件を表示しています。</div>
+        <div class="tab-panel" data-panel="b" hidden>進行中のタスク 8 件を表示しています。</div>
+        <div class="tab-panel" data-panel="c" hidden>完了したタスク 4 件を表示しています。</div>
+      </div>
+    </section>
+
+    <!-- プログレス -->
+    <section class="sc-section">
+      <h2>プログレス</h2>
+      <p class="sc-hint">細いプログレスバーと円形インジケータ。</p>
+      <div class="sc-stack" style="max-width:420px">
+        <div class="progress"><i style="width:71%"></i></div>
+        <div class="progress"><i style="width:34%"></i></div>
+      </div>
+      <div class="sc-subhead">インジケータ</div>
+      <div class="spinner"></div>
+    </section>
+
+    <!-- オーバーレイ -->
+    <section class="sc-section">
+      <h2>オーバーレイ</h2>
+      <p class="sc-hint">角ばったモーダル。フッタは全幅のボタン（Carbon 流）。</p>
+      <button class="btn btn--danger" data-open-modal="cds-modal">モーダルを開く</button>
+    </section>
+
+  </div>
+
+  <div data-modal id="cds-modal" hidden>
+    <div class="cds-modal" role="dialog" aria-modal="true">
+      <div class="cds-modal__head"><h3>タスクを削除しますか？</h3></div>
+      <div class="cds-modal__body">「リリースノート v5.0 のレビュー」を削除します。この操作は取り消せません。関連するコメントも削除されます。</div>
+      <div class="cds-modal__foot">
+        <button class="btn btn--secondary" data-close-modal>キャンセル</button>
+        <button class="btn btn--danger" data-close-modal data-toast="削除しました">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../_shared/showcase.js"></script>
+</body>
+</html>

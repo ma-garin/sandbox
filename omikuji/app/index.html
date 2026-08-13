@@ -121,7 +121,16 @@
         <svg aria-hidden="true"><use href="#i-close"/></svg>
       </button>
     </div>
-    <div class="chips" id="chips" role="group" aria-label="絞り込み"></div>
+    <div class="filters__row" role="group" aria-label="絞り込み">
+      <label class="filter">
+        <span class="filter__label">神社</span>
+        <select id="filter-shrine"></select>
+      </label>
+      <label class="filter">
+        <span class="filter__label">吉凶</span>
+        <select id="filter-fortune"></select>
+      </label>
+    </div>
     <p class="filters__count" id="summary"></p>
   </div>
 

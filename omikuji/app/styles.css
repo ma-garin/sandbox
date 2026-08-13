@@ -529,23 +529,29 @@ button.cal__day:hover { background: rgba(23, 65, 107, 0.07); }
 }
 .search__clear svg { width: 100%; height: 100%; }
 
-/* 6-25 チップ。横スクロールにすると後ろのチップに気づけないので折り返す */
-.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 10px; }
-.chip {
-  flex: 0 0 auto;
-  /* 指で押す的として最低限の高さを確保する（絞り込みは密に並ぶので幅は詰める） */
-  min-height: 36px; padding: 0 13px;
-  display: inline-flex; align-items: center;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill);
-  color: var(--text-sub); font-size: var(--text-caption);
-  cursor: pointer; white-space: nowrap;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+/* 6-25 絞り込み。神社と吉凶は別々に選べて、両方選べば掛け合わせになる。
+   選択肢が増えても背が伸びないよう、並べるのではなくプルダウンにしている */
+.filters__row { display: flex; gap: var(--space-2); margin-top: 10px; }
+.filter { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.filter__label {
+  padding-left: 2px;
+  font-size: var(--text-caption-2); color: var(--text-weak);
 }
-.chip:hover { border-color: var(--line-str); }
-.chip.is-on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
-.chip__n { opacity: 0.6; margin-left: 5px; font-size: var(--text-caption-2); }
-.chip--shrine { background: var(--bar); border-color: var(--bar); }
-.chip__x { margin-left: 6px; font-size: var(--text-caption-2); opacity: .8; }
+.filter select {
+  width: 100%; min-width: 0;
+  /* 指で押す的として最低限の高さを確保する */
+  min-height: 40px; padding: 0 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2);
+  color: var(--text-sub); font-family: inherit; font-size: var(--text-caption);
+  outline: none; cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.filter select:hover { border-color: var(--line-str); }
+.filter select:focus { border-color: var(--bar); box-shadow: 0 0 0 3px rgba(27, 75, 122, 0.16); }
+/* 絞り込み中。地を反転させると、OS が描く矢印との明暗が読めなくなるので枠と文字で示す */
+.filter select.is-on {
+  border-color: var(--primary); color: var(--primary); font-weight: 600;
+}
 
 .filters__count {
   margin: 9px 2px 0; font-size: var(--text-caption-2); color: var(--text-weak);

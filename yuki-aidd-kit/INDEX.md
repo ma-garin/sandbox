@@ -35,6 +35,7 @@ YukiのAI駆動開発を高速・高品質にするための統合キット。Cl
 | `agent-eval` | 自作AIシステムのeval（Weave相当・無料スタック） |
 | `retro` | AIDDプロセスの振り返り・学びの蓄積 |
 | `done-gate` | 「完成」判定の前。Definition of Done検証 |
+| `browser-use` | 実ブラウザを操作して目視確認・調査（Playwright MCP）。恒久テストはtest-automationへ |
 
 ### スラッシュコマンド（明示的に呼ぶ）
 | コマンド | 機能 |
@@ -53,6 +54,18 @@ YukiのAI駆動開発を高速・高品質にするための統合キット。Cl
 | `pre-write-check` | 書き込み前: 秘密情報・外部分割を警告 |
 | `post-write-html` | HTML保存後: 行数・localStorage確認 |
 | `session-summary` | セッション終了: コミット漏れ・記録漏れ検出 |
+
+### MCP（`claude-code/mcp/mcp.json.template`。任意・プロジェクト単位で有効化）
+| MCP | 用途 | APIキー |
+|---|---|---|
+| `playwright` | 実ブラウザ操作。`browser-use` skillのドライバ | 不要 |
+| `context7` | 最新ライブラリドキュメント参照 | 任意 |
+| `firecrawl-mcp` | Webスクレイピング・クロール | 必要 |
+
+### 外部スキル集（任意導入）
+| 名前 | 内容 |
+|---|---|
+| `mattpocock/skills` | `npx skills@latest add mattpocock/skills` で追加。grill→PRD→issues→TDD→code-reviewのワークフロー一式（詳細はREADME参照） |
 
 ### テンプレート
 | ファイル | 用途 |

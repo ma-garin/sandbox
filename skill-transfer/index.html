@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIDD スキルトランスファー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-primary:#1976D2;--color-primary-light:#E3F2FD;--color-primary-dark:#0D47A1;
+  --color-bg:#F8F9FA;--color-surface:#FFFFFF;--color-surface-2:#F1F3F4;
+  --color-border:#E0E0E0;--color-divider:#F0F0F0;
+  --color-text:#212121;--color-text-secondary:#616161;--color-text-disabled:#9E9E9E;
+  --color-critical:#D32F2F;--color-high:#F57C00;--color-medium:#FBC02D;--color-low:#388E3C;--color-info:#0288D1;
+  --color-critical-bg:#FFEBEE;--color-high-bg:#FFF3E0;--color-medium-bg:#FFFDE7;--color-low-bg:#E8F5E9;--color-info-bg:#E1F5FE;
+  --font-main:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;
+  --font-mono:'JetBrains Mono','Consolas',monospace;
+  --text-xs:11px;--text-sm:13px;--text-base:14px;--text-md:16px;--text-lg:18px;--text-xl:22px;--text-2xl:28px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--space-12:48px;
+  --radius-sm:4px;--radius-md:8px;--radius-lg:12px;--radius-full:9999px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 2px 8px rgba(0,0,0,.12);
+  --nav-width:260px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-main);font-size:var(--text-base);color:var(--color-text);background:var(--color-bg);line-height:1.7}
+a{color:var(--color-primary);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--font-mono);font-size:var(--text-sm);background:var(--color-surface-2);padding:1px 5px;border-radius:var(--radius-sm)}
+pre{background:#1e1e2e;color:#cdd6f4;padding:var(--space-4);border-radius:var(--radius-md);overflow-x:auto;font-family:var(--font-mono);font-size:var(--text-sm);line-height:1.6;position:relative;margin:var(--space-3) 0}
+pre code{background:none;color:inherit;padding:0}
+.copy-btn{position:absolute;top:var(--space-2);right:var(--space-2);background:rgba(255,255,255,.15);border:none;color:#cdd6f4;padding:3px 8px;border-radius:var(--radius-sm);cursor:pointer;font-size:var(--text-xs);font-family:var(--font-main)}
+.copy-btn:hover{background:rgba(255,255,255,.25)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:var(--nav-width) 1fr;min-height:100vh}
+
+/* Sidenav */
+.sidenav{background:var(--color-surface);border-right:1px solid var(--color-border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.nav-logo{padding:var(--space-6) var(--space-4) var(--space-4);border-bottom:1px solid var(--color-divider)}
+.nav-logo h1{font-size:var(--text-md);font-weight:700;color:var(--color-primary);line-height:1.3}
+.nav-logo p{font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-1)}
+.progress-bar-wrap{padding:var(--space-3) var(--space-4);background:var(--color-primary-light)}
+.progress-label{font-size:var(--text-xs);color:var(--color-primary-dark);margin-bottom:var(--space-1);font-weight:500}
+.progress-bar{height:6px;background:#fff;border-radius:var(--radius-full);overflow:hidden}
+.progress-fill{height:100%;background:var(--color-primary);border-radius:var(--radius-full);transition:width .4s}
+.nav-section{padding:var(--space-3) var(--space-4) var(--space-1);font-size:var(--text-xs);font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em}
+.nav-link{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);font-size:var(--text-sm);color:var(--color-text);cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.nav-link:hover{background:var(--color-primary-light);color:var(--color-primary)}
+.nav-link.active{background:var(--color-primary-light);color:var(--color-primary);border-left-color:var(--color-primary);font-weight:500}
+.nav-link .check{color:var(--color-low);font-size:var(--text-xs)}
+.nav-link .dot{width:6px;height:6px;border-radius:50%;background:var(--color-text-disabled);flex-shrink:0}
+.nav-link.done .dot{background:var(--color-low)}
+
+/* Main content */
+.main{min-height:100vh;padding:0}
+.section{padding:var(--space-12) var(--space-8);border-bottom:1px solid var(--color-divider);max-width:860px}
+.section-label{font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-secondary);margin-bottom:var(--space-2)}
+.section-title{font-size:var(--text-xl);font-weight:700;margin-bottom:var(--space-4)}
+.section-desc{font-size:var(--text-md);color:var(--color-text-secondary);margin-bottom:var(--space-6);line-height:1.7}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0D47A1 0%,#1976D2 60%,#42A5F5 100%);color:#fff;padding:var(--space-12) var(--space-8);max-width:none}
+.hero-label{font-size:var(--text-sm);opacity:.8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:var(--space-3)}
+.hero-title{font-size:36px;font-weight:700;line-height:1.25;margin-bottom:var(--space-4)}
+.hero-desc{font-size:var(--text-md);opacity:.9;max-width:560px;line-height:1.7;margin-bottom:var(--space-8)}
+.hero-stats{display:flex;gap:var(--space-8)}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:var(--text-2xl);font-weight:700}
+.hero-stat-label{font-size:var(--text-xs);opacity:.8;margin-top:2px}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600}
+.badge-beginner{background:#E8F5E9;color:#1B5E20}
+.badge-intermediate{background:#FFF3E0;color:#E65100}
+.badge-advanced{background:#FCE4EC;color:#880E4F}
+.badge-command{background:var(--color-primary-light);color:var(--color-primary-dark)}
+.badge-new{background:var(--color-info-bg);color:var(--color-info)}
+
+/* Phase header */
+.phase-header{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-6) var(--space-8);background:var(--color-surface);border-bottom:1px solid var(--color-border);max-width:none;position:sticky;top:0;z-index:10}
+.phase-num{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--text-lg);flex-shrink:0}
+.phase-1 .phase-num{background:#E8F5E9;color:#1B5E20}
+.phase-2 .phase-num{background:#FFF3E0;color:#E65100}
+.phase-3 .phase-num{background:#FCE4EC;color:#880E4F}
+.phase-header-info h2{font-size:var(--text-lg);font-weight:700}
+.phase-header-info p{font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:2px}
+
+/* Skill card */
+.skill-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);margin-bottom:var(--space-4);box-shadow:var(--shadow-sm);overflow:hidden}
+.skill-card.done{border-left:3px solid var(--color-low)}
+.skill-header{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-6);cursor:pointer;user-select:none}
+.skill-header:hover{background:var(--color-surface-2)}
+.skill-toggle{font-size:var(--text-sm);color:var(--color-text-secondary);transition:transform .2s;flex-shrink:0}
+.skill-card.open .skill-toggle{transform:rotate(180deg)}
+.skill-name{font-size:var(--text-md);font-weight:700;flex:1}
+.skill-done-cb{accent-color:var(--color-low);width:16px;height:16px;cursor:pointer;flex-shrink:0}
+.skill-body{display:none;padding:0 var(--space-6) var(--space-6);border-top:1px solid var(--color-divider)}
+.skill-card.open .skill-body{display:block}
+
+/* Tabs inside skill card */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--color-divider);margin-bottom:var(--space-4)}
+.tab{padding:var(--space-2) var(--space-4);font-size:var(--text-sm);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--color-text-secondary);transition:all .15s}
+.tab.active{color:var(--color-primary);border-bottom-color:var(--color-primary);font-weight:500}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Steps */
+.steps{counter-reset:step;list-style:none;margin-top:var(--space-3)}
+.step-item{display:flex;gap:var(--space-4);margin-bottom:var(--space-4)}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);font-weight:700;flex-shrink:0;margin-top:2px}
+.step-body{flex:1}
+.step-title{font-weight:600;font-size:var(--text-base);margin-bottom:var(--space-1)}
+.step-desc{font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.6}
+
+/* Info box */
+.info-box{background:var(--color-info-bg);border-left:3px solid var(--color-info);padding:var(--space-3) var(--space-4);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:var(--space-3) 0;font-size:var(--text-sm)}
+.tip-box{background:var(--color-low-bg);border-left:3px solid var(--color-low);padding:var(--space-3) var(--space-4);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:var(--space-3) 0;font-size:var(--text-sm)}
+.warn-box{background:var(--color-high-bg);border-left:3px solid var(--color-high);padding:var(--space-3) var(--space-4);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin:var(--space-3) 0;font-size:var(--text-sm)}
+
+/* Roadmap */
+.roadmap{display:flex;gap:var(--space-4);margin:var(--space-6) 0}
+.roadmap-phase{flex:1;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4)}
+.roadmap-phase h3{font-size:var(--text-base);font-weight:700;margin-bottom:var(--space-2)}
+.roadmap-phase ul{list-style:none;font-size:var(--text-sm);color:var(--color-text-secondary)}
+.roadmap-phase li{padding:2px 0}
+.roadmap-phase li::before{content:"→ ";color:var(--color-primary)}
+
+/* Command card */
+.cmd-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4) var(--space-6);margin-bottom:var(--space-3)}
+.cmd-name{font-family:var(--font-mono);font-size:var(--text-md);font-weight:700;color:var(--color-primary-dark)}
+.cmd-desc{font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:var(--space-1)}
+.cmd-usage{margin-top:var(--space-3)}
+
+/* First project timeline */
+.timeline{position:relative;padding-left:var(--space-8)}
+.timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--color-divider)}
+.tl-item{position:relative;margin-bottom:var(--space-6)}
+.tl-dot{position:absolute;left:-var(--space-8);width:24px;height:24px;border-radius:50%;background:var(--color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--text-xs);font-weight:700;left:-32px;top:0}
+.tl-title{font-weight:700;font-size:var(--text-base);margin-bottom:var(--space-1)}
+.tl-body{font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.6}
+.tl-time{display:inline-block;font-size:var(--text-xs);background:var(--color-surface-2);padding:1px 6px;border-radius:var(--radius-full);margin-bottom:var(--space-2);color:var(--color-text-secondary)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:var(--text-sm);margin:var(--space-3) 0}
+th{background:var(--color-surface-2);padding:var(--space-2) var(--space-3);text-align:left;font-weight:600;border:1px solid var(--color-border)}
+td{padding:var(--space-2) var(--space-3);border:1px solid var(--color-border);vertical-align:top}
+
+/* Mobile menu */
+.menu-btn{display:none;position:fixed;top:var(--space-3);right:var(--space-3);z-index:100;background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius-md);width:40px;height:40px;font-size:18px;cursor:pointer;box-shadow:var(--shadow-md)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidenav{position:fixed;top:0;left:-100%;width:var(--nav-width);z-index:60;transition:left .25s;height:100vh}
+  .sidenav.open{left:0}
+  .menu-btn{display:flex;align-items:center;justify-content:center}
+  .overlay.open{display:block}
+  .section{padding:var(--space-8) var(--space-4)}
+  .hero{padding:var(--space-8) var(--space-4)}
+  .hero-title{font-size:26px}
+  .hero-stats{gap:var(--space-4)}
+  .roadmap{flex-direction:column}
+  .phase-header{padding:var(--space-4)}
+}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn">☰</button>
+<div class="overlay" id="overlay"></div>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<nav class="sidenav" id="sidenav">
+  <div class="nav-logo">
+    <h1>AIDD<br>スキルトランスファー</h1>
+    <p>はじめてAIDDを学ぶ人へ</p>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label">学習進捗: <span id="progressPct">0</span>%</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="nav-section">はじめに</div>
+    <div class="nav-link" onclick="scrollTo('intro')">📖 AIDDとは</div>
+    <div class="nav-link" onclick="scrollTo('roadmap')">🗺 学習ロードマップ</div>
+
+    <div class="nav-section">Phase 1 — 初級</div>
+    <div class="nav-link" id="nav-design-system" onclick="scrollTo('phase1')"><span class="dot"></span> design-system</div>
+    <div class="nav-link" id="nav-nfr-standards" onclick="scrollTo('phase1')"><span class="dot"></span> nfr-standards</div>
+    <div class="nav-link" id="nav-single-html-tool" onclick="scrollTo('phase1')"><span class="dot"></span> single-html-tool</div>
+    <div class="nav-link" id="nav-personal-pwa" onclick="scrollTo('phase1')"><span class="dot"></span> personal-pwa</div>
+    <div class="nav-link" id="nav-done-gate" onclick="scrollTo('phase1')"><span class="dot"></span> done-gate</div>
+    <div class="nav-link" id="nav-code-doc-search" onclick="scrollTo('phase1')"><span class="dot"></span> code-doc-search</div>
+    <div class="nav-link" onclick="scrollTo('phase1-cmds')">💬 Phase 1 コマンド</div>
+
+    <div class="nav-section">Phase 2 — 中級</div>
+    <div class="nav-link" id="nav-qa-review-standards" onclick="scrollTo('phase2')"><span class="dot"></span> qa-review-standards</div>
+    <div class="nav-link" id="nav-test-automation" onclick="scrollTo('phase2')"><span class="dot"></span> test-automation</div>
+    <div class="nav-link" id="nav-sdd-ecc-workflow" onclick="scrollTo('phase2')"><span class="dot"></span> sdd-ecc-workflow</div>
+    <div class="nav-link" id="nav-retro" onclick="scrollTo('phase2')"><span class="dot"></span> retro</div>
+    <div class="nav-link" onclick="scrollTo('phase2-cmds')">💬 Phase 2 コマンド</div>
+
+    <div class="nav-section">Phase 3 — 上級</div>
+    <div class="nav-link" id="nav-streamlit-rag-app" onclick="scrollTo('phase3')"><span class="dot"></span> streamlit-rag-app</div>
+    <div class="nav-link" id="nav-agent-eval" onclick="scrollTo('phase3')"><span class="dot"></span> agent-eval</div>
+    <div class="nav-link" onclick="scrollTo('phase3-cmds')">💬 Phase 3 コマンド</div>
+
+    <div class="nav-section">ガイド</div>
+    <div class="nav-link" onclick="scrollTo('first-project')">🚀 最初の1プロジェクト</div>
+    <div class="nav-link" onclick="scrollTo('templates')">📄 テンプレート集</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+<!-- Hero -->
+<section class="hero" id="intro">
+  <div class="hero-label">Skill Transfer Guide</div>
+  <h1 class="hero-title">AIDDを<br>ゼロから学ぶ</h1>
+  <p class="hero-desc">AIDD（AI-Driven Development）は、AIをペアプログラマとして活用しながら、品質・スピード・再現性を同時に高める開発スタイルです。このガイドでは3つのフェーズに分けて、ステップバイステップで学びます。</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-num">12</div><div class="hero-stat-label">スキル</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">7</div><div class="hero-stat-label">コマンド</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">3</div><div class="hero-stat-label">フェーズ</div></div>
+  </div>
+</section>
+
+<!-- What is AIDD -->
+<section class="section">
+  <div class="section-label">基本概念</div>
+  <h2 class="section-title">AIDDとは何か</h2>
+  <p class="section-desc">AI-Driven Development。AIに指示を出して成果物を作るのではなく、AIと対話しながら「仕様→設計→実装→テスト→振り返り」のループを高速に回す開発手法です。</p>
+  <table>
+    <tr><th>従来の開発</th><th>AIDD</th></tr>
+    <tr><td>「これを作って」と指示する</td><td>spec.mdで要件を明示し、AIと対話しながら実装する</td></tr>
+    <tr><td>「動いた」で完了とする</td><td>done-gateチェックリストで「完了」を機械的に判定</td></tr>
+    <tr><td>レビューは感覚や経験に依存</td><td>ISO 25010 + ISTQB severity で定量評価</td></tr>
+    <tr><td>ノウハウは個人の記憶に残る</td><td>lessons.md + CURRENT_STATE.md で蓄積・引き継ぎ</td></tr>
+    <tr><td>毎回ゼロから始める</td><td>スキル・テンプレート・コマンドで再現性を確保</td></tr>
+  </table>
+  <div class="info-box">
+    <strong>重要な概念：</strong> AIDDはAIへの「お願い」ではなく、AIとの「協業設計」です。仕様・品質基準・完了定義を明示することで、AIの出力を制御し、手戻りを防ぎます。
+  </div>
+  <h3 style="margin-top:var(--space-6);margin-bottom:var(--space-3);font-size:var(--text-md)">3つの品質ループ</h3>
+  <table>
+    <tr><th>ループ</th><th>スキル</th><th>問い</th></tr>
+    <tr><td><strong>コード品質</strong></td><td>test-automation</td><td>コードは動くか？（決定的）</td></tr>
+    <tr><td><strong>AI出力品質</strong></td><td>agent-eval</td><td>AIの回答は良いか？（非決定的）</td></tr>
+    <tr><td><strong>プロセス品質</strong></td><td>retro</td><td>進め方は良いか？（継続改善）</td></tr>
+  </table>
+</section>
+
+<!-- Roadmap -->
+<section class="section" id="roadmap">
+  <div class="section-label">学習ロードマップ</div>
+  <h2 class="section-title">3フェーズで習得する</h2>
+  <p class="section-desc">無理に全部を一度に学ばなくていい。Phase 1 で小さなツールを1つ完成させてから次へ進みましょう。</p>
+  <div class="roadmap">
+    <div class="roadmap-phase">
+      <div style="margin-bottom:var(--space-2)"><span class="badge badge-beginner">Phase 1 — 初級</span></div>
+      <h3>基本スキル</h3>
+      <p style="font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-3)">小さなツールを品質基準を守りながら作れるようになる</p>
+      <ul>
+        <li>design-system</li>
+        <li>nfr-standards</li>
+        <li>single-html-tool</li>
+        <li>personal-pwa</li>
+        <li>done-gate</li>
+        <li>code-doc-search</li>
+      </ul>
+    </div>
+    <div class="roadmap-phase">
+      <div style="margin-bottom:var(--space-2)"><span class="badge badge-intermediate">Phase 2 — 中級</span></div>
+      <h3>品質スキル</h3>
+      <p style="font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-3)">レビュー・テスト・振り返りを習慣化し、改善ループを回す</p>
+      <ul>
+        <li>qa-review-standards</li>
+        <li>test-automation</li>
+        <li>sdd-ecc-workflow</li>
+        <li>retro</li>
+      </ul>
+    </div>
+    <div class="roadmap-phase">
+      <div style="margin-bottom:var(--space-2)"><span class="badge badge-advanced">Phase 3 — 上級</span></div>
+      <h3>AI・評価スキル</h3>
+      <p style="font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-3)">LLMベースのシステムを品質管理下で開発・運用する</p>
+      <ul>
+        <li>streamlit-rag-app</li>
+        <li>agent-eval</li>
+      </ul>
+    </div>
+  </div>
+  <div class="tip-box">
+    <strong>最速化の鍵：</strong> 毎セッション終了時に <code>CURRENT_STATE.md</code> を5分で更新。次回は「CURRENT_STATE.mdを読んで再開して」の1行でコンテキストが完全復元できます。
+  </div>
+</section>
+
+<!-- ==================== PHASE 1 ==================== -->
+<div class="phase-header phase-1" id="phase1">
+  <div class="phase-num">1</div>
+  <div class="phase-header-info">
+    <h2>Phase 1 — 基本スキル <span class="badge badge-beginner">初級</span></h2>
+    <p>目標：小さなツールを品質基準を守りながら1本完成させる</p>
+  </div>
+</div>
+
+<section class="section">
+
+<!-- design-system -->
+<div class="skill-card" id="card-design-system">
+  <div class="skill-header" onclick="toggleCard('design-system')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">design-system</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-design-system" onchange="markDone('design-system',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'design-system','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'design-system','steps')">手順</div>
+      <div class="tab" onclick="switchTab(this,'design-system','code')">コード</div>
+    </div>
+    <div class="tab-panel active" id="tp-design-system-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> AIDDツール群全体に一貫したビジュアルデザインを適用する設計システムです。色・フォント・スペーシング・コンポーネントのCSS変数が定義されており、全プロジェクトでこの変数を使うことで見た目の統一感を保ちます。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> UIを作るとき、色を決めるとき、新しいHTMLファイルを作り始めるとき。常に最初に参照します。</p>
+      <table>
+        <tr><th>要素</th><th>内容</th></tr>
+        <tr><td>ベース</td><td>Material Design 3 / ライトテーマ</td></tr>
+        <tr><td>フォント</td><td>Noto Sans JP（日本語）+ JetBrains Mono（コード）</td></tr>
+        <tr><td>管理</td><td>CSS変数（<code>:root</code>）で一元管理</td></tr>
+        <tr><td>カラー数</td><td>Primary / Surface / Border / Text / Status の5系統</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-design-system-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">Google Fonts を head に追加する</div><div class="step-desc">Noto Sans JP と JetBrains Mono を読み込みます。これだけで日本語が美しく表示されます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">CSS変数（:root）をコピーする</div><div class="step-desc">カラーパレット・タイポグラフィ・スペーシング・シャドウの変数をまるごとコピーし、スタイルの冒頭に貼ります。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">変数名をそのまま使う（上書き禁止）</div><div class="step-desc"><code>--color-primary</code> を勝手に別の色に変えない。既存ツールとの統一感が崩れます。カスタマイズする場合は新しい変数名を追加します。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">レイアウトパターンを選ぶ</div><div class="step-desc">「2ペイン（サイドナビ+メイン）」または「カードグリッド」のどちらかが既定パターン。そのままコピーして使います。</div></div></li>
+      </ol>
+      <div class="tip-box">最初は変数を見て色を選ぶのでなく、既存ツール（QA Lens / UX Reviewer）のHTMLをそのまま参考にするのが早いです。</div>
+    </div>
+    <div class="tab-panel" id="tp-design-system-code">
+      <p style="margin-bottom:var(--space-2);font-size:var(--text-sm)">Fonts読み込み（&lt;head&gt;内）</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"&gt;</pre>
+      <p style="margin-bottom:var(--space-2);margin-top:var(--space-4);font-size:var(--text-sm)">CSS変数（最小セット）</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>:root {
+  --color-primary: #1976D2;
+  --color-primary-light: #E3F2FD;
+  --color-bg: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F1F3F4;
+  --color-border: #E0E0E0;
+  --color-text: #212121;
+  --color-text-secondary: #616161;
+  --color-low: #388E3C;   /* 成功・完了 */
+  --color-high: #F57C00;  /* 警告 */
+  --color-critical: #D32F2F; /* エラー */
+  --font-main: 'Noto Sans JP', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-md: 8px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- nfr-standards -->
+<div class="skill-card" id="card-nfr-standards">
+  <div class="skill-header" onclick="toggleCard('nfr-standards')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">nfr-standards</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-nfr-standards" onchange="markDone('nfr-standards',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'nfr-standards','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'nfr-standards','steps')">手順</div>
+      <div class="tab" onclick="switchTab(this,'nfr-standards','code')">テンプレート</div>
+    </div>
+    <div class="tab-panel active" id="tp-nfr-standards-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 非機能要件（NFR）をspec.mdに書く際のテンプレートを提供します。パフォーマンス・デバイス対応・オフライン・セキュリティ・アクセシビリティの各要件が、プロジェクト種別ごとに整理されています。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> 新しいプロジェクトの spec.md を書くとき。「Lighthouseのスコアはどこを目標にする？」「Fold5対応が必要？」などを確認するとき。</p>
+      <table>
+        <tr><th>種別</th><th>条件</th></tr>
+        <tr><td><strong>PWA</strong></td><td>GitHub Pages + Service Worker + localStorage</td></tr>
+        <tr><td><strong>単一HTMLツール</strong></td><td>社内配布・ビルド不要・ブラウザで開くだけ</td></tr>
+        <tr><td><strong>Streamlitアプリ</strong></td><td>ローカル/サーバ実行・Python</td></tr>
+      </table>
+      <div class="warn-box">NFRを決めずに実装を始めると、後から「Fold5で崩れる」「オフラインで動かない」などの手戻りが発生します。spec.md作成時に必ず先に定義しましょう。</div>
+    </div>
+    <div class="tab-panel" id="tp-nfr-standards-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">プロジェクト種別を確認する</div><div class="step-desc">PWA / 単一HTMLツール / Streamlit の3択。迷ったら「GitHub Pagesに公開するか」「スマホで使うか」で判断します。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">spec.mdの非機能要件セクションを作る</div><div class="step-desc">種別に対応するNFRテンプレートをそのままコピーします。AIに「nfr-standardsスキルに従ってspec.mdの非機能要件を書いて」と依頼するだけでOKです。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">Fold5対応が必要か確認する</div><div class="step-desc">PWAの場合はカバー画面（360×820px）での動作確認が必須。タッチターゲットは44px以上。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">APIキー管理方針を決める</div><div class="step-desc">全種別でAPIキーのハードコード禁止。localStorage + 設定モーダルパターンを使います。</div></div></li>
+      </ol>
+    </div>
+    <div class="tab-panel" id="tp-nfr-standards-code">
+      <p style="margin-bottom:var(--space-2);font-size:var(--text-sm)">spec.mdの非機能要件セクション（PWA用最小版）</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>## 非機能要件
+
+### 性能
+- 初回ロード: 3G相当（1.6Mbps）で3秒以内に操作可能
+- Lighthouse Performance: 80点以上
+
+### デバイス対応
+- Galaxy Z Fold5 カバー画面（360px）で主要機能が動くこと
+- タッチターゲット: 44×44px以上
+
+### オフライン
+- Service Worker: cache-firstでコアUIをキャッシュ
+- データはlocalStorageに保存。ネットワーク不要で全機能動作
+
+### セキュリティ
+- APIキーのハードコード禁止（localStorage保存）
+- 外部依存はCDNのみ
+
+### データ保全
+- export（JSON）/ import機能を必ず実装</pre>
+    </div>
+  </div>
+</div>
+
+<!-- single-html-tool -->
+<div class="skill-card" id="card-single-html-tool">
+  <div class="skill-header" onclick="toggleCard('single-html-tool')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">single-html-tool</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-single-html-tool" onchange="markDone('single-html-tool',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'single-html-tool','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'single-html-tool','steps')">手順</div>
+      <div class="tab" onclick="switchTab(this,'single-html-tool','code')">パターン</div>
+    </div>
+    <div class="tab-panel active" id="tp-single-html-tool-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 社内配布・デモ・QAツールを「単一のHTMLファイル」として作るための規約です。npm・ビルド不要でファイル1つをメールやSlackで送れば誰でも使えます。QA Lens・UX Reviewer はこのパターンで作られています。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> 「ブラウザで開くだけで動くツールを作りたい」「社内に配布したい」「デモを作りたい」とき。</p>
+      <div class="info-box"><strong>絶対制約：</strong> CSS/JSの外部ファイル分割禁止。<code>&lt;style&gt;</code> と <code>&lt;script&gt;</code> をHTMLにインライン記述します。外部依存はCDNのみ許可。</div>
+      <table>
+        <tr><th>機能</th><th>実装パターン</th></tr>
+        <tr><td>データ永続化</td><td>localStorage（キー: <code>appName:dataType</code>）</td></tr>
+        <tr><td>APIキー管理</td><td>設定モーダル → localStorage保存</td></tr>
+        <tr><td>AI連携</td><td>JSON強制出力、コードフェンス除去フォールバック</td></tr>
+        <tr><td>エクスポート</td><td>CSV / Markdown / JSON / PDF印刷</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-single-html-tool-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">AIに依頼するときに「single-html-toolスキルに従って」と明示する</div><div class="step-desc">「single-html-toolスキルに従って、〇〇ツールを単一HTMLで作って」と伝えるだけで、規約に沿った構造を生成してくれます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">デザインシステムのCSS変数を冒頭に貼る</div><div class="step-desc"><code>&lt;style&gt;</code>の先頭に <code>:root { ... }</code> の変数ブロックを置きます。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">localStorage操作を実装する</div><div class="step-desc">保存: <code>localStorage.setItem('appName:key', JSON.stringify(data))</code>、読み込み: <code>JSON.parse(localStorage.getItem('appName:key') || '[]')</code></div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">APIキーは設定モーダルで入力させる</div><div class="step-desc">ハードコード厳禁。設定ボタン → モーダル表示 → 入力値をlocalStorageへ保存 → 以降は読み出して使用。</div></div></li>
+        <li class="step-item"><div class="step-num">5</div><div class="step-body"><div class="step-title">ブラウザでダブルクリックして動作確認する</div><div class="step-desc">done-gateの「単一HTMLツール追加項目」を確認します（この手順自体がdone-gateチェックの一部です）。</div></div></li>
+      </ol>
+    </div>
+    <div class="tab-panel" id="tp-single-html-tool-code">
+      <p style="margin-bottom:var(--space-2);font-size:var(--text-sm)">localStorage + APIキー管理の基本パターン</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>// APIキー取得
+function getApiKey() {
+  return localStorage.getItem('myTool:apiKey') || '';
+}
+
+// APIキー保存（設定モーダルのsaveボタンから）
+function saveApiKey(key) {
+  localStorage.setItem('myTool:apiKey', key);
+}
+
+// データ保存
+function saveData(data) {
+  const store = {
+    version: 1,
+    items: data,
+    updatedAt: new Date().toISOString()
+  };
+  localStorage.setItem('myTool:data', JSON.stringify(store));
+}
+
+// データ読み込み
+function loadData() {
+  const raw = localStorage.getItem('myTool:data');
+  if (!raw) return [];
+  const store = JSON.parse(raw);
+  return store.items || [];
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- personal-pwa -->
+<div class="skill-card" id="card-personal-pwa">
+  <div class="skill-header" onclick="toggleCard('personal-pwa')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">personal-pwa</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-personal-pwa" onchange="markDone('personal-pwa',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'personal-pwa','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'personal-pwa','steps')">手順</div>
+    </div>
+    <div class="tab-panel active" id="tp-personal-pwa-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> GitHub Pagesに公開する個人PWA（家計簿・日記・習慣トラッカーなど）の開発規約です。スマホのホーム画面に追加でき、オフラインでも動く「ほぼネイティブアプリ」を作れます。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> 「スマホでも使いたい」「ホーム画面に追加したい」「Galaxy Z Fold5で使う」というアプリを作るとき。</p>
+      <table>
+        <tr><th>ファイル</th><th>役割</th></tr>
+        <tr><td><code>index.html</code></td><td>アプリ本体</td></tr>
+        <tr><td><code>manifest.json</code></td><td>アプリ名・アイコン・テーマカラー定義</td></tr>
+        <tr><td><code>sw.js</code></td><td>Service Worker（オフライン対応・キャッシュ制御）</td></tr>
+      </table>
+      <div class="warn-box"><strong>iOSの注意：</strong> iOSのlocalStorageは長期間未使用でデータが消える可能性があります。必ずJSON形式のexport/import機能を実装してください。</div>
+    </div>
+    <div class="tab-panel" id="tp-personal-pwa-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">/new-pwa コマンドで雛形を生成する</div><div class="step-desc">「/new-pwa アプリ名 "概要一文"」を実行するとindex.html・manifest.json・sw.jsの最小構成が生成されます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">sw.jsのCACHE_NAMEを変更するたびにバージョンを上げる</div><div class="step-desc"><code>const CACHE_NAME = 'myapp-v1'</code> → 変更時は <code>v2</code> に更新。古いキャッシュが自動削除されます。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">Fold5の360px幅で表示確認する</div><div class="step-desc">ChromeのDevTools → デバイスエミュレータ → 幅を360pxに設定。主要操作が画面内に収まるか確認します。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">GitHub Pagesに公開する</div><div class="step-desc">リポジトリのSettings → Pages → main branch / root を選択。数分後に <code>https://username.github.io/repo/</code> で公開されます。</div></div></li>
+        <li class="step-item"><div class="step-num">5</div><div class="step-body"><div class="step-title">export / import 機能を実装する</div><div class="step-desc">「JSONでエクスポート」「JSONからインポート」ボタンを必ず追加。データバックアップの手段を必ずユーザーに提供します。</div></div></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- done-gate -->
+<div class="skill-card" id="card-done-gate">
+  <div class="skill-header" onclick="toggleCard('done-gate')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">done-gate</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-done-gate" onchange="markDone('done-gate',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'done-gate','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'done-gate','steps')">チェックリスト</div>
+    </div>
+    <div class="tab-panel active" id="tp-done-gate-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 「完了」と判定する前の最終チェックリストです。スクラムの Definition of Done に相当します。「動いた」と「完了」は別物。このゲートを通過して初めて「完了」です。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> 機能ができたと思ったとき。PRを出す前。タスクをクローズする前。</p>
+      <div class="warn-box"><strong>よくある間違い：</strong> 「動いた」「確認した」という主観的な判断で完了とすること。done-gateは「テストがpassする」「spec.md の検証基準を満たすevidenceがある」など客観的な事実で判定します。</div>
+    </div>
+    <div class="tab-panel" id="tp-done-gate-steps">
+      <p style="margin-bottom:var(--space-3);font-size:var(--text-sm)"><strong>全種別共通（毎回必ず確認）</strong></p>
+      <ul style="list-style:none;font-size:var(--text-sm)">
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ spec.md の検証基準を全て満たす（evidence提示可能）</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ QAレビュー済み（Critical / High の指摘が残ゼロ）</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ テストがpassする（人力確認でなくテスト実行で判定）</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ 秘密情報がコードに混入していない（grepで確認）</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ CURRENT_STATE.md を更新した</li>
+        <li style="padding:var(--space-2) 0">☐ コミット済み（Conventional Commits形式）</li>
+      </ul>
+      <p style="margin:var(--space-4) 0 var(--space-2);font-size:var(--text-sm)"><strong>単一HTMLツールの追加項目</strong></p>
+      <ul style="list-style:none;font-size:var(--text-sm)">
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ ブラウザでダブルクリックして動作確認した</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ CSS/JS外部分割していない（単一ファイル維持）</li>
+        <li style="padding:var(--space-2) 0">☐ APIキーがハードコードされていない</li>
+      </ul>
+      <p style="margin:var(--space-4) 0 var(--space-2);font-size:var(--text-sm)"><strong>PWAの追加項目</strong></p>
+      <ul style="list-style:none;font-size:var(--text-sm)">
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ Fold5カバー画面（360px）で主要機能が動く</li>
+        <li style="padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">☐ localStorage の export / import が動作する</li>
+        <li style="padding:var(--space-2) 0">☐ Service Workerのキャッシュバージョンを更新した</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- code-doc-search -->
+<div class="skill-card" id="card-code-doc-search">
+  <div class="skill-header" onclick="toggleCard('code-doc-search')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">code-doc-search</span>
+    <span class="badge badge-beginner">初級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-code-doc-search" onchange="markDone('code-doc-search',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'code-doc-search','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'code-doc-search','steps')">使い方</div>
+    </div>
+    <div class="tab-panel active" id="tp-code-doc-search-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 技術ドキュメント・OSS・APIリファレンスの検索を最適化するスキルです。web_searchのクエリ構築ルールやバージョン指定・並列検索の方法を体系化しています。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> ライブラリのAPIを調べたいとき。エラーメッセージの解決策を探すとき。公式ドキュメントを参照したいとき。</p>
+      <div class="tip-box">「〇〇 site:docs.example.com」「〇〇 version:X.X changelog」など、サイト指定・バージョン指定を組み合わせると精度が上がります。</div>
+    </div>
+    <div class="tab-panel" id="tp-code-doc-search-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">/doc-search コマンドを使う</div><div class="step-desc">「/doc-search [調べたいこと]」で、クエリ最適化・検索・結果の整理をAIが自動で行います。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">バージョンを必ず指定する</div><div class="step-desc">「Playwright v1.44」「FastAPI 0.111」など。バージョン指定なしでは古いAPIのドキュメントが返ってくることがあります。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">公式ドキュメントを優先する</div><div class="step-desc">Qiita・Zennより公式docs・GitHub READMEを優先。AIに「site:docs.〇〇.com で探して」と指定するのが有効です。</div></div></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Phase 1 Commands -->
+<section class="section" id="phase1-cmds">
+  <div class="section-label">Phase 1 — コマンド集</div>
+  <h2 class="section-title">スラッシュコマンド（基礎）</h2>
+  <p class="section-desc">コマンドはチャット欄に直接入力して呼び出します。スキルが自動発動するのに対し、コマンドは明示的に呼ぶものです。</p>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/new-pwa</div>
+    <span class="badge badge-beginner">初級</span>
+    <div class="cmd-desc">新規個人PWAを立ち上げるコマンド。ディレクトリ構成・spec.md・index.html・manifest.json・sw.js・GitHub Pages公開手順を順番に生成します。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/new-pwa my-app "家計簿アプリ。月ごとの収支を記録してグラフ表示する"</pre>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/sdd-start</div>
+    <span class="badge badge-beginner">初級</span>
+    <div class="cmd-desc">SDD（仕様駆動開発）の10ステップを自動起動。プロジェクト概要から spec.md / plan.md / tasks.md を一気生成します。Phase 2で学ぶsdd-ecc-workflowスキルの入口です。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/sdd-start "QAレビューツール。スクリーンショットをアップロードしてGeminiにレビューさせる単一HTML"</pre>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/doc-search</div>
+    <span class="badge badge-beginner">初級</span>
+    <div class="cmd-desc">技術ドキュメント特化の検索コマンド。クエリ整理・検索・結果の整形をAIが自動で行います。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/doc-search Playwright v1.44 の page.waitForSelector の使い方</pre>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/token-check</div>
+    <span class="badge badge-beginner">初級</span>
+    <div class="cmd-desc">セッションのトークン使用量を確認・最適化します。「どこでトークンを使いすぎているか」「CLAUDE.mdを短縮できるか」「/clearのタイミングはいつか」を提案します。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/token-check</pre>
+    </div>
+    <div class="tip-box" style="margin-top:var(--space-3)">1セッションが長くなってきたと感じたら実行。AIのレスポンスが遅くなる・ミスが増えるのはトークン枯渇のサインです。</div>
+  </div>
+</section>
+
+<!-- ==================== PHASE 2 ==================== -->
+<div class="phase-header phase-2" id="phase2">
+  <div class="phase-num">2</div>
+  <div class="phase-header-info">
+    <h2>Phase 2 — 品質スキル <span class="badge badge-intermediate">中級</span></h2>
+    <p>目標：レビュー・テスト・振り返りを習慣化し、プロセス改善ループを回す</p>
+  </div>
+</div>
+
+<section class="section">
+
+<!-- qa-review-standards -->
+<div class="skill-card" id="card-qa-review-standards">
+  <div class="skill-header" onclick="toggleCard('qa-review-standards')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">qa-review-standards</span>
+    <span class="badge badge-intermediate">中級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-qa-review-standards" onchange="markDone('qa-review-standards',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'qa-review-standards','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'qa-review-standards','steps')">評価基準</div>
+    </div>
+    <div class="tab-panel active" id="tp-qa-review-standards-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> ISO/IEC 25010（製品品質モデル）とISTQB severity分類を使って成果物をレビューします。「なんとなく良さそう」という主観を排除し、国際規格ベースで定量評価します。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> PRを出す前。done-gateのQAレビュー項目を実行するとき。/qa-reviewコマンドを呼んだとき。</p>
+      <table>
+        <tr><th>ISO 25010の5カテゴリ</th><th>評価する観点</th></tr>
+        <tr><td><strong>機能適合性</strong></td><td>要件を満たしているか</td></tr>
+        <tr><td><strong>使用性</strong></td><td>操作しやすいか、わかりやすいか</td></tr>
+        <tr><td><strong>性能効率性</strong></td><td>速いか、リソースを無駄遣いしていないか</td></tr>
+        <tr><td><strong>信頼性</strong></td><td>エラー処理が適切か、データが消えないか</td></tr>
+        <tr><td><strong>セキュリティ</strong></td><td>APIキーが安全か、XSS等の脆弱性がないか</td></tr>
+      </table>
+      <table style="margin-top:var(--space-4)">
+        <tr><th>ISTQB Severity</th><th>意味</th><th>対応</th></tr>
+        <tr><td><span class="badge" style="background:var(--color-critical-bg);color:var(--color-critical)">Critical</span></td><td>使用不能・データ消失・セキュリティホール</td><td>即時修正必須。done-gate通過不可</td></tr>
+        <tr><td><span class="badge" style="background:var(--color-high-bg);color:var(--color-high)">High</span></td><td>主要機能が動かない・大きな使いにくさ</td><td>修正必須。done-gate通過不可</td></tr>
+        <tr><td><span class="badge" style="background:var(--color-medium-bg);color:#856404">Medium</span></td><td>機能は動くが品質に問題あり</td><td>次のイテレーションで修正</td></tr>
+        <tr><td><span class="badge" style="background:var(--color-low-bg);color:var(--color-low)">Low</span></td><td>軽微な改善点・好み</td><td>余裕があれば修正</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-qa-review-standards-steps">
+      <div class="info-box"><strong>evidence-only原則：</strong> 根拠のない指摘はしない。「〇〇ページで△△ボタンをクリックしたとき、✕✕が発生した」という形でevidenceを提示します。</div>
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">/qa-review コマンドを呼ぶ</div><div class="step-desc">対象の成果物（スクリーンショット・コード・仕様）を渡して「/qa-review」を実行。AIが5カテゴリ×severityでレビュー結果を出力します。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">Critical / High を先に修正する</div><div class="step-desc">Medium / Low はあとでいい。まずCritical・Highをゼロにすることがdone-gateの条件です。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">delta比較でレビューする</div><div class="step-desc">「前のバージョンと比べて何が変わったか」を明示することで、レビューの範囲を絞り込みます。</div></div></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- test-automation -->
+<div class="skill-card" id="card-test-automation">
+  <div class="skill-header" onclick="toggleCard('test-automation')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">test-automation</span>
+    <span class="badge badge-intermediate">中級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-test-automation" onchange="markDone('test-automation',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'test-automation','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'test-automation','steps')">手順</div>
+      <div class="tab" onclick="switchTab(this,'test-automation','code')">コード例</div>
+    </div>
+    <div class="tab-panel active" id="tp-test-automation-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 「動作確認した」を人力から自動テストの実行結果に置き換えるスキルです。PWA/HTMLツールはPlaywright、Streamlit/PythonはpytestでAIDDの品質ゲートに接続します。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> done-gateの「テストがpassする」を達成するとき。「毎回手動確認が面倒」と感じたとき。CIに組み込みたいとき。</p>
+      <table>
+        <tr><th>種別</th><th>フレームワーク</th><th>最小テスト観点</th></tr>
+        <tr><td>PWA / 単一HTML</td><td>Playwright</td><td>ロード・主要操作・localStorage永続化・360px表示</td></tr>
+        <tr><td>Streamlit</td><td>pytest + AppTest</td><td>例外なく起動・session_state衝突なし・テナント越境なし</td></tr>
+        <tr><td>純Pythonロジック</td><td>pytest</td><td>関数の入出力・エッジケース</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-test-automation-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">AIに「test-automationスキルに従ってスモークテストを書いて」と依頼する</div><div class="step-desc">対象ファイル（index.html や app.py）を渡すだけで、最小スモーク観点のテストコードを生成してくれます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">tests/ フォルダにテストを配置する</div><div class="step-desc">PWA: <code>tests/test_smoke.py</code>、Streamlit: <code>tests/test_app.py</code></div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">ローカルで実行する</div><div class="step-desc"><code>pytest tests/ -v</code>（Python/Streamlit）または <code>pytest tests/test_smoke.py</code>（Playwright）</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">LLMを含むロジックはモックにする</div><div class="step-desc">AIの応答はテストで再現できない（非決定的）ため、LLM呼び出しは必ずモック化してロジックだけをテストします。</div></div></li>
+      </ol>
+      <div class="warn-box"><code>time.sleep()</code> でのテスト待機は禁止。Playwrightの <code>expect / wait_for</code> を使ってください。</div>
+    </div>
+    <div class="tab-panel" id="tp-test-automation-code">
+      <p style="margin-bottom:var(--space-2);font-size:var(--text-sm)">Playwright スモークテスト最小構成（単一HTML）</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button">import pytest
+from playwright.sync_api import Page, expect
+
+def test_page_loads(page: Page):
+    page.goto("file:///path/to/index.html")
+    # コンソールエラーゼロ確認
+    errors = []
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    expect(page.locator("h1")).to_be_visible()
+    assert len(errors) == 0
+
+def test_local_storage_persistence(page: Page):
+    page.goto("file:///path/to/index.html")
+    page.fill("#input", "テストデータ")
+    page.click("#save-btn")
+    page.reload()
+    expect(page.locator("#input")).to_have_value("テストデータ")
+
+def test_fold5_layout(page: Page):
+    page.set_viewport_size({"width": 360, "height": 820})
+    page.goto("file:///path/to/index.html")
+    # 主要ボタンが viewport 内に表示されること
+    expect(page.locator("#main-action")).to_be_visible()</pre>
+    </div>
+  </div>
+</div>
+
+<!-- sdd-ecc-workflow -->
+<div class="skill-card" id="card-sdd-ecc-workflow">
+  <div class="skill-header" onclick="toggleCard('sdd-ecc-workflow')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">sdd-ecc-workflow</span>
+    <span class="badge badge-intermediate">中級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-sdd-ecc-workflow" onchange="markDone('sdd-ecc-workflow',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'sdd-ecc-workflow','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'sdd-ecc-workflow','steps')">10ステップ</div>
+      <div class="tab" onclick="switchTab(this,'sdd-ecc-workflow','code')">ガバナンス選択</div>
+    </div>
+    <div class="tab-panel active" id="tp-sdd-ecc-workflow-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> 仕様駆動開発（Spec-Driven Development）でプロジェクトを進めるフローです。spec.mdを「単一の真実」として、実装と検証を分離して進めます。手戻りを90%削減する最重要スキルのひとつです。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> 「新しいプロジェクトを始めたい」「要件定義から進めたい」「タスク分解をしたい」とき。</p>
+      <table>
+        <tr><th>役割</th><th>何をするか</th></tr>
+        <tr><td><strong>Coordinator</strong></td><td>タスク割当・進捗管理のみ。コードを書かない</td></tr>
+        <tr><td><strong>Implementor</strong></td><td>tasks.mdの1タスクのみ実装。範囲外に手を出さない</td></tr>
+        <tr><td><strong>Verifier</strong></td><td>spec.mdの検証基準に対して独立にevidenceで判定</td></tr>
+      </table>
+      <div class="info-box">1タスク1セッションが基本。タスクが終わったら <code>/clear</code> でセッションをリセットし、次のタスクから始めます。これがトークン節約の鍵です。</div>
+    </div>
+    <div class="tab-panel" id="tp-sdd-ecc-workflow-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">spec.md を作成する</div><div class="step-desc">要求・制約・検証基準を書く。「/sdd-start "概要一文"」で生成できます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">plan.md を作成する</div><div class="step-desc">アーキテクチャ・技術選定・ファイル構成を決める。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">tasks.md を作成する</div><div class="step-desc">依存関係付きで実装タスクを分解。各タスクには「対象ファイル・検証基準・完了条件」を明記。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">実装ループを回す</div><div class="step-desc">tasks.mdの1タスクを実装 → Verifierが検証 → 合格したら次のタスクへ。</div></div></li>
+        <li class="step-item"><div class="step-num">5</div><div class="step-body"><div class="step-title">implement.md に記録する</div><div class="step-desc">実装の判断・変更内容・ハマったことを残す。次セッションの文脈引き継ぎに使います。</div></div></li>
+        <li class="step-item"><div class="step-num">10</div><div class="step-body"><div class="step-title">done-gate → retro で完了する</div><div class="step-desc">チェックリストで完了判定 → lessons.md に振り返りを記録。</div></div></li>
+      </ol>
+    </div>
+    <div class="tab-panel" id="tp-sdd-ecc-workflow-code">
+      <p style="margin-bottom:var(--space-3);font-size:var(--text-sm)"><strong>ガバナンスパターンの選び方</strong></p>
+      <table>
+        <tr><th>パターン</th><th>適用条件</th></tr>
+        <tr><td><strong>spec-first</strong></td><td>個人PWA・小規模。specは初期ガイドのみで実装後に追記OK</td></tr>
+        <tr><td><strong>spec-anchored</strong></td><td>社内ツール・PoC。実装後にspecへ逆同期する</td></tr>
+        <tr><td><strong>spec-as-source</strong></td><td>顧客納品・規制要件。specが常に正であり、実装は必ずspecに従う</td></tr>
+      </table>
+      <p style="margin-top:var(--space-4);margin-bottom:var(--space-2);font-size:var(--text-sm)">spec.md の最小構成</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button"># spec.md — [プロジェクト名]
+
+## 概要
+[一文でプロジェクトを説明]
+
+## 機能要件
+- FR-01: [機能名] → 検証基準: [確認できる事実]
+
+## 非機能要件
+[nfr-standardsのテンプレートをここにコピー]
+
+## 制約・禁止事項
+- [触らないファイル・使わない技術を明記]
+
+## 対象外
+- [スコープ外を明記]</pre>
+    </div>
+  </div>
+</div>
+
+<!-- retro -->
+<div class="skill-card" id="card-retro">
+  <div class="skill-header" onclick="toggleCard('retro')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">retro</span>
+    <span class="badge badge-intermediate">中級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-retro" onchange="markDone('retro',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'retro','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'retro','steps')">手順</div>
+    </div>
+    <div class="tab-panel active" id="tp-retro-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> AIDDプロセスを改善するための振り返りスキルです。Keep / Problem / Try を整理して lessons.md に蓄積し、スキル・コマンド・hookへのフィードバックに変換します。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> プロジェクト完了後。月1回の定期レトロ。「なんか上手くいかなかった」と感じたセッションの後。</p>
+      <table>
+        <tr><th>分類</th><th>内容</th></tr>
+        <tr><td><strong>Keep</strong></td><td>上手くいったこと。次も続ける</td></tr>
+        <tr><td><strong>Problem</strong></td><td>上手くいかなかったこと。原因を特定する</td></tr>
+        <tr><td><strong>Try</strong></td><td>次のイテレーションで試すこと。具体的なアクション</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-retro-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">/retro コマンドを実行する</div><div class="step-desc">このセッション・プロジェクトを振り返り、Keep/Problem/Tryを整理します。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">lessons.md に記録する</div><div class="step-desc"><code>yuki-aidd-kit/templates/lessons.md</code> に追記。日付・プロジェクト名・KPTを書きます。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">改善点をスキル・コマンドに反映する</div><div class="step-desc">「このパターンは毎回使う」と気づいたらスキルに追記。繰り返す作業はコマンド化の候補です。</div></div></li>
+      </ol>
+      <div class="tip-box">レトロは5〜15分でいい。完璧にやろうとしない。「1つのTryが次のプロジェクトで生きた」を繰り返すことが目的です。</div>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Phase 2 Commands -->
+<section class="section" id="phase2-cmds">
+  <div class="section-label">Phase 2 — コマンド集</div>
+  <h2 class="section-title">スラッシュコマンド（品質）</h2>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/qa-review</div>
+    <span class="badge badge-intermediate">中級</span>
+    <div class="cmd-desc">ISO 25010 + ISTQB準拠のQAレビューを実行します。スクリーンショット・コード・仕様を渡すと5カテゴリ×severityで評価結果と改善指摘を出力します。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/qa-review [スクリーンショットを貼り付けるかコードを渡す]</pre>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/retro</div>
+    <span class="badge badge-intermediate">中級</span>
+    <div class="cmd-desc">プロジェクト・セッションの振り返りを実行します。Keep/Problem/Tryを整理し、lessons.mdへの記載内容と次のイテレーションへの改善候補を提示します。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/retro</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PHASE 3 ==================== -->
+<div class="phase-header phase-3" id="phase3">
+  <div class="phase-num">3</div>
+  <div class="phase-header-info">
+    <h2>Phase 3 — AI・評価スキル <span class="badge badge-advanced">上級</span></h2>
+    <p>目標：LLMベースのシステムを品質管理下で開発・運用する</p>
+  </div>
+</div>
+
+<section class="section">
+
+<!-- streamlit-rag-app -->
+<div class="skill-card" id="card-streamlit-rag-app">
+  <div class="skill-header" onclick="toggleCard('streamlit-rag-app')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">streamlit-rag-app</span>
+    <span class="badge badge-advanced">上級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-streamlit-rag-app" onchange="markDone('streamlit-rag-app',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'streamlit-rag-app','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'streamlit-rag-app','steps')">設計原則</div>
+    </div>
+    <div class="tab-panel active" id="tp-streamlit-rag-app-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> PMOエージェント等の Streamlit RAGアプリ開発規約です。16モジュール構成・マルチテナント・3機能（意思決定支援・成果物支援・教育支援）の大規模アプリを品質基準を守りながら開発する方法を定義しています。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> Streamlit + LLMで業務アプリを作るとき。RAG（検索拡張生成）システムを構築するとき。</p>
+      <div class="warn-box">Phase 1・2のスキルが習得できてから取り組みましょう。特にsdd-ecc-workflow（仕様駆動）とtest-automation（テスト自動化）が前提です。</div>
+      <table>
+        <tr><th>ポイント</th><th>規約</th></tr>
+        <tr><td>モジュール構成</td><td>1モジュール = 1責務。16モジュール以上に分割しない</td></tr>
+        <tr><td>session_state</td><td>キーは <code>モジュール名_変数名</code> 形式で衝突防止</td></tr>
+        <tr><td>LLM呼び出し</td><td>1箇所のラッパー関数に集約（モデル切替・リトライを一元管理）</td></tr>
+        <tr><td>マルチテナント</td><td>テナントIDを全DBクエリの第一キーとして強制フィルタ</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tp-streamlit-rag-app-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">sdd-ecc-workflowでspec.mdを先に書く</div><div class="step-desc">3機能（意思決定支援・成果物支援・教育支援）のうちどれを作るかを決め、要件を先に固めます。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">16モジュール構成を設計する</div><div class="step-desc">app.py（起動）/ ui/（各ページ）/ core/（ビジネスロジック）/ data/（DB・RAG）など責務で分ける。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">LLMラッパーを最初に実装する</div><div class="step-desc"><code>core/llm.py</code> に全LLM呼び出しを集約。モデル名・タイムアウト・リトライをここで管理。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">マルチテナントテストを書く</div><div class="step-desc">テナントAのデータがテナントBから見えないことをpytestで検証。これが必須のdone-gate項目です。</div></div></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- agent-eval -->
+<div class="skill-card" id="card-agent-eval">
+  <div class="skill-header" onclick="toggleCard('agent-eval')">
+    <span class="skill-toggle">▼</span>
+    <span class="skill-name">agent-eval</span>
+    <span class="badge badge-advanced">上級</span>
+    <input type="checkbox" class="skill-done-cb" id="cb-agent-eval" onchange="markDone('agent-eval',this.checked)" onclick="e=>e.stopPropagation()">
+  </div>
+  <div class="skill-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'agent-eval','what')">概要</div>
+      <div class="tab" onclick="switchTab(this,'agent-eval','steps')">評価フロー</div>
+    </div>
+    <div class="tab-panel active" id="tp-agent-eval-what">
+      <p style="margin-bottom:var(--space-3)"><strong>何をするスキルか：</strong> AIエージェント・LLMシステムの出力品質を定量評価します。DeepEval（pytest-native）+ Langfuse（トレース・UI）を使って、非決定的なAI出力を測定可能にします。</p>
+      <p style="margin-bottom:var(--space-3)"><strong>いつ使うか：</strong> プロンプト・モデル・ロジックを変更したとき。AI出力の品質を数値で把握したいとき。回帰テストを設定したいとき。</p>
+      <table>
+        <tr><th>ツール</th><th>役割</th></tr>
+        <tr><td><strong>DeepEval</strong></td><td>評価メトリクス実装（Faithfulness / Relevancy / Correctness 等）</td></tr>
+        <tr><td><strong>Langfuse</strong></td><td>LLM呼び出しのトレース・コスト・レイテンシの可視化</td></tr>
+        <tr><td><strong>ゴールデンデータセット</strong></td><td>「正解がわかっている入出力ペア」の集合。評価の基準</td></tr>
+      </table>
+      <div class="info-box"><strong>test-automationとの違い：</strong> test-automationは「コードが動くか（決定的）」を確認します。agent-evalは「AIの回答が良いか（非決定的）」を定量評価します。両方必要です。</div>
+    </div>
+    <div class="tab-panel" id="tp-agent-eval-steps">
+      <ol class="steps">
+        <li class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">ゴールデンデータセットを作る</div><div class="step-desc">「この入力に対してこの回答が正解」というペアを最低10件用意します。ここが最も重要で、品質の基準になります。</div></div></li>
+        <li class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">評価メトリクスを選ぶ</div><div class="step-desc">RAGなら Faithfulness（根拠に忠実か）+ Relevancy（関連性あるか）が最低限。タスクに応じて Correctness・Coherence を追加。</div></div></li>
+        <li class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">ベースラインスコアを記録する</div><div class="step-desc">最初の evalを「ベースライン」として保存。以降のプロンプト変更で回帰していないかこの値と比較します。</div></div></li>
+        <li class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">/eval コマンドで定期実行する</div><div class="step-desc">プロンプト・モデル変更のたびに /eval を実行し、スコアがベースライン以上であることを確認してから done-gate を通過させます。</div></div></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Phase 3 Commands -->
+<section class="section" id="phase3-cmds">
+  <div class="section-label">Phase 3 — コマンド集</div>
+  <h2 class="section-title">スラッシュコマンド（AI評価）</h2>
+
+  <div class="cmd-card">
+    <div class="cmd-name">/eval</div>
+    <span class="badge badge-advanced">上級</span>
+    <div class="cmd-desc">AIエージェント品質評価を実行します。対象システム → スコアラー選定 → ゴールデンデータセット確認 → eval実行 → ベースラインとの回帰判定を流れで行います。</div>
+    <div class="cmd-usage">
+      <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/eval [評価対象システムの説明または対象ファイルを渡す]</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FIRST PROJECT ==================== -->
+<section class="section" id="first-project">
+  <div class="section-label">実践ガイド</div>
+  <h2 class="section-title">最初の1プロジェクト</h2>
+  <p class="section-desc">Phase 1の6スキル + 3コマンドを1週間で体験する最速ルートです。「家計簿アプリ（個人PWA）」を題材にします。</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">1</div>
+      <div class="tl-time">15分</div>
+      <div class="tl-title">/new-pwa でプロジェクトを立ち上げる</div>
+      <div class="tl-body">
+        <pre><button class="copy-btn" onclick="copyCode(this)">copy</button>/new-pwa my-kakeibo "家計簿アプリ。月ごとの収支を記録し、カテゴリ別グラフで可視化する"</pre>
+        <p style="margin-top:var(--space-2)">index.html・manifest.json・sw.js・spec.mdの雛形が生成されます。</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">2</div>
+      <div class="tl-time">10分</div>
+      <div class="tl-title">design-system を適用する</div>
+      <div class="tl-body">CSS変数ブロックを index.html の &lt;style&gt; 冒頭に貼り、Google Fontsを追加します。「design-systemスキルに従ってCSSを適用して」と依頼するだけで自動適用されます。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">3</div>
+      <div class="tl-time">10分</div>
+      <div class="tl-title">nfr-standards で非機能要件を spec.md に書く</div>
+      <div class="tl-body">「nfr-standardsスキルに従ってspec.mdの非機能要件を書いて（種別: PWA）」と依頼。Fold5対応・オフライン要件が自動で入ります。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">4</div>
+      <div class="tl-time">2〜3時間</div>
+      <div class="tl-title">personal-pwa スキルに従って実装する</div>
+      <div class="tl-body">収支入力フォーム・localStorage保存・グラフ表示・export/importを実装。「personal-pwaスキルに従ってlocalStorage操作を実装して」と都度依頼します。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">5</div>
+      <div class="tl-time">30分</div>
+      <div class="tl-title">/qa-review でレビューする</div>
+      <div class="tl-body">スクリーンショットを貼り付けて /qa-review を実行。Critical/High の指摘があれば修正します。これが初めての品質評価体験です。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">6</div>
+      <div class="tl-time">1時間</div>
+      <div class="tl-title">done-gate チェックリストを実行する</div>
+      <div class="tl-body">「done-gateスキルのチェックリストを実行して」と依頼。未達項目があれば修正。全項目クリアで初めて「完了」です。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">7</div>
+      <div class="tl-time">30分</div>
+      <div class="tl-title">GitHub Pages に公開する</div>
+      <div class="tl-body">リポジトリのSettings → Pages → main / root を選択。数分後にスマホでアクセスしてホーム画面に追加します。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">8</div>
+      <div class="tl-time">15分</div>
+      <div class="tl-title">/retro で振り返る</div>
+      <div class="tl-body">/retro を実行してKPTを整理。lessons.md に記録します。「何がうまくいったか」「次はこうしたい」を書いてセッション終了。<br><strong>次回は「CURRENT_STATE.mdを読んで再開して」の1行で復帰できます。</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== TEMPLATES ==================== -->
+<section class="section" id="templates">
+  <div class="section-label">テンプレート集</div>
+  <h2 class="section-title">必須ドキュメント</h2>
+  <p class="section-desc">AIDDでは「記録」が品質とスピードの基盤です。これらのファイルをセッション終了時に更新することで、次回の立ち上がりを劇的に速くできます。</p>
+
+  <table>
+    <tr><th>ファイル</th><th>役割</th><th>更新タイミング</th></tr>
+    <tr><td><code>CURRENT_STATE.md</code></td><td>セッション間の文脈引き継ぎ（最重要）</td><td>毎セッション終了時（5分）</td></tr>
+    <tr><td><code>spec.md</code></td><td>要件・制約・検証基準の唯一の真実</td><td>要件変更時</td></tr>
+    <tr><td><code>implement.md</code></td><td>実装の判断記録・変更履歴</td><td>タスク完了時</td></tr>
+    <tr><td><code>ADR-template.md</code></td><td>重要な設計判断の記録（なぜその選択か）</td><td>重要な判断が発生したとき</td></tr>
+    <tr><td><code>lessons.md</code></td><td>AIDDプロセス改善ログ</td><td>プロジェクト完了時・月1回レトロ</td></tr>
+  </table>
+
+  <h3 style="margin-top:var(--space-8);margin-bottom:var(--space-3);font-size:var(--text-md)">CURRENT_STATE.md テンプレート</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button"># CURRENT_STATE.md — [プロジェクト名]
+
+> 次回開始: 「CURRENT_STATE.mdを読んで再開して」の1行でコンテキスト復元。
+
+## プロジェクト名
+## 最終更新
+## 現在のフェーズ（設計中 / 実装中 / レビュー中 / 完了）
+## 直近の完了タスク
+## 次のタスク（最優先）
+## 未解決の判断待ち事項
+## 既知の問題・技術的負債
+## 重要な設計決定</pre>
+
+  <h3 style="margin-top:var(--space-6);margin-bottom:var(--space-3);font-size:var(--text-md)">Conventional Commits 形式</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">copy</button">feat: 収支入力フォームを追加
+fix: localStorage読み込み時のJSONパースエラーを修正
+docs: spec.mdに非機能要件を追加
+test: スモークテストを追加
+refactor: localStorage操作をsaveData/loadData関数に集約
+chore: sw.jsのCACHE_NAMEをv2に更新</pre>
+
+  <div class="tip-box" style="margin-top:var(--space-6)">
+    <strong>1コミット = 1論理変更</strong> を守りましょう。複数の変更をまとめて1コミットにしない。小さくコミットするほど、問題が起きたときの切り分けが簡単になります。
+  </div>
+</section>
+
+<!-- Footer -->
+<div style="padding:var(--space-8);text-align:center;color:var(--color-text-secondary);font-size:var(--text-sm);border-top:1px solid var(--color-divider)">
+  <p>AIDD スキルトランスファー — <a href="https://github.com/ma-garin/sandbox/tree/main/skill-transfer">GitHub</a></p>
+  <p style="margin-top:var(--space-2)">学習進捗はブラウザに自動保存されます。</p>
+</div>
+
+</main>
+</div>
+
+<script>
+const SKILLS = ['design-system','nfr-standards','single-html-tool','personal-pwa','done-gate','code-doc-search','qa-review-standards','test-automation','sdd-ecc-workflow','retro','streamlit-rag-app','agent-eval'];
+const STORE_KEY = 'aidd-transfer:progress';
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; }
+}
+function saveProgress(p) { localStorage.setItem(STORE_KEY, JSON.stringify(p)); }
+
+function updateProgressBar() {
+  const p = loadProgress();
+  const done = SKILLS.filter(s => p[s]).length;
+  const pct = Math.round((done / SKILLS.length) * 100);
+  document.getElementById('progressPct').textContent = pct;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function markDone(skill, checked) {
+  const p = loadProgress();
+  p[skill] = checked;
+  saveProgress(p);
+  const card = document.getElementById('card-' + skill);
+  if (card) card.classList.toggle('done', checked);
+  const navLink = document.getElementById('nav-' + skill);
+  if (navLink) navLink.classList.toggle('done', checked);
+  updateProgressBar();
+}
+
+function toggleCard(skill) {
+  const card = document.getElementById('card-' + skill);
+  card.classList.toggle('open');
+}
+
+function switchTab(tabEl, skill, panel) {
+  const body = tabEl.closest('.skill-body');
+  body.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  body.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  tabEl.classList.add('active');
+  const tp = document.getElementById('tp-' + skill + '-' + panel);
+  if (tp) tp.classList.add('active');
+}
+
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (window.innerWidth <= 768) closeMobileMenu();
+}
+
+function copyCode(btn) {
+  const pre = btn.parentElement;
+  const text = pre.textContent.replace('copy', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+
+// Mobile menu
+const menuBtn = document.getElementById('menuBtn');
+const sidenav = document.getElementById('sidenav');
+const overlay = document.getElementById('overlay');
+menuBtn.addEventListener('click', () => {
+  sidenav.classList.toggle('open');
+  overlay.classList.toggle('open');
+});
+overlay.addEventListener('click', closeMobileMenu);
+function closeMobileMenu() {
+  sidenav.classList.remove('open');
+  overlay.classList.remove('open');
+}
+
+// Active nav link on scroll
+const sections = ['intro','roadmap','phase1','phase2','phase3','first-project','templates'];
+const navLinks = document.querySelectorAll('.nav-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+
+// Init: restore checkboxes
+(function init() {
+  const p = loadProgress();
+  SKILLS.forEach(skill => {
+    if (p[skill]) {
+      const cb = document.getElementById('cb-' + skill);
+      if (cb) cb.checked = true;
+      const card = document.getElementById('card-' + skill);
+      if (card) card.classList.add('done');
+      const navLink = document.getElementById('nav-' + skill);
+      if (navLink) navLink.classList.add('done');
+    }
+  });
+  updateProgressBar();
+})();
+</script>
+</body>
+</html>

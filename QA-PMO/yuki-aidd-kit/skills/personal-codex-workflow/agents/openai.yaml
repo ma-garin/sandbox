@@ -1,0 +1,4 @@
+interface:
+  display_name: "Personal Codex Workflow"
+  short_description: "日本語対応・低コスト調査・承認ゲートを毎回の作業規律にする"
+  default_prompt: "Use $personal-codex-workflow to handle this task with Japanese responses, minimal investigation, and approval gates."

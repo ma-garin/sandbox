@@ -16,7 +16,9 @@ yuki-aidd-kit/
 │   ├── streamlit-rag-app/      # PMOエージェント系（RAG・multi-agent）
 │   ├── design-system/          # MD3トークン（#1976D2系/#1a3a6b系）
 │   ├── nfr-standards/          # パフォーマンス予算・WCAG・タッチターゲット
-│   └── agent-eval/             # DeepEval + Langfuseセルフホスト評価基盤
+│   ├── agent-eval/             # DeepEval + Langfuseセルフホスト評価基盤
+│   ├── personal-codex-workflow/ # 日本語・低コスト・承認ベースのCodex作業規律
+│   └── qa-pmo-context-triage/   # QA-PMO repoを小さく読んで次手を整理
 ├── claude-code/
 │   ├── hooks/
 │   │   ├── settings.json

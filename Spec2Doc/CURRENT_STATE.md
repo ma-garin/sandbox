@@ -1,0 +1,61 @@
+# CURRENT_STATE.md — Spec2Doc
+
+> **更新タイミング**: 各セッション終了時に更新する。
+> **次回開始**: 「CURRENT_STATE.mdを読んで再開して」の1行でコンテキスト復元。
+
+---
+
+## プロジェクト名
+
+Spec2Doc
+
+## 最終更新
+
+2026-09-26
+
+## 現在のフェーズ
+
+第 1 リリース＋市場・先行研究に基づく改修済み（D13・図・CRUD・差分・影響分析・確度・トレーサビリティ・デモ）。受け入れ判定待ち
+
+## 直近の完了タスク
+
+- `_template/` からフォルダを作成し、目的・入出力の想定を README に記載
+- 2026-09-26 午後: 市場調査（関連度で絞って日本 30・米国 23。docs/research/market/README.md）と先行研究 4 分野（docs/research/prior-work/）。改修: 図の自動生成・D04 CRUD 表・前回との差分・D13 テスト観点表・D07 変更影響分析・D08 確度のまとめ・URL/メソッドの解決・トレーサビリティ（関係図と管理、確認状態の保存と引き継ぎ）・デモ用サンプル（fixtures/demo-library・demo/library-output）。npm test PASS=217 / FAIL=0
+- 2026-09-26 第 1 リリースを実装（PLAN.md）。npm test PASS=129 / FAIL=0、tsc 0、check-design NG=0。検証 3 本（安全性・文書の中身・画面の全状態）の Critical/High は解消（docs/verify/）
+- 2026-09-25 要件定義書を起草（REQ-F 41 件・REQ-N 18 件（RFD-007 の追加を含む））。RFD-001〜006 に保守者回答を転記。題材分析 docs/research/ を根拠に参照
+
+## 次のタスク（最優先）
+
+- 保守者: 受け入れ判定（Web で自分のリポジトリを入れて文書を確認）
+- 受入評価（REQ-N-006・007）: 評価用システム（ポットの JS 実装等）の用意と 7 観点の再現率の計測は未着手
+- 未コミット: src/・test/・fixtures/・package.json 等はまだ git 管理外
+
+## 未解決の判断待ち事項
+
+- 工程承認（phase-0〜9）は保守者指示（2026-09-25）で省略中
+
+## 既知の問題・技術的負債
+
+- 先行研究の示唆のうち未反映: JS の呼び出し関係は静的解析で完全にならない旨の出力への注記、設計意図はソースから復元できない旨の明記、推測の行をソース位置と機械照合する検証工程（DocAgent の Verifier 相当）
+- 先行研究・市場調査の数値の多くは要旨・検索結果どまり（本文未確認）。各ファイルの「引用してはいけない数値」を参照
+
+- 業務ルール・状態遷移の抽出は構文パターン止まり（動的な URL・状態名は `{url}`・`is-{next}` のまま）
+- Express・axios・XHR・IndexedDB の抽出は実装済みだが fixture に無く未検証
+- 性能（REQ-N-001 5 万行）は未計測。LLM 有効時の実 API 呼び出しは未検証（テストはモック）
+- 同じ数値を unit-unknown と magic-number に二重に載せない処理は、該当する入力が作れず未検証
+- バックグラウンドのサブエージェントに npm install をさせると実行許可待ちで止まる（2026-09-25 に 3 本停止）
+
+## 重要な設計決定
+
+- 対象言語: Java / COBOL / C#・VB.NET / Python / JavaScript / TypeScript / PHP / HTML / CSS（2026-09-25 保守者回答）
+- 出力形式: Markdown / Word / HTML / Excel（同上）
+- 解析方式: 静的解析と LLM の併用。構造は静的解析で抽出し、業務ロジックの説明文を LLM で書く（同上）
+- 実行形態: CLI を中核にし、Web 画面を加える（同上）
+- 実装順: Web 系（JavaScript / TypeScript / HTML / CSS）を先に作り、他の言語は解析部分を差し替えて広げる（同上）
+
+## セッション開始時の指示テンプレート
+
+```
+CURRENT_STATE.mdを読んで、次のタスクから作業を再開してください。
+プロジェクト: /Users/fujimagariyuki/dev/active/sandbox/Spec2Doc/
+```

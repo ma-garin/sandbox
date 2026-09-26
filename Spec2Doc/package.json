@@ -1,0 +1,31 @@
+{
+  "name": "spec2doc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ソースコードから仕様書・設計書を生成する",
+  "engines": {
+    "node": ">=25"
+  },
+  "scripts": {
+    "cli": "node src/cli.ts",
+    "web": "node src/web/server.ts",
+    "test": "node --test 'test/**/*.test.ts'",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "docx": "^9.7.2",
+    "exceljs": "^4.4.0",
+    "ignore": "^7.0.10",
+    "parse5": "^8.0.1",
+    "postcss": "^8.5.28",
+    "typescript": "^5.9.3",
+    "yauzl": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/yauzl": "^3.4.0",
+    "jszip": "^3.10.2"
+  }
+}

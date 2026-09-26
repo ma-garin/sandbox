@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>入場券予約</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+</head>
+<body>
+  <h1>入場券予約</h1>
+  <form id="order-form" action="#">
+    <label for="name">氏名</label>
+    <input id="name" name="name" type="text" required maxlength="40">
+
+    <label for="email">メールアドレス</label>
+    <input id="email" name="email" type="email" required pattern="[^@\s]+@[^@\s]+\.[a-z]{2,}">
+
+    <label for="age">年齢</label>
+    <input id="age" name="age" type="number" required min="0" max="119" step="1">
+
+    <label for="qty">数量</label>
+    <input id="qty" name="qty" type="number" min="1" max="10" value="1">
+
+    <label for="ticket-type">券種</label>
+    <select id="ticket-type" name="ticketType">
+      <option value="day">1 日券</option>
+      <option value="night">夜間券</option>
+      <option value="annual">年間パスポート</option>
+    </select>
+
+    <label for="coupon">クーポンコード</label>
+    <input id="coupon" name="coupon" type="text" maxlength="8" pattern="[A-Z0-9]{8}">
+
+    <button id="calc-button" type="button">料金を計算</button>
+    <button id="submit-button" type="submit">予約する</button>
+  </form>
+
+  <p id="price">合計: <output id="total">0</output> 円</p>
+  <p id="status" class="status is-idle">待機中</p>
+  <p id="error-message" class="error-message" role="alert"></p>
+
+  <a id="help-link" href="help.html">ご利用案内</a>
+  <script src="app.js"></script>
+</body>
+</html>

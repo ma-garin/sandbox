@@ -1,0 +1,17 @@
+body { font-family: sans-serif; margin: 0 auto; max-width: 720px; padding: 16px; }
+form { display: grid; grid-template-columns: 10em 1fr; gap: 8px; }
+.error-message { display: none; color: #b00020; }
+.error-message.is-error { display: block; }
+.status.is-loading { opacity: 0.6; }
+.status.is-done { color: #1b5e20; }
+.status.is-error { color: #b00020; }
+.is-hidden { display: none; }
+
+@media (max-width: 767px) {
+  form { grid-template-columns: 1fr; }
+  #help-link { display: none; }
+}
+
+@media (min-width: 1200px) {
+  body { max-width: 960px; }
+}

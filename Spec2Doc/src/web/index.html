@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec2Doc — ソースコードから仕様書を作る</title>
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/components.css">
+<link rel="stylesheet" href="/layout.css">
+<style>
+  /* 骨格は layout.css、部品は components.css、値は tokens.css（yuki-aidd-kit design-system）。ここは画面固有の配置だけ */
+  /* 本文だけスクロール: .app を画面の高さに収め、.app-content だけが overflow:auto（layout.css の意図） */
+  .app { height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
+  .app-body { overflow: hidden; }
+  @media (min-width: 769px) { #menu { display: none; } }   /* サイドバーが常に見える幅では開閉ボタンは不要 */
+  .input, .textarea, .select { box-sizing: border-box; width: 100%; max-width: 100%; }   /* 幅 100% でカードからはみ出さない */
+  .view { display: flex; flex-direction: column; gap: var(--space-4); }
+  #run-form { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
+  .card-head h2 { margin: 0; font-size: var(--text-lg); }
+  .card-head .row { display: flex; gap: var(--space-1); }
+  .stack { display: flex; flex-direction: column; gap: var(--space-3); }
+  .card h3 { margin: 0; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); }
+  .hint { margin: 0; font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .gh-row { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
+  .doc-groups { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .doc-group { display: flex; flex-direction: column; gap: var(--space-1); }
+  .check { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); cursor: pointer; font-size: var(--text-sm); }
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--space-3); }
+  input[type=checkbox] { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--color-primary); }
+  input[type=checkbox]:focus-visible, .seg > button:focus-visible, a:focus-visible, .sidebar nav a:focus-visible, summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .seg { align-self: flex-start; flex-wrap: wrap; }
+  .switch-row { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--space-8); cursor: pointer; font-size: var(--text-sm); }
+  #llm:focus-visible + .switch-row .toggle { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  details summary { cursor: pointer; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); }
+  details[open] summary { margin-bottom: var(--space-2); }
+  hr.sep { border: 0; border-top: 1px solid var(--color-divider); margin: 0; }
+  progress { width: 100%; height: 8px; accent-color: var(--color-primary); }
+  #status, #summary { margin: 0; font-size: var(--text-sm); }
+  .files { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin: 0; }
+  .files a, .view-cell a { color: var(--color-primary-dark); font-weight: 600; display: inline-flex; align-items: center; gap: var(--space-1); }
+  .view-cell { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  #page-title:focus:not(:focus-visible) { outline: none; }   /* 画面切替で見出しへ移すフォーカスは枠を出さない。キーボードでは :focus-visible */
+  .btn-sm { min-height: var(--space-8); padding: 0 var(--space-3); font-size: var(--text-sm); }
+  .btn-icon { width: var(--space-8); padding: 0; }
+  .cell-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+  .table tbody th { background: transparent; font-weight: 600; border-bottom: 1px solid var(--color-divider); vertical-align: middle; }
+  .table tbody td { vertical-align: middle; }
+  .topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .dl-label { font-size: var(--text-sm); color: var(--color-text-secondary); }
+  #result .kpi-row { margin-bottom: 0; }
+  .badge-neutral { color: var(--color-text-secondary); border-color: var(--color-border); margin-left: var(--space-2); font-weight: 600; }
+  #view-doc { height: 100%; }
+  #frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+  .log { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-sm); }
+  .log dt { color: var(--color-text-secondary); }
+  .log dd { margin: 0; overflow-wrap: anywhere; }
+  .steps { margin: 0; padding-left: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
+  code { font-family: var(--font-mono); font-size: var(--text-sm); background: var(--color-surface-2); padding: 0 var(--space-1); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+  @media (min-width: 1100px) { #run-form { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } #card-input { grid-column: 1 / -1; } }
+  @media (min-width: 1366px) { .gh-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
+  @media (max-width: 480px) {
+    .app-globalbar .muted { display: none; }
+    #kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }   /* 4 枚を 2×2 に。1 列だと一覧が画面外に押し出される */   /* 狭い幅では製品名と主な操作を優先 */
+    .card-head { flex-wrap: wrap; }
+    .checks { grid-template-columns: minmax(0, 1fr); }
+    .log { grid-template-columns: 1fr; gap: var(--space-1); }
+    .log dd { margin-bottom: var(--space-2); }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="app-globalbar">
+    <button class="btn btn--ghost" id="menu" type="button" aria-label="メニューを開く" aria-controls="sidebar" aria-expanded="false"><span data-icon="grid-view" data-icon-size="18" aria-hidden="true"></span></button>
+    <span class="brand">Spec2Doc</span>
+    <span class="spacer"></span>
+    <span class="muted">この端末だけで動作</span>
+    <button class="btn btn--ghost" id="theme" type="button" aria-pressed="false"><span data-icon="settings" data-icon-size="16" aria-hidden="true"></span><span class="label-text">ダークにする</span></button>
+  </header>
+  <div class="app-body">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head"><span class="brand">メニュー</span><button class="btn btn--ghost" id="collapse" type="button" aria-label="メニューを折りたたむ" aria-controls="sidebar" aria-expanded="true">‹</button></div>
+      <nav aria-label="主要">
+        <a href="#make" data-view="make" aria-current="page"><span class="icon" data-icon="add" data-icon-size="18" aria-hidden="true"></span><span class="label-text">文書の作成</span></a>
+        <a href="#result" data-view="result"><span class="icon" data-icon="description" data-icon-size="18" aria-hidden="true"></span><span class="label-text">結果</span></a>
+        <a href="#log" data-view="log"><span class="icon" data-icon="history" data-icon-size="18" aria-hidden="true"></span><span class="label-text">実行記録</span></a>
+        <a href="#help" data-view="help"><span class="icon" data-icon="help" data-icon-size="18" aria-hidden="true"></span><span class="label-text">使い方</span></a>
+      </nav>
+    </aside>
+    <div class="maincol">
+      <header class="app-topbar">
+        <div><div class="breadcrumb" id="crumb" hidden><a href="#result">結果</a><span>/</span><span>閲覧</span></div><h1 id="page-title" tabindex="-1">文書の作成</h1></div>
+        <span class="spacer"></span>
+        <div class="topbar-actions" id="doc-actions" hidden>
+          <a class="btn" href="#result" id="back"><span data-icon="arrow-back" data-icon-size="16" aria-hidden="true"></span>一覧へ戻る</a>
+          <span class="dl-label" id="doc-dl-label">ダウンロード</span>
+          <div class="cell-actions" role="group" aria-labelledby="doc-dl-label" id="doc-downloads"></div>
+        </div>
+        <button type="submit" form="run-form" class="btn btn--primary" id="run"><span data-icon="play" data-icon-size="16" aria-hidden="true"></span><span id="run-label">文書を作る</span></button>
+      </header>
+      <main class="app-content">
+
+        <section class="view" id="view-make" aria-labelledby="page-title">
+          <form id="run-form" novalidate>
+            <div class="card" id="card-input">
+              <div class="card-head">
+                <h2 id="h-input">入力</h2>
+                <button type="button" class="btn" id="demo" hidden>デモのサンプルで試す</button>
+              </div>
+              <div class="stack">
+                <input type="hidden" name="kind" id="kind" value="github">
+                <div class="seg" role="tablist" aria-label="入力の種類">
+                  <button type="button" role="tab" id="tab-github" data-kind="github" aria-controls="panel-github" aria-selected="true" tabindex="0" class="active">GitHub の URL</button>
+                  <button type="button" role="tab" id="tab-zip" data-kind="zip" aria-controls="panel-zip" aria-selected="false" tabindex="-1">.zip ファイル</button>
+                  <button type="button" role="tab" id="tab-folder" data-kind="folder" aria-controls="panel-folder" aria-selected="false" tabindex="-1">フォルダのパス</button>
+                </div>
+                <div role="tabpanel" id="panel-github" aria-labelledby="tab-github" class="stack">
+                  <div class="gh-row">
+                    <div class="field"><label for="url">リポジトリの URL</label><input type="url" id="url" name="url" class="input" placeholder="https://github.com/owner/repo" autocomplete="url"></div>
+                    <div class="field"><label for="ref">ブランチ・タグ・コミット</label><input type="text" id="ref" name="ref" class="input" placeholder="main" aria-describedby="ref-hint"></div>
+                  </div>
+                  <p class="hint" id="ref-hint">ブランチ等が空欄なら既定のブランチを使います。非公開リポジトリはサーバの環境変数 GITHUB_TOKEN にトークンを設定して起動します。</p>
+                </div>
+                <div role="tabpanel" id="panel-zip" aria-labelledby="tab-zip" class="stack" hidden>
+                  <div class="field"><label for="zip">.zip ファイル</label><input type="file" id="zip" name="zip" class="input" accept=".zip,application/zip" aria-describedby="zip-hint"></div>
+                  <p class="hint" id="zip-hint">読み取り専用の一時領域に展開して解析し、終わったら消します。</p>
+                </div>
+                <div role="tabpanel" id="panel-folder" aria-labelledby="tab-folder" class="stack" hidden>
+                  <div class="field"><label for="folder">フォルダのパス</label><input type="text" id="folder" name="folder" class="input" placeholder="/Users/you/project" aria-describedby="folder-hint"></div>
+                  <p class="hint" id="folder-hint">このサーバを動かしている端末のフォルダを絶対パスで指定します。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" id="docs-set" role="group" aria-labelledby="h-docs">
+              <div class="card-head">
+                <h2 id="h-docs">文書の種類</h2>
+                <div class="row">
+                  <button type="button" class="btn btn--ghost" id="docs-all">すべて選ぶ</button>
+                  <button type="button" class="btn btn--ghost" id="docs-none">すべて外す</button>
+                </div>
+              </div>
+              <div id="docs" class="doc-groups"></div>
+            </div>
+
+            <div class="card" id="card-settings">
+              <h2 id="h-settings">設定</h2>
+              <div class="stack">
+                <div class="doc-group" role="group" aria-labelledby="h-formats" id="formats-set">
+                  <h3 id="h-formats">出力形式</h3>
+                  <div class="checks">
+                    <label class="check" for="f-md"><input type="checkbox" id="f-md" name="formats" value="md" checked>Markdown</label>
+                    <label class="check" for="f-html"><input type="checkbox" id="f-html" name="formats" value="html" checked>HTML</label>
+                    <label class="check" for="f-docx"><input type="checkbox" id="f-docx" name="formats" value="docx" checked>Word（.docx）</label>
+                    <label class="check" for="f-xlsx"><input type="checkbox" id="f-xlsx" name="formats" value="xlsx" checked>Excel（.xlsx）</label>
+                    <label class="check" for="f-trace"><input type="checkbox" id="f-trace" name="formats" value="trace" checked>HTML（トレーサビリティ）</label>
+                  </div>
+                </div>
+                <hr class="sep">
+                <div class="doc-group">
+                  <h3>LLM</h3>
+                  <input type="checkbox" id="llm" name="llm" value="on" class="visually-hidden" role="switch" aria-describedby="llm-hint">
+                  <label for="llm" class="switch-row"><span class="toggle" id="llm-toggle" aria-hidden="true"><i></i></span><span>LLM で説明文を作る</span></label>
+                  <p class="hint" id="llm-hint">ソースの一部を外部の LLM に送ります。キーはサーバの環境変数 ANTHROPIC_API_KEY から読みます。</p>
+                </div>
+                <hr class="sep">
+                <details id="exclude-box">
+                  <summary>除外パターン</summary>
+                  <div class="field">
+                    <label for="exclude">解析しないファイルのパターン</label>
+                    <textarea id="exclude" name="exclude" class="textarea" rows="3" placeholder="legacy/**&#10;**/*.min.js" aria-describedby="exclude-hint"></textarea>
+                    <p class="hint" id="exclude-hint">1 行に 1 つ、glob で書きます。空欄なら既定の除外（node_modules・.gitignore など）だけを使います。</p>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </form>
+
+          <div id="progress-box" class="card" hidden>
+            <h2 id="progress-title">進み具合</h2>
+            <div class="stack">
+              <progress id="bar" max="100" value="0" aria-labelledby="progress-title"></progress>
+              <p id="status" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-result" aria-labelledby="page-title" hidden>
+          <div id="result-empty"></div>
+          <div id="result" class="stack" hidden>
+            <div class="kpi-row" id="kpis"></div>
+            <div class="card stack" id="trace-card" hidden>
+              <div class="card-head">
+                <h2 id="h-trace">トレーサビリティ</h2>
+                <a class="btn btn--primary" id="trace-open" href="#" target="_blank" rel="noopener" aria-label="トレーサビリティを新しいタブで開く">開く</a>
+              </div>
+              <div class="kpi-row" id="trace-kpis"></div>
+            </div>
+            <div class="card stack">
+              <h2 id="h-docs-list">生成した文書</h2>
+              <p id="failures" class="callout callout--high" hidden><span data-icon="warning" data-icon-size="18" aria-hidden="true"></span><span>一部のファイルの解析に失敗しました。D08 と D09 で対象のファイルを確かめてください。</span></p>
+              <div class="table-wrap" id="doc-table">
+                <table class="table">
+                  <thead><tr><th scope="col">文書</th><th scope="col">閲覧</th><th scope="col">ダウンロード</th></tr></thead>
+                  <tbody id="doc-rows"></tbody>
+                </table>
+              </div>
+              <div class="cell-actions" id="extras" role="group" aria-label="実行の記録ファイル"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-doc" aria-labelledby="page-title" hidden>
+          <iframe id="frame" title="文書の表示" sandbox="allow-scripts"></iframe>
+        </section>
+
+        <section class="view" id="view-log" aria-labelledby="page-title" hidden>
+          <div id="log-empty"></div>
+          <div id="log-box" class="card" hidden>
+            <dl class="log" id="log"></dl>
+            <p class="files" id="log-download"></p>
+          </div>
+        </section>
+
+        <section class="view measure" id="view-help" aria-labelledby="page-title" hidden>
+          <div class="card">
+            <h2>画面で使う</h2>
+            <ol class="steps">
+              <li>「文書の作成」で入力の種類を選び、GitHub の URL・.zip ファイル・フォルダのパスのどれかを入れます。</li>
+              <li>文書の種類と出力形式を選び、「文書を作る」を押します。</li>
+              <li>終わると「結果」に文書の一覧が出ます。HTML はこの画面で閲覧でき、各形式をダウンロードできます。</li>
+              <li>入力・設定・処理時間・ファイル件数・LLM の使用量は「実行記録」で確かめられます。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h2>コマンドで使う</h2>
+            <p class="hint">同じ処理をコマンドでも実行できます。使い方は <code>node src/cli.ts --help</code> で表示します。</p>
+            <p class="hint"><code>node src/cli.ts --folder ./my-app --docs D01,D03 --format md,html</code></p>
+          </div>
+          <div class="card">
+            <h2>文書の根拠</h2>
+            <p class="hint">各記述には「事実」「推測」「不明」のどれかを付けています。「不明」の項目は D09 確認事項一覧にまとまっています。</p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+</div>
+<script src="/icons.js"></script>
+<script src="/feedback.js"></script>
+<script>
+(() => {
+  const DOCS = [['D01','概要書'],['D02','要求仕様書'],['D03','画面仕様書'],['D04','データ仕様書'],['D05','データ連携仕様書'],['D06','依存ライブラリ一覧'],['D07','移行論点・技術的負債一覧'],['D08','解析カバレッジ・追跡レポート'],['D09','確認事項一覧'],['D11','基本設計書'],['D12','詳細設計書'],['D13','テスト観点表']];
+  const VIEWS = { make: '文書の作成', result: '結果', doc: '閲覧', log: '実行記録', help: '使い方' };
+  const FORMAT_LABELS = { md: 'MD', html: 'HTML', docx: 'Word', xlsx: 'Excel', json: 'JSON' };
+  let currentDoc = null;   // 閲覧中の文書 { runId, id, title, files }
+  const $ = (id) => document.getElementById(id);
+  const icon = (name, size) => {
+    const s = document.createElement('span');
+    s.setAttribute('aria-hidden', 'true');
+    if (window.Icons && window.Icons.names.includes(name)) s.innerHTML = window.Icons.svg(name, size);
+    return s;
+  };
+
+  // 文書の種類は読む人の関心ごとに 3 グループ
+  const GROUPS = [['概要・要求', ['D01', 'D02', 'D03', 'D09']], ['データ・連携', ['D04', 'D05', 'D06']], ['設計・移行', ['D11', 'D12', 'D13', 'D07', 'D08']]];
+  const TITLES = Object.fromEntries(DOCS);
+  for (const [name, ids] of GROUPS) {
+    const group = Object.assign(document.createElement('div'), { className: 'doc-group', role: 'group' });
+    const h = Object.assign(document.createElement('h3'), { textContent: name, id: 'dg-' + ids[0] });
+    group.setAttribute('aria-labelledby', h.id);
+    group.append(h);
+    for (const id of ids) {
+      const lb = Object.assign(document.createElement('label'), { className: 'check', htmlFor: 'd-' + id });
+      const cb = Object.assign(document.createElement('input'), { type: 'checkbox', id: 'd-' + id, name: 'docs', value: id, checked: true });
+      lb.append(cb, document.createTextNode(id + ' ' + TITLES[id])); group.append(lb);
+    }
+    $('docs').append(group);
+  }
+  const setAllDocs = (on) => { for (const cb of document.querySelectorAll('input[name=docs]')) cb.checked = on; };
+  $('docs-all').addEventListener('click', () => setAllDocs(true));
+  $('docs-none').addEventListener('click', () => setAllDocs(false));
+
+  // ── 骨格: サイドバー・テーマ・画面の切替 ──
+  const sidebar = $('sidebar');
+  $('menu').addEventListener('click', () => {
+    const open = sidebar.classList.toggle('open');
+    $('menu').setAttribute('aria-expanded', String(open));
+    $('menu').setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
+  });
+  // 折りたたみは広い幅だけ。狭い幅（off-canvas）ではラベル付きで開き、広い幅に戻ったら保存した状態を戻す
+  const narrow = window.matchMedia('(max-width: 768px)');
+  let collapsedPref = false;
+  const syncCollapse = () => {
+    const collapsed = !narrow.matches && collapsedPref;
+    sidebar.classList.toggle('collapsed', collapsed);
+    $('collapse').hidden = narrow.matches;
+    $('collapse').setAttribute('aria-expanded', String(!collapsed));
+    $('collapse').setAttribute('aria-label', collapsed ? 'メニューを広げる' : 'メニューを折りたたむ');
+    $('collapse').textContent = collapsed ? '›' : '‹';
+  };
+  const applyLayout = () => {
+    if (!narrow.matches) {
+      sidebar.classList.remove('open');
+      $('menu').setAttribute('aria-expanded', 'false');
+      $('menu').setAttribute('aria-label', 'メニューを開く');
+    }
+    syncCollapse();
+  };
+  $('collapse').addEventListener('click', () => { collapsedPref = !collapsedPref; syncCollapse(); });
+  narrow.addEventListener('change', applyLayout);
+  applyLayout();
+  // テーマ: 既定はライト（OS の設定に従わない）。切り替えたら保存し、次に開いたときも同じにする
+  const THEME_KEY = 'spec2doc-theme';
+  const applyTheme = (theme) => {
+    const dark = theme === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    $('theme').setAttribute('aria-pressed', String(dark));
+    $('theme').querySelector('.label-text').textContent = dark ? 'ライトにする' : 'ダークにする';
+  };
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem(THEME_KEY); } catch { /* 保存できない環境ではライトのまま */ }
+  applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+  $('theme').addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* 保存できなくても表示は切り替える */ }
+  });
+  const show = (name, focus) => {
+    let view = VIEWS[name] ? name : 'make';
+    if (view === 'doc' && !currentDoc) view = 'result';
+    for (const key of Object.keys(VIEWS)) $('view-' + key).hidden = key !== view;
+    const navView = view === 'doc' ? 'result' : view;   // 閲覧は「結果」の配下
+    for (const a of sidebar.querySelectorAll('nav a')) {
+      if (a.dataset.view === navView) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    }
+    const title = view === 'doc' ? currentDoc.id + ' ' + currentDoc.title : VIEWS[view];
+    $('page-title').textContent = title;
+    $('crumb').hidden = view !== 'doc';
+    $('doc-actions').hidden = view !== 'doc';
+    $('run').hidden = view !== 'make';   // 主操作は「文書の作成」でだけ出す
+    if (view !== 'doc') $('frame').removeAttribute('src');
+    document.querySelector('.app-content').scrollTop = 0;   // 画面を切り替えたら本文の先頭から
+    document.title = title + ' — Spec2Doc';
+    sidebar.classList.remove('open'); $('menu').setAttribute('aria-expanded', 'false');
+    if (focus) $('page-title').focus();
+  };
+  window.addEventListener('hashchange', () => show(location.hash.slice(1), true));
+  const go = (name) => { if (location.hash === '#' + name) show(name, true); else location.hash = name; };
+
+  // ── 入力の種類（seg） ──
+  let running = false;
+  let closeLastError = null;
+  const resetFeedback = () => {   // 前の実行の失敗と進み具合を消す。入力値は触らない
+    if (closeLastError) { closeLastError(); closeLastError = null; }
+    $('progress-box').hidden = true; $('bar').value = 0; $('status').textContent = '';
+  };
+  const tabs = [...document.querySelectorAll('[role=tab]')];
+  const select = (tab, focus) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; t.classList.toggle('active', on);
+      $(t.getAttribute('aria-controls')).hidden = !on;
+    }
+    $('kind').value = tab.dataset.kind;
+    if (!running) resetFeedback();
+    if (focus) tab.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t, false));
+    t.addEventListener('keydown', (e) => {
+      const n = tabs.length;
+      const next = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+      if (next !== undefined) { e.preventDefault(); select(tabs[next], true); }
+    });
+  });
+
+  const syncLlm = () => {
+    $('llm-toggle').classList.toggle('on', $('llm').checked);
+  };
+  $('llm').addEventListener('change', syncLlm); syncLlm();
+
+  // ── トーストの位置: feedback.js は直前に pointerdown された button・a の近くに出す（位置を渡す引数は無い）。
+  //    キーボード操作や画面の切替で基準が無い・隠れるときは、基準にしたい要素で pointerdown を起こしてから出す
+  const anchorAt = (el) => {
+    if (el && el.getClientRects().length > 0) el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  };
+  const resultAnchor = () => document.querySelector('#view-result a, #view-result button');
+
+  // ── 失敗は Feedback.error（消えない）。原因 1 行＋次の行動 1 行。入力は残す ──
+  const firstInput = () => {
+    const panel = document.querySelector('[role=tabpanel]:not([hidden])');
+    return panel && panel.querySelector('input');
+  };
+  const fail = (cause, next, target) => {
+    if (closeLastError) closeLastError();
+    anchorAt($('view-make').hidden ? resultAnchor() : $('run'));
+    closeLastError = Feedback.error(cause, {
+      detail: '次の行動: ' + next,
+      action: { label: '入力欄へ移る', onClick: () => { go('make'); const el = target || firstInput(); if (el) el.focus(); } },
+    });
+  };
+
+  // ── 結果・実行記録 ──
+  const fileUrl = (mode, runId, name) => '/' + mode + '/' + encodeURIComponent(runId) + '/' + encodeURIComponent(name);
+  const link = (href, text, iconName, download) => {
+    const a = Object.assign(document.createElement('a'), { href });
+    if (download) a.setAttribute('download', '');
+    a.append(icon(iconName, 16), document.createTextNode(text));
+    return a;
+  };
+  const emptyResult = () => $('result-empty').replaceChildren(Feedback.emptyState({
+    icon: 'description', title: 'まだ文書がありません', description: '入力を指定して文書を作ると、ここに一覧が出ます。',
+    action: { label: '文書を作る', onClick: () => go('make') },
+  }));
+  const emptyLog = () => $('log-empty').replaceChildren(Feedback.emptyState({
+    icon: 'history', title: 'まだ実行記録がありません', description: '文書を作ると、入力・設定・処理時間・ファイル件数・LLM の使用量がここに残ります。',
+    action: { label: '文書を作る', onClick: () => go('make') },
+  }));
+
+  const dlButtons = (runId, files, docLabel) => files.map((f) => {
+    const ext = f.slice(f.lastIndexOf('.') + 1);
+    const fmt = FORMAT_LABELS[ext] || ext.toUpperCase();
+    const a = Object.assign(document.createElement('a'), { href: fileUrl('files', runId, f), className: 'btn btn--ghost btn-sm' });
+    a.setAttribute('download', '');
+    a.setAttribute('aria-label', docLabel + ' を ' + fmt + ' でダウンロード');
+    a.append(icon('download', 16), document.createTextNode(fmt));
+    return a;
+  });
+  const openDoc = (runId, d) => {
+    const html = d.files.find((f) => f.endsWith('.html'));
+    currentDoc = { runId, id: d.id, title: d.title, files: d.files };
+    $('frame').src = fileUrl('view', runId, html);
+    $('frame').title = d.id + ' ' + d.title;
+    $('doc-downloads').replaceChildren(...dlButtons(runId, d.files, d.id + ' ' + d.title));
+    go('doc');
+  };
+  const kpi = (label, value, delta) => {
+    const card = Object.assign(document.createElement('div'), { className: 'card kpi' });
+    card.append(
+      Object.assign(document.createElement('span'), { className: 'kpi-label', textContent: label }),
+      Object.assign(document.createElement('span'), { className: 'kpi-value', textContent: value }),
+      Object.assign(document.createElement('span'), { className: 'kpi-delta', textContent: delta }),
+    );
+    return card;
+  };
+
+  const showResult = (r) => {
+    const c = r.fileCounts;
+    $('kpis').replaceChildren(
+      kpi('解析したファイル', String(c.analyzed), '全 ' + c.total + ' 件中'),
+      kpi('失敗', String(c.failed), c.failed ? 'D08・D09 で確認' : 'なし'),
+      kpi('除外', String(c.excluded), '対象外 ' + c.unsupported + ' 件'),
+      kpi('所要時間', (r.durationMs / 1000).toFixed(1) + ' 秒', '生成から書き出しまで'),
+    );
+    const t = r.trace;   // 出力形式に trace を選んだ実行だけ載る
+    $('trace-card').hidden = !t;
+    if (t) {
+      const pct = t.links > 0 ? Math.round((t.reviewed / t.links) * 100) : 0;
+      $('trace-kpis').replaceChildren(
+        kpi('ノード', String(t.nodes), 'フォルダ・ファイル・要素・文書・節'),
+        kpi('対応', t.links + ' 件', '文書の行とソースの対応'),
+        kpi('判定済み', pct + '%', t.reviewed + ' / ' + t.links + ' 件（要修正 ' + (t.needsFix ?? 0) + ' 件）'),
+      );
+      $('trace-open').href = t.url;
+    }
+    $('failures').hidden = !r.hasFailures;
+    const rows = $('doc-rows'); rows.replaceChildren();
+    const docs = [...r.docs].sort((x, y) => x.id.localeCompare(y.id));   // D01 → D12 の番号順
+    for (const d of docs) {
+      const label = d.id + ' ' + d.title;
+      const tr = document.createElement('tr');
+      const th = Object.assign(document.createElement('th'), { scope: 'row', textContent: label });
+      if (typeof d.changes === 'number') {   // 前回の実行と比べた変化（初回生成の文書は出さない）
+        const badge = Object.assign(document.createElement('span'), { className: 'badge badge-neutral', textContent: d.changes === 0 ? '変更なし' : '変更 ' + d.changes + ' 節' });
+        badge.title = '前回の実行と比べて変わった節の数';
+        th.append(badge);
+      }
+      const view = document.createElement('td');
+      const html = d.files.find((f) => f.endsWith('.html'));
+      if (html) {
+        const cell = Object.assign(document.createElement('div'), { className: 'cell-actions' });
+        const b = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-sm', textContent: '開く' });
+        b.setAttribute('aria-label', label + ' を開く');
+        b.addEventListener('click', () => openDoc(r.runId, d));
+        const tab = Object.assign(document.createElement('a'), { href: fileUrl('view', r.runId, html), className: 'btn btn--ghost btn-sm btn-icon', target: '_blank', rel: 'noopener' });
+        tab.setAttribute('aria-label', label + ' を新しいタブで開く');
+        tab.append(icon('open-in-new', 16));
+        cell.append(b, tab); view.append(cell);
+      } else {
+        view.textContent = 'HTML 形式を選ぶと開けます';
+      }
+      const dl = document.createElement('td');
+      const group = Object.assign(document.createElement('div'), { className: 'cell-actions' });
+      group.setAttribute('role', 'group'); group.setAttribute('aria-label', label + ' のダウンロード');
+      group.append(...dlButtons(r.runId, d.files, label));
+      dl.append(group);
+      tr.append(th, view, dl); rows.append(tr);
+    }
+    $('extras').replaceChildren(...r.extras.map((f) => {
+      const name = f === 'run-log.json' ? '実行記録' : '中間表現';
+      const a = Object.assign(document.createElement('a'), { href: fileUrl('files', r.runId, f), className: 'btn btn--ghost btn-sm' });
+      a.setAttribute('download', '');
+      a.append(icon('download', 16), document.createTextNode(name + '（' + f + '）'));
+      return a;
+    }));
+    const empty = r.fileCounts.total === 0 || r.docs.length === 0;
+    if (empty) {
+      $('result-empty').replaceChildren(Feedback.emptyState({
+        icon: 'search-off', title: '解析できるファイルがありませんでした',
+        description: '対象の JS・TS・HTML・CSS が含まれているか、除外パターンが広すぎないかを確かめてください。',
+        action: { label: '入力を見直す', onClick: () => { go('make'); const el = firstInput(); if (el) el.focus(); } },
+      }));
+    } else {
+      $('result-empty').replaceChildren();
+    }
+    $('result').hidden = empty;
+  };
+
+  // デモのサンプル: フォルダ入力に切り替え、文書・出力形式を全部選んだ状態にする（実行は利用者が押す）
+  fetch('/api/config').then((res) => (res.ok ? res.json() : null)).then((c) => {
+    if (!c || typeof c.demoPath !== 'string') return;
+    const b = $('demo');
+    b.hidden = false;
+    b.addEventListener('click', () => {
+      select($('tab-folder'), false);
+      $('folder').value = c.demoPath;
+      setAllDocs(true);
+      for (const el of document.querySelectorAll('input[name=formats]')) el.checked = true;
+      $('run').focus();
+    });
+  }).catch(() => {});
+
+  const showLog = async (runId) => {
+    try {
+      const res = await fetch(fileUrl('files', runId, 'run-log.json'));
+      if (!res.ok) throw new Error(String(res.status));
+      const log = await res.json();
+      const s = log.settings, c = log.fileCounts, l = log.llm;
+      const rows = [
+        ['実行 ID', log.runId],
+        ['入力', log.input.label + (log.input.commit ? '（' + log.input.commit.slice(0, 12) + '）' : '')],
+        ['文書の種類', s.docIds.join(', ')],
+        ['出力形式', s.formats.join(', ')],
+        ['除外パターン', s.exclude.length ? s.exclude.join(', ') : 'なし'],
+        ['LLM', s.llmEnabled ? 'オン' : 'オフ'],
+        ['開始', new Date(log.startedAt).toLocaleString('ja-JP')],
+        ['処理時間', (log.durationMs / 1000).toFixed(1) + ' 秒'],
+        ['ファイル件数', '全 ' + c.total + '（解析 ' + c.analyzed + '・失敗 ' + c.failed + '・除外 ' + c.excluded + '・対象外 ' + c.unsupported + '）'],
+        ['LLM の使用トークン', '入力 ' + l.inputTokens + '・出力 ' + l.outputTokens + '（' + l.requests + ' 回）'],
+        ['LLM へ送ったファイル', l.sentFiles.length ? l.sentFiles.join(', ') : 'なし'],
+      ];
+      $('log').replaceChildren(...rows.flatMap(([k, v]) => [
+        Object.assign(document.createElement('dt'), { textContent: k }),
+        Object.assign(document.createElement('dd'), { textContent: v }),
+      ]));
+      $('log-download').replaceChildren(link(fileUrl('files', runId, 'run-log.json'), 'run-log.json をダウンロード', 'download', true));
+      $('log-empty').replaceChildren(); $('log-box').hidden = false;
+    } catch {
+      $('log-box').hidden = true;
+      $('log-empty').replaceChildren(Feedback.emptyState({
+        icon: 'history', title: '実行記録を読み込めませんでした', description: '出力フォルダが移動・削除された可能性があります。もう一度文書を作ると新しい記録が残ります。',
+        action: { label: '文書を作る', onClick: () => go('make') },
+      }));
+    }
+  };
+
+  // ── 実行（二重送信は aria-busy ＋「処理中…」） ──
+  const setRunning = (on) => {
+    running = on;
+    $('run').setAttribute('aria-busy', String(on));
+    $('run-label').textContent = on ? '処理中…' : '文書を作る';
+    $('run-form').setAttribute('aria-busy', String(on));
+  };
+
+  $('run-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (running) return;
+    resetFeedback();
+    const fd = new FormData($('run-form'));
+    if (fd.get('kind') !== 'zip') fd.delete('zip');
+    if (fd.getAll('docs').length === 0) { fail('文書の種類が選ばれていません', '少なくとも 1 つ選んでください', $('d-D01')); return; }
+    if (fd.getAll('formats').length === 0) { fail('出力形式が選ばれていません', '少なくとも 1 つ選んでください', $('f-md')); return; }
+    setRunning(true);
+    anchorAt($('run'));
+    const done = Feedback.busy('文書を作っています');
+    $('progress-box').hidden = false; $('bar').value = 0; $('status').textContent = '送信しています';
+    const stop = (status) => { done(); setRunning(false); $('status').textContent = status; };
+    let res, body;
+    try {
+      res = await fetch('/api/run', { method: 'POST', body: fd });
+      body = await res.json().catch(() => null);
+    } catch {
+      stop('中断しました');
+      fail('サーバに接続できませんでした', 'サーバが起動しているか確かめてから、もう一度実行してください');
+      return;
+    }
+    if (!res.ok || !body || !body.jobId) {
+      stop('失敗しました');
+      fail(body?.message ?? '送信に失敗しました（' + res.status + '）', body?.hint ?? 'もう一度実行してください');
+      return;
+    }
+    const es = new EventSource('/api/jobs/' + encodeURIComponent(body.jobId) + '/events');
+    let finished = false;
+    const finish = (status) => { finished = true; es.close(); stop(status); };
+    es.addEventListener('progress', (ev) => {
+      const p = JSON.parse(ev.data);
+      $('bar').value = Math.round(p.ratio * 100);
+      $('status').textContent = p.message + '（' + Math.round(p.ratio * 100) + '%）';
+    });
+    es.addEventListener('result', async (ev) => {
+      finish('完了しました（100%）'); $('bar').value = 100;
+      const r = JSON.parse(ev.data);
+      showResult(r);
+      await showLog(r.runId);
+      go('result');
+      // 成功は押した実行ボタンの近くに出す（feedback.js の既定。押した場所と結果を結び付ける）
+      if (r.hasFailures) Feedback.info('文書を作りました。一部のファイルは解析できませんでした', { detail: '結果の D08 と D09 で対象のファイルを確かめてください。' });
+      else Feedback.ok('文書を作りました');
+    });
+    es.addEventListener('failure', (ev) => {
+      finish('失敗しました');
+      const f = JSON.parse(ev.data);
+      fail(f.message, f.hint);
+    });
+    es.onerror = () => {
+      if (finished) return;
+      finish('中断しました');
+      fail('進み具合の受信が途切れました', 'サーバが動いているか確かめてから、もう一度実行してください');
+    };
+  });
+
+  emptyResult(); emptyLog();
+  show(location.hash.slice(1), false);
+})();
+</script>
+</body>
+</html>

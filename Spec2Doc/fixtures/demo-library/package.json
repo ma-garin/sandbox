@@ -1,0 +1,14 @@
+{
+  "name": "demo-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Spec2Doc のデモ用サンプル: 図書館の貸出システム（画面と API 呼び出しのみ）",
+  "type": "module",
+  "dependencies": {
+    "dayjs": "^1.11.13",
+    "dompurify": "^3.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

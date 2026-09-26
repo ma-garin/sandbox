@@ -1,0 +1,12 @@
+{
+  "name": "sample-ticket-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Spec2Doc 検証用の入場券予約アプリ",
+  "dependencies": {
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

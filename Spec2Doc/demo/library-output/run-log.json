@@ -1,0 +1,2608 @@
+{
+  "runId": "20260926-084216-0cf05c",
+  "input": {
+    "kind": "folder",
+    "label": "fixtures/demo-library"
+  },
+  "settings": {
+    "docIds": [
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D08",
+      "D09",
+      "D11",
+      "D12",
+      "D13"
+    ],
+    "formats": [
+      "md",
+      "html",
+      "docx",
+      "xlsx",
+      "trace"
+    ],
+    "exclude": [],
+    "llmEnabled": false
+  },
+  "startedAt": "2026-09-26T08:42:16.081Z",
+  "finishedAt": "2026-09-26T08:42:17.739Z",
+  "durationMs": 1658,
+  "stageMs": {
+    "ingest": 2,
+    "analyze": 277,
+    "generate": 78,
+    "render": 1138
+  },
+  "fileCounts": {
+    "total": 19,
+    "analyzed": 18,
+    "failed": 0,
+    "excluded": 0,
+    "unsupported": 1
+  },
+  "llm": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "requests": 0,
+    "sentFiles": []
+  },
+  "outputs": [
+    "D01.md",
+    "D01.html",
+    "D01.docx",
+    "D01.xlsx",
+    "D02.md",
+    "D02.html",
+    "D02.docx",
+    "D02.xlsx",
+    "D03.md",
+    "D03.html",
+    "D03.docx",
+    "D03.xlsx",
+    "D04.md",
+    "D04.html",
+    "D04.docx",
+    "D04.xlsx",
+    "D05.md",
+    "D05.html",
+    "D05.docx",
+    "D05.xlsx",
+    "D06.md",
+    "D06.html",
+    "D06.docx",
+    "D06.xlsx",
+    "D07.md",
+    "D07.html",
+    "D07.docx",
+    "D07.xlsx",
+    "D08.md",
+    "D08.html",
+    "D08.docx",
+    "D08.xlsx",
+    "D09.md",
+    "D09.html",
+    "D09.docx",
+    "D09.xlsx",
+    "D11.md",
+    "D11.html",
+    "D11.docx",
+    "D11.xlsx",
+    "D12.md",
+    "D12.html",
+    "D12.docx",
+    "D12.xlsx",
+    "D13.md",
+    "D13.html",
+    "D13.docx",
+    "D13.xlsx",
+    "ir.json",
+    "trace.json",
+    "trace-review.json",
+    "traceability.html",
+    "run-log.json"
+  ],
+  "sourceKey": "フォルダ: demo-library",
+  "sectionDigests": {
+    "D01": {
+      "1. システム構成": {
+        "content": "db59c1e0ca9ef081",
+        "full": "9650c95c8bc99b4f"
+      },
+      "2. モジュール構成": {
+        "content": "c8719d6fc1ca66cf",
+        "full": "3619f3ea7b6cb39a"
+      },
+      "3. 機能サマリ": {
+        "content": "40cf7c534bf22120",
+        "full": "065e0033512583d9"
+      },
+      "4. 用語集": {
+        "content": "b93350be9668a01c",
+        "full": "2b44dffcef95bd17"
+      }
+    },
+    "D02": {
+      "1. 機能一覧": {
+        "content": "95ef95cf9fab13e8",
+        "full": "9ea57ee1d71c6c9d"
+      },
+      "2. 機能ごとの仕様（テストベース 7 観点）": {
+        "content": "f77fa5570f2b4e6f",
+        "full": "c8f40588a43ed2d2"
+      },
+      "F-001 requestWithRetry": {
+        "content": "d4f8e5bd9d470728",
+        "full": "9de86c30f258b2e6"
+      },
+      "F-001-1 機能一覧": {
+        "content": "d9b6dc8f297437f6",
+        "full": "a15ec3a470863631"
+      },
+      "F-001-2 画面／入出力項目": {
+        "content": "197b3826cc564ea2",
+        "full": "bad627398aef7e85"
+      },
+      "F-001-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "4371a5a0d0cae8a3"
+      },
+      "F-001-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "71486209b57510f5"
+      },
+      "F-001-5 状態と状態遷移": {
+        "content": "1f9371c3caa9a446",
+        "full": "614d76ce2c4ff936"
+      },
+      "F-001-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "e9d951affa20ff1d"
+      },
+      "F-001-7 用語定義": {
+        "content": "db0b1e60c7ada96e",
+        "full": "f14f6f1b6e2b609f"
+      },
+      "F-002 searchBooks": {
+        "content": "d4f8e5bd9d470728",
+        "full": "1312d651385adce3"
+      },
+      "F-002-1 機能一覧": {
+        "content": "04af1c3db82b3991",
+        "full": "44321c77f6099014"
+      },
+      "F-002-2 画面／入出力項目": {
+        "content": "0b594da228729d6b",
+        "full": "f4029b4e2a09034a"
+      },
+      "F-002-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "b6e71795d20f3288"
+      },
+      "F-002-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "99886fb4964ebe22"
+      },
+      "F-002-5 状態と状態遷移": {
+        "content": "5479e973c670cdbc",
+        "full": "ced661e93faa5c81"
+      },
+      "F-002-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "69d3d1f548fa304a"
+      },
+      "F-002-7 用語定義": {
+        "content": "2c9325dd30490508",
+        "full": "db00632b4c74b34d"
+      },
+      "F-003 getMember": {
+        "content": "d4f8e5bd9d470728",
+        "full": "f0be1b492c3812ff"
+      },
+      "F-003-1 機能一覧": {
+        "content": "edea1f7645519719",
+        "full": "663b8d41be8572f9"
+      },
+      "F-003-2 画面／入出力項目": {
+        "content": "c050f96678a0fa03",
+        "full": "fad5e779eeeef883"
+      },
+      "F-003-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "aff78e6f424a7907"
+      },
+      "F-003-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "8188c558960c2385"
+      },
+      "F-003-5 状態と状態遷移": {
+        "content": "7fcfd497cae09288",
+        "full": "205f3e653d7981df"
+      },
+      "F-003-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "502fffda725acf23"
+      },
+      "F-003-7 用語定義": {
+        "content": "14b85abbafa3607f",
+        "full": "6b917bdd86f18812"
+      },
+      "F-004 createLoan": {
+        "content": "d4f8e5bd9d470728",
+        "full": "03bbe7ac1c47d54d"
+      },
+      "F-004-1 機能一覧": {
+        "content": "97f204d571def8b1",
+        "full": "dcbe8eb239450bf5"
+      },
+      "F-004-2 画面／入出力項目": {
+        "content": "c0df46eaae6385b2",
+        "full": "8f70321d5744e188"
+      },
+      "F-004-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "6bf42431b59d696b"
+      },
+      "F-004-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "5f4eb06fe943e2dc"
+      },
+      "F-004-5 状態と状態遷移": {
+        "content": "ce27af325430d17c",
+        "full": "86d6931d020dbd77"
+      },
+      "F-004-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "346f5518919078b2"
+      },
+      "F-004-7 用語定義": {
+        "content": "a3b0bbaba7870f30",
+        "full": "dd98a291da6d0ed6"
+      },
+      "F-005 deleteLoan": {
+        "content": "d4f8e5bd9d470728",
+        "full": "368ad5a105ba7c2e"
+      },
+      "F-005-1 機能一覧": {
+        "content": "6041a4437f252a52",
+        "full": "f0fae7a45529058a"
+      },
+      "F-005-2 画面／入出力項目": {
+        "content": "336b49c78293067d",
+        "full": "a86926a7362fe9ca"
+      },
+      "F-005-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "6c70b9ad8c494e82"
+      },
+      "F-005-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "1ccab2caac5121b1"
+      },
+      "F-005-5 状態と状態遷移": {
+        "content": "4553c3579017dc10",
+        "full": "e1a7a0a19ad152ad"
+      },
+      "F-005-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "3eccadd3390e055b"
+      },
+      "F-005-7 用語定義": {
+        "content": "660baab21b086844",
+        "full": "29d5fa192117e36f"
+      },
+      "F-006 login": {
+        "content": "d4f8e5bd9d470728",
+        "full": "81e95ec7b5573ab3"
+      },
+      "F-006-1 機能一覧": {
+        "content": "7d2bbac64c633385",
+        "full": "6eca8451c83b4741"
+      },
+      "F-006-2 画面／入出力項目": {
+        "content": "dc9f8963f85c18aa",
+        "full": "c77f1f4a67a76d07"
+      },
+      "F-006-3 業務ルール／計算式": {
+        "content": "4e2894a12fe8f0ac",
+        "full": "a4a585ca593460d0"
+      },
+      "F-006-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "6f6090f357a23369"
+      },
+      "F-006-5 状態と状態遷移": {
+        "content": "036da83602dad730",
+        "full": "cdfad142ce691c50"
+      },
+      "F-006-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "7b779bf30af65967"
+      },
+      "F-006-7 用語定義": {
+        "content": "1d80955fe6851165",
+        "full": "4f5ae18a50318678"
+      },
+      "F-007 loanLimit": {
+        "content": "d4f8e5bd9d470728",
+        "full": "d77e1840b30ecf3e"
+      },
+      "F-007-1 機能一覧": {
+        "content": "b2433063d3b9a21d",
+        "full": "6526c03cc22cbf7c"
+      },
+      "F-007-2 画面／入出力項目": {
+        "content": "35b9614ec4aa18ae",
+        "full": "6ced0ca0899a2b81"
+      },
+      "F-007-3 業務ルール／計算式": {
+        "content": "ce4cae504c359b00",
+        "full": "0eb59bf1267d1e93"
+      },
+      "F-007-4 入力値の範囲／境界": {
+        "content": "40cbaf67317e4ff0",
+        "full": "7162dc0745ad7968"
+      },
+      "F-007-5 状態と状態遷移": {
+        "content": "44e88edd013d6630",
+        "full": "3e44cfa294a3bc42"
+      },
+      "F-007-6 エラー／例外時の振る舞い": {
+        "content": "e92faa9135b8e848",
+        "full": "9d3e3e0f115d77cd"
+      },
+      "F-007-7 用語定義": {
+        "content": "8dee7ba32e0c09e9",
+        "full": "c7ed5f3980ea7fd9"
+      },
+      "F-008 canLoan": {
+        "content": "d4f8e5bd9d470728",
+        "full": "94dc37f7abc76737"
+      },
+      "F-008-1 機能一覧": {
+        "content": "6f8b18a9b3bd3ae5",
+        "full": "3e2a5b5ed79209c9"
+      },
+      "F-008-2 画面／入出力項目": {
+        "content": "867abd37426478ab",
+        "full": "6d8534f773bfb62e"
+      },
+      "F-008-3 業務ルール／計算式": {
+        "content": "86428d00a3385ade",
+        "full": "2ba45ef25f3c68fe"
+      },
+      "F-008-4 入力値の範囲／境界": {
+        "content": "68f427981455ef9c",
+        "full": "ecf5c40283849c92"
+      },
+      "F-008-5 状態と状態遷移": {
+        "content": "adafca7a7108d67f",
+        "full": "b0a1187f249358ff"
+      },
+      "F-008-6 エラー／例外時の振る舞い": {
+        "content": "6808714670320288",
+        "full": "40eb13fb6f903ecf"
+      },
+      "F-008-7 用語定義": {
+        "content": "e5dbb453c1f012a5",
+        "full": "9f79e1b1a3f5de35"
+      },
+      "F-009 calcLateFee": {
+        "content": "d4f8e5bd9d470728",
+        "full": "6a6d4b1153d01254"
+      },
+      "F-009-1 機能一覧": {
+        "content": "55008ed87e25568c",
+        "full": "558a88c002e18b2c"
+      },
+      "F-009-2 画面／入出力項目": {
+        "content": "dd7c3fa39d37e46a",
+        "full": "65140f476e0b2106"
+      },
+      "F-009-3 業務ルール／計算式": {
+        "content": "bdc7f094c4c75b06",
+        "full": "6d383cea3b92edcd"
+      },
+      "F-009-4 入力値の範囲／境界": {
+        "content": "6aad543e520bc4cd",
+        "full": "6c9b04b2d5c94709"
+      },
+      "F-009-5 状態と状態遷移": {
+        "content": "377e073131881f42",
+        "full": "e1a4bddb46e20f8a"
+      },
+      "F-009-6 エラー／例外時の振る舞い": {
+        "content": "72b9e12b73393311",
+        "full": "df205b04065f9ee7"
+      },
+      "F-009-7 用語定義": {
+        "content": "836c35190e5bac78",
+        "full": "2c420f7fbb870f83"
+      },
+      "F-010 dueDays": {
+        "content": "d4f8e5bd9d470728",
+        "full": "5f22b4b50c86d76c"
+      },
+      "F-010-1 機能一覧": {
+        "content": "aeae9368bff89728",
+        "full": "ad34691e440b38d8"
+      },
+      "F-010-2 画面／入出力項目": {
+        "content": "22409df3568150bd",
+        "full": "9695eb4ff79c85ae"
+      },
+      "F-010-3 業務ルール／計算式": {
+        "content": "c5e9413a1d5df997",
+        "full": "7994ef99c73752ad"
+      },
+      "F-010-4 入力値の範囲／境界": {
+        "content": "33f75a4d0c43e7c7",
+        "full": "a6d2574ae1a1d758"
+      },
+      "F-010-5 状態と状態遷移": {
+        "content": "d4080fce643b026c",
+        "full": "12dcd4566b4a63ff"
+      },
+      "F-010-6 エラー／例外時の振る舞い": {
+        "content": "b4d1486dfff6907d",
+        "full": "d7f779220e28577c"
+      },
+      "F-010-7 用語定義": {
+        "content": "36febe36d8abb7d1",
+        "full": "b04e587d06d4c303"
+      },
+      "F-011 nextState": {
+        "content": "d4f8e5bd9d470728",
+        "full": "35958d0cf957773d"
+      },
+      "F-011-1 機能一覧": {
+        "content": "9d3e63f5e915ddf9",
+        "full": "8c67178e5d77c8e9"
+      },
+      "F-011-2 画面／入出力項目": {
+        "content": "fd6d44aacf40b9f8",
+        "full": "374f2e699d82a754"
+      },
+      "F-011-3 業務ルール／計算式": {
+        "content": "77b7f1f14302f1ad",
+        "full": "2ec7c73396cccd28"
+      },
+      "F-011-4 入力値の範囲／境界": {
+        "content": "0eef728c26b14a7b",
+        "full": "ec93d5220fd90e9b"
+      },
+      "F-011-5 状態と状態遷移": {
+        "content": "51237f59673d87a8",
+        "full": "ce0fe2476cad72e3"
+      },
+      "F-011-6 エラー／例外時の振る舞い": {
+        "content": "9078766d9a5ef452",
+        "full": "20146f9d20845993"
+      },
+      "F-011-7 用語定義": {
+        "content": "1b704bc3fcf9cc50",
+        "full": "9b0067a3058ca7a2"
+      },
+      "F-012 stateLabel": {
+        "content": "d4f8e5bd9d470728",
+        "full": "e25cc2d4bef70b4c"
+      },
+      "F-012-1 機能一覧": {
+        "content": "76fb94303a1717e7",
+        "full": "e026ffb9a3731452"
+      },
+      "F-012-2 画面／入出力項目": {
+        "content": "f6de4ef68f4cb58a",
+        "full": "d89fcd5a87e93c6d"
+      },
+      "F-012-3 業務ルール／計算式": {
+        "content": "f8b1138e6d8ca41c",
+        "full": "bf3f26f85fb4164c"
+      },
+      "F-012-4 入力値の範囲／境界": {
+        "content": "440813cfa542bf57",
+        "full": "8f1b81bb38cfec3b"
+      },
+      "F-012-5 状態と状態遷移": {
+        "content": "9eddc083d55d43ed",
+        "full": "d658a8e332ac097c"
+      },
+      "F-012-6 エラー／例外時の振る舞い": {
+        "content": "072536501ddcfb10",
+        "full": "d83a5b1175286941"
+      },
+      "F-012-7 用語定義": {
+        "content": "dd129a4b9b3d0282",
+        "full": "045eba3914c90da3"
+      },
+      "F-013 applyStateClass": {
+        "content": "d4f8e5bd9d470728",
+        "full": "b3602ee60169eab3"
+      },
+      "F-013-1 機能一覧": {
+        "content": "de13cdfc6e6f843b",
+        "full": "8706ca9324dd105b"
+      },
+      "F-013-2 画面／入出力項目": {
+        "content": "47e6ddfba6758cce",
+        "full": "2ff6c0cbc52421dc"
+      },
+      "F-013-3 業務ルール／計算式": {
+        "content": "fe97f308133b9f9a",
+        "full": "9a7a4f1b44d09907"
+      },
+      "F-013-4 入力値の範囲／境界": {
+        "content": "7a16971108dcfd4f",
+        "full": "3078080fec8f4fd1"
+      },
+      "F-013-5 状態と状態遷移": {
+        "content": "72cdb3af8b887b88",
+        "full": "26aa296718d28577"
+      },
+      "F-013-6 エラー／例外時の振る舞い": {
+        "content": "c2122e2c032f938b",
+        "full": "fd190b845b334c13"
+      },
+      "F-013-7 用語定義": {
+        "content": "c02ef1955e842d2d",
+        "full": "1ad09c1d0df75138"
+      },
+      "F-014 isOverdue": {
+        "content": "d4f8e5bd9d470728",
+        "full": "920b6baee972b66d"
+      },
+      "F-014-1 機能一覧": {
+        "content": "41554f9f34b18c3a",
+        "full": "af638956e6c72664"
+      },
+      "F-014-2 画面／入出力項目": {
+        "content": "04ffb8e2d667f71f",
+        "full": "b8f77150287cc6d3"
+      },
+      "F-014-3 業務ルール／計算式": {
+        "content": "571e1b75beb9e2c3",
+        "full": "b5ad309f8a7e9551"
+      },
+      "F-014-4 入力値の範囲／境界": {
+        "content": "6d0d5df6a7121b10",
+        "full": "218097cffc22cdfa"
+      },
+      "F-014-5 状態と状態遷移": {
+        "content": "a56d634d5f1ce804",
+        "full": "08a5f2dcb1f1f613"
+      },
+      "F-014-6 エラー／例外時の振る舞い": {
+        "content": "6f4973178eb7cb74",
+        "full": "8097e7682819d04d"
+      },
+      "F-014-7 用語定義": {
+        "content": "918f0a1df2726673",
+        "full": "6f867cb84defbd2b"
+      },
+      "F-015 handleCheckMember": {
+        "content": "d4f8e5bd9d470728",
+        "full": "b300edafe5985bc8"
+      },
+      "F-015-1 機能一覧": {
+        "content": "db12df7d8da20284",
+        "full": "f22e467ab67d5343"
+      },
+      "F-015-2 画面／入出力項目": {
+        "content": "3b6f46928d65fa24",
+        "full": "7b28a51e58a49643"
+      },
+      "F-015-3 業務ルール／計算式": {
+        "content": "88921b4bcaf8eae3",
+        "full": "3cbb658b94e131bf"
+      },
+      "F-015-4 入力値の範囲／境界": {
+        "content": "cdef7a74068de1c8",
+        "full": "1ed37b9ee2daa015"
+      },
+      "F-015-5 状態と状態遷移": {
+        "content": "e76517dc8996ee5d",
+        "full": "59eada6f25917f5e"
+      },
+      "F-015-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "37d5ed43f6a3b427"
+      },
+      "F-015-7 用語定義": {
+        "content": "5eddcc6828c2f4f6",
+        "full": "f311c64622244271"
+      },
+      "F-016 handleLoan": {
+        "content": "d4f8e5bd9d470728",
+        "full": "b930eb7290ff0eb4"
+      },
+      "F-016-1 機能一覧": {
+        "content": "af23fb65ec0ce29c",
+        "full": "f7692041b56e2aed"
+      },
+      "F-016-2 画面／入出力項目": {
+        "content": "59a4aafb4466f72f",
+        "full": "9026cd35a37816cf"
+      },
+      "F-016-3 業務ルール／計算式": {
+        "content": "a425c50def55a0cd",
+        "full": "07829e15ad634ebf"
+      },
+      "F-016-4 入力値の範囲／境界": {
+        "content": "4eab35e821dcc7cc",
+        "full": "8409cd2a51d8c327"
+      },
+      "F-016-5 状態と状態遷移": {
+        "content": "a255c637746dd3d4",
+        "full": "55daa2914e784809"
+      },
+      "F-016-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "ac831f7ada1f63b8"
+      },
+      "F-016-7 用語定義": {
+        "content": "0f0cff613c444072",
+        "full": "3512ce7c4466fc01"
+      },
+      "F-017 無名関数（js/pages/loan.js:#）": {
+        "content": "d4f8e5bd9d470728",
+        "full": "ddadabbb7d4748e3"
+      },
+      "F-017-1 機能一覧": {
+        "content": "3f8e15bd3944bdbc",
+        "full": "843c03d4a05dde6d"
+      },
+      "F-017-2 画面／入出力項目": {
+        "content": "941b5f2730519894",
+        "full": "e286165ab7eadd04"
+      },
+      "F-017-3 業務ルール／計算式": {
+        "content": "58f829ba9f40abd8",
+        "full": "d39730997f59c31d"
+      },
+      "F-017-4 入力値の範囲／境界": {
+        "content": "0dc23d0f99d378a7",
+        "full": "7af7d3a432a3d03b"
+      },
+      "F-017-5 状態と状態遷移": {
+        "content": "4789753e629af5a7",
+        "full": "689ebbbb63eec98c"
+      },
+      "F-017-6 エラー／例外時の振る舞い": {
+        "content": "61012adbfd1a01e4",
+        "full": "aa1651e3cc9b903f"
+      },
+      "F-017-7 用語定義": {
+        "content": "84585baba33e8cbb",
+        "full": "843b9e1799a70445"
+      },
+      "F-018 restoreMemberId": {
+        "content": "d4f8e5bd9d470728",
+        "full": "edcedd4e892ea757"
+      },
+      "F-018-1 機能一覧": {
+        "content": "be088281be510287",
+        "full": "1bd940386d5b8b3b"
+      },
+      "F-018-2 画面／入出力項目": {
+        "content": "7dcf94f51a43cacb",
+        "full": "fb94844a6423bc5a"
+      },
+      "F-018-3 業務ルール／計算式": {
+        "content": "cdb2fc7b3d6d1319",
+        "full": "002942e45623eb70"
+      },
+      "F-018-4 入力値の範囲／境界": {
+        "content": "caec74042a5c8de4",
+        "full": "07b3b871bbd99934"
+      },
+      "F-018-5 状態と状態遷移": {
+        "content": "ba6fe760d768f0e9",
+        "full": "3b8803885d3347e1"
+      },
+      "F-018-6 エラー／例外時の振る舞い": {
+        "content": "783541208e2c9643",
+        "full": "c841898e9b778540"
+      },
+      "F-018-7 用語定義": {
+        "content": "c72fb5f9a1804637",
+        "full": "cebbceb599ecbce3"
+      },
+      "F-019 handleLogin": {
+        "content": "d4f8e5bd9d470728",
+        "full": "a9e24a682cf189ef"
+      },
+      "F-019-1 機能一覧": {
+        "content": "78ae0514c8e37f10",
+        "full": "1d7dab23e3bb9ae1"
+      },
+      "F-019-2 画面／入出力項目": {
+        "content": "b5d3dd125b86e301",
+        "full": "e5e5b1765474fe2c"
+      },
+      "F-019-3 業務ルール／計算式": {
+        "content": "1ca9da17411d020c",
+        "full": "adb76ef35ad2d9ad"
+      },
+      "F-019-4 入力値の範囲／境界": {
+        "content": "ca2018a975869b53",
+        "full": "6630c8c8bc93a274"
+      },
+      "F-019-5 状態と状態遷移": {
+        "content": "34d62a6e3f40a4b3",
+        "full": "548699a829ecf6e6"
+      },
+      "F-019-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "4a5ac083bcade58e"
+      },
+      "F-019-7 用語定義": {
+        "content": "df5f4773b4f0fb75",
+        "full": "6998e18a1c033285"
+      },
+      "F-020 無名関数（js/pages/login.js:#）": {
+        "content": "d4f8e5bd9d470728",
+        "full": "92270e884f0b55cd"
+      },
+      "F-020-1 機能一覧": {
+        "content": "c75579cbfa26ba9b",
+        "full": "a30d283cc87d0290"
+      },
+      "F-020-2 画面／入出力項目": {
+        "content": "a06392d03b295da0",
+        "full": "94ae146a957bc791"
+      },
+      "F-020-3 業務ルール／計算式": {
+        "content": "146651ab953eea5d",
+        "full": "d43e785bf1618020"
+      },
+      "F-020-4 入力値の範囲／境界": {
+        "content": "205f6e7f839da8c8",
+        "full": "dc5e74af85d1112f"
+      },
+      "F-020-5 状態と状態遷移": {
+        "content": "52432147972c24df",
+        "full": "102500dbdd1aa0fe"
+      },
+      "F-020-6 エラー／例外時の振る舞い": {
+        "content": "0071a8909979ead0",
+        "full": "1d9ed507be8e4569"
+      },
+      "F-020-7 用語定義": {
+        "content": "31fe579753acaf63",
+        "full": "d3f8aafb7e18c470"
+      },
+      "F-021 updateFee": {
+        "content": "d4f8e5bd9d470728",
+        "full": "48824ed8cfa74e3a"
+      },
+      "F-021-1 機能一覧": {
+        "content": "74520481b2bef6f2",
+        "full": "d7dffd8404179537"
+      },
+      "F-021-2 画面／入出力項目": {
+        "content": "f423d4630f405430",
+        "full": "5700bcf78241b5b3"
+      },
+      "F-021-3 業務ルール／計算式": {
+        "content": "bdc7f094c4c75b06",
+        "full": "d934b0238286cd98"
+      },
+      "F-021-4 入力値の範囲／境界": {
+        "content": "f71fb9bb4817a3d8",
+        "full": "6fee0cc6a8aea441"
+      },
+      "F-021-5 状態と状態遷移": {
+        "content": "5126e1c5594c2482",
+        "full": "8cb480fb3a1cbde0"
+      },
+      "F-021-6 エラー／例外時の振る舞い": {
+        "content": "15c7f9383e54ac11",
+        "full": "4fc3b85107b835f8"
+      },
+      "F-021-7 用語定義": {
+        "content": "6032e99e97ea8063",
+        "full": "592d1450ecd47b6c"
+      },
+      "F-022 refreshOverdue": {
+        "content": "d4f8e5bd9d470728",
+        "full": "e60bc890113371ad"
+      },
+      "F-022-1 機能一覧": {
+        "content": "c7c42c0b3cdacf61",
+        "full": "bc2989521f36986a"
+      },
+      "F-022-2 画面／入出力項目": {
+        "content": "e8e71547946a79ed",
+        "full": "f3c7d991be65223d"
+      },
+      "F-022-3 業務ルール／計算式": {
+        "content": "74f54b82fe151e1a",
+        "full": "98810f32149796bf"
+      },
+      "F-022-4 入力値の範囲／境界": {
+        "content": "805f210228bbf2bd",
+        "full": "6121ebdf62164a68"
+      },
+      "F-022-5 状態と状態遷移": {
+        "content": "9a4df304597386e7",
+        "full": "88c07cbb52785741"
+      },
+      "F-022-6 エラー／例外時の振る舞い": {
+        "content": "4751f62790529b16",
+        "full": "09a6f5849b021ab9"
+      },
+      "F-022-7 用語定義": {
+        "content": "9bb0eeee6cf2d8b4",
+        "full": "710703c75175f393"
+      },
+      "F-023 handleReturn": {
+        "content": "d4f8e5bd9d470728",
+        "full": "432ca837fcd3ef6e"
+      },
+      "F-023-1 機能一覧": {
+        "content": "a5ba1872cac417e0",
+        "full": "219922630c6af8e7"
+      },
+      "F-023-2 画面／入出力項目": {
+        "content": "0de934167437944d",
+        "full": "e652e3b3684554e6"
+      },
+      "F-023-3 業務ルール／計算式": {
+        "content": "4809a96ad623c5e6",
+        "full": "981f3dfea26ec900"
+      },
+      "F-023-4 入力値の範囲／境界": {
+        "content": "584ce56127947b4c",
+        "full": "5458a0bf1d0bc986"
+      },
+      "F-023-5 状態と状態遷移": {
+        "content": "447e1cb93821a3b8",
+        "full": "a6df384f38dab2fb"
+      },
+      "F-023-6 エラー／例外時の振る舞い": {
+        "content": "4751f62790529b16",
+        "full": "afad3233d185e1ee"
+      },
+      "F-023-7 用語定義": {
+        "content": "3a3294eaa967d1fe",
+        "full": "b2116202f0820848"
+      },
+      "F-024 handleSearch": {
+        "content": "d4f8e5bd9d470728",
+        "full": "1ccf0b95e3e85c57"
+      },
+      "F-024-1 機能一覧": {
+        "content": "2eb4558e3afbde32",
+        "full": "c3f1a5fd9dabbbc0"
+      },
+      "F-024-2 画面／入出力項目": {
+        "content": "35e41c18630b9c92",
+        "full": "0a8c8349e2b02dda"
+      },
+      "F-024-3 業務ルール／計算式": {
+        "content": "a4e995f7e8969369",
+        "full": "fcd9f51bc761524c"
+      },
+      "F-024-4 入力値の範囲／境界": {
+        "content": "ca366b1c08665b8f",
+        "full": "b23b1754f4f9026f"
+      },
+      "F-024-5 状態と状態遷移": {
+        "content": "7d2bc18af427bc2b",
+        "full": "e51cfc92db0e4e16"
+      },
+      "F-024-6 エラー／例外時の振る舞い": {
+        "content": "cd5b6cd3f2f2bc01",
+        "full": "c7510ebad41c0741"
+      },
+      "F-024-7 用語定義": {
+        "content": "d8ea30c1779bc484",
+        "full": "132a49461cbf5992"
+      },
+      "F-025 無名関数（js/pages/search.js:#）": {
+        "content": "d4f8e5bd9d470728",
+        "full": "84efbbd9fab83434"
+      },
+      "F-025-1 機能一覧": {
+        "content": "ee73788e98b50b74",
+        "full": "0182737ac2ed9d8c"
+      },
+      "F-025-2 画面／入出力項目": {
+        "content": "8cd7bd2f5e9654ff",
+        "full": "24511d86c29e4ffd"
+      },
+      "F-025-3 業務ルール／計算式": {
+        "content": "e9e7e16f99a38056",
+        "full": "18f784edf729cc5f"
+      },
+      "F-025-4 入力値の範囲／境界": {
+        "content": "0a3d211fe8c954cb",
+        "full": "f5ebeda51f5c2f3d"
+      },
+      "F-025-5 状態と状態遷移": {
+        "content": "a1ad2659f8827c0c",
+        "full": "17886f3da21f2f52"
+      },
+      "F-025-6 エラー／例外時の振る舞い": {
+        "content": "502151a66d18e5b3",
+        "full": "75faa39725b1299d"
+      },
+      "F-025-7 用語定義": {
+        "content": "d4be28fb008085f7",
+        "full": "40f080a78a0fb6b1"
+      },
+      "F-026 saveSession": {
+        "content": "d4f8e5bd9d470728",
+        "full": "d622677ffaa85023"
+      },
+      "F-026-1 機能一覧": {
+        "content": "0b1fdf535bb0e5ab",
+        "full": "b14764ca301ebe6c"
+      },
+      "F-026-2 画面／入出力項目": {
+        "content": "528986868c00dfd9",
+        "full": "97c6d7e4485d6ae6"
+      },
+      "F-026-3 業務ルール／計算式": {
+        "content": "70fc0e2758784d9d",
+        "full": "a7d86b9a35ad505d"
+      },
+      "F-026-4 入力値の範囲／境界": {
+        "content": "2097760cca8abcc3",
+        "full": "6703fb52d23d6e12"
+      },
+      "F-026-5 状態と状態遷移": {
+        "content": "d11573b6ec43c38c",
+        "full": "43602591dc540f7c"
+      },
+      "F-026-6 エラー／例外時の振る舞い": {
+        "content": "47e1543368440c41",
+        "full": "9ce925cafc6a3a1d"
+      },
+      "F-026-7 用語定義": {
+        "content": "d20dc0b65401c45d",
+        "full": "752ed8c12655baf4"
+      },
+      "F-027 loadSession": {
+        "content": "d4f8e5bd9d470728",
+        "full": "1d549265f4f9987a"
+      },
+      "F-027-1 機能一覧": {
+        "content": "b6ec5fbba80fcf4c",
+        "full": "11d2e9c991c043ac"
+      },
+      "F-027-2 画面／入出力項目": {
+        "content": "d17658a644a77ee8",
+        "full": "c76a4a18206315ac"
+      },
+      "F-027-3 業務ルール／計算式": {
+        "content": "44c96a508e255a52",
+        "full": "f51e076d3be4a0e8"
+      },
+      "F-027-4 入力値の範囲／境界": {
+        "content": "8e9321c8c4859ea4",
+        "full": "795c4ca02d658d4d"
+      },
+      "F-027-5 状態と状態遷移": {
+        "content": "ce182eed9a2a16b1",
+        "full": "383fcfb123cd5f84"
+      },
+      "F-027-6 エラー／例外時の振る舞い": {
+        "content": "c8ec1690994b79a2",
+        "full": "8a8695b446feb75a"
+      },
+      "F-027-7 用語定義": {
+        "content": "9943d960f69e96ff",
+        "full": "08bc973325f147bc"
+      },
+      "F-028 clearSession": {
+        "content": "d4f8e5bd9d470728",
+        "full": "7236b91512cd6255"
+      },
+      "F-028-1 機能一覧": {
+        "content": "fb91d0476392cedc",
+        "full": "efb8b3c3e1a04c05"
+      },
+      "F-028-2 画面／入出力項目": {
+        "content": "9e3c37aba82f71f8",
+        "full": "65250dd85f6aa6d5"
+      },
+      "F-028-3 業務ルール／計算式": {
+        "content": "9358c9cc1206ad65",
+        "full": "d1b660e6b9491003"
+      },
+      "F-028-4 入力値の範囲／境界": {
+        "content": "ffc9ac4b8c8adfad",
+        "full": "e67c759d76f93a6a"
+      },
+      "F-028-5 状態と状態遷移": {
+        "content": "fbaeb544345f81c5",
+        "full": "64bb248b7c4d1092"
+      },
+      "F-028-6 エラー／例外時の振る舞い": {
+        "content": "16e5ceca63d5f2e7",
+        "full": "d1566d623170fa29"
+      },
+      "F-028-7 用語定義": {
+        "content": "8139be03e5e51dea",
+        "full": "eaa10c003ff7c077"
+      },
+      "F-029 loadRecentSearches": {
+        "content": "d4f8e5bd9d470728",
+        "full": "dac455aa284a0098"
+      },
+      "F-029-1 機能一覧": {
+        "content": "4afc9326f7730798",
+        "full": "89dbe25dacc7341a"
+      },
+      "F-029-2 画面／入出力項目": {
+        "content": "f183b719b2d41933",
+        "full": "ff3ffb969da1a9f1"
+      },
+      "F-029-3 業務ルール／計算式": {
+        "content": "54b07bd71cedcf62",
+        "full": "94e31c801447dd3a"
+      },
+      "F-029-4 入力値の範囲／境界": {
+        "content": "2230e6411f079148",
+        "full": "79886c26138bb21e"
+      },
+      "F-029-5 状態と状態遷移": {
+        "content": "55aa3a3e3eeaae86",
+        "full": "7793a86b7e01621d"
+      },
+      "F-029-6 エラー／例外時の振る舞い": {
+        "content": "07a746e4649f4d42",
+        "full": "dddaa4f68735143f"
+      },
+      "F-029-7 用語定義": {
+        "content": "ca78562af909b1db",
+        "full": "ddb3dfee1c5392b1"
+      },
+      "F-030 addRecentSearch": {
+        "content": "d4f8e5bd9d470728",
+        "full": "9e879f1c881dc549"
+      },
+      "F-030-1 機能一覧": {
+        "content": "e2f2cfe5e38e779a",
+        "full": "6a49b5164b647352"
+      },
+      "F-030-2 画面／入出力項目": {
+        "content": "540b921179b35762",
+        "full": "53f6f9227f0ad23e"
+      },
+      "F-030-3 業務ルール／計算式": {
+        "content": "54b07bd71cedcf62",
+        "full": "1a3fc80320797f45"
+      },
+      "F-030-4 入力値の範囲／境界": {
+        "content": "af1d8f8962581fb1",
+        "full": "a5023a95a1020670"
+      },
+      "F-030-5 状態と状態遷移": {
+        "content": "28b090cc7b9cea26",
+        "full": "9bd55ef2e991e5f0"
+      },
+      "F-030-6 エラー／例外時の振る舞い": {
+        "content": "0f05ca30245fb2ce",
+        "full": "3837c3799f0b63ec"
+      },
+      "F-030-7 用語定義": {
+        "content": "70146f1e23b169ef",
+        "full": "7aec686fefe6835b"
+      },
+      "F-031 clearRecentSearches": {
+        "content": "d4f8e5bd9d470728",
+        "full": "0cbe80b6b5cdc278"
+      },
+      "F-031-1 機能一覧": {
+        "content": "02a95980350000c3",
+        "full": "0e46de40cf56f461"
+      },
+      "F-031-2 画面／入出力項目": {
+        "content": "597ef8a2a768b0ef",
+        "full": "49e1cee8e90d998b"
+      },
+      "F-031-3 業務ルール／計算式": {
+        "content": "0e4f519fc3f96cc1",
+        "full": "9eb967aeb36b4c8d"
+      },
+      "F-031-4 入力値の範囲／境界": {
+        "content": "8f2a5b066213bf5a",
+        "full": "035ccc71980c64b6"
+      },
+      "F-031-5 状態と状態遷移": {
+        "content": "f13405f9c38113a0",
+        "full": "84eabb912eec9718"
+      },
+      "F-031-6 エラー／例外時の振る舞い": {
+        "content": "d3954c515ae76142",
+        "full": "3904d1710b08c7a2"
+      },
+      "F-031-7 用語定義": {
+        "content": "a0bb1704e1bf09ce",
+        "full": "ba8fc8426cd72524"
+      },
+      "F-032 saveLoanDraft": {
+        "content": "d4f8e5bd9d470728",
+        "full": "b85d30619b600aa5"
+      },
+      "F-032-1 機能一覧": {
+        "content": "67f39fe1b96f27e4",
+        "full": "08aa6a1ecd6c0962"
+      },
+      "F-032-2 画面／入出力項目": {
+        "content": "508f08755033cc8c",
+        "full": "315cda69dab5460f"
+      },
+      "F-032-3 業務ルール／計算式": {
+        "content": "ae6a1fd56374bef4",
+        "full": "03a79cd42983b1cf"
+      },
+      "F-032-4 入力値の範囲／境界": {
+        "content": "6ccb78cd27a84c0c",
+        "full": "0a95e8b225ea17c0"
+      },
+      "F-032-5 状態と状態遷移": {
+        "content": "cd4585813fe1a99c",
+        "full": "f282a0eb26c125a2"
+      },
+      "F-032-6 エラー／例外時の振る舞い": {
+        "content": "21be2e3871a9ce6a",
+        "full": "c7cfff5b1ce0b1b2"
+      },
+      "F-032-7 用語定義": {
+        "content": "cb24eb724d6d7fd6",
+        "full": "7fc799456e4732af"
+      },
+      "F-033 loadLoanDraft": {
+        "content": "d4f8e5bd9d470728",
+        "full": "e97e7494f88cda45"
+      },
+      "F-033-1 機能一覧": {
+        "content": "452a21623d36c23d",
+        "full": "d012bff125f47af5"
+      },
+      "F-033-2 画面／入出力項目": {
+        "content": "f8ae2f29749f7707",
+        "full": "c2412633e8939f60"
+      },
+      "F-033-3 業務ルール／計算式": {
+        "content": "520f355389db5b42",
+        "full": "02ebbb7dccf7fd42"
+      },
+      "F-033-4 入力値の範囲／境界": {
+        "content": "0ef88ca903bd9728",
+        "full": "6e9d676270c6f83a"
+      },
+      "F-033-5 状態と状態遷移": {
+        "content": "8349b274a879f03f",
+        "full": "e7db2544506cb4b5"
+      },
+      "F-033-6 エラー／例外時の振る舞い": {
+        "content": "2c6a0d636b79e0a7",
+        "full": "66d35de97ef4b545"
+      },
+      "F-033-7 用語定義": {
+        "content": "f24c3918acba5136",
+        "full": "bf2c11b53dc384fd"
+      },
+      "F-034 clearLoanDraft": {
+        "content": "d4f8e5bd9d470728",
+        "full": "ca631575f7291b3b"
+      },
+      "F-034-1 機能一覧": {
+        "content": "11d8a4aa73823608",
+        "full": "ae227ac9a283cd8e"
+      },
+      "F-034-2 画面／入出力項目": {
+        "content": "6568661dcc427dd5",
+        "full": "3ac6b9ceb2751d09"
+      },
+      "F-034-3 業務ルール／計算式": {
+        "content": "38334a840968acf0",
+        "full": "c67aba629a1ca1a1"
+      },
+      "F-034-4 入力値の範囲／境界": {
+        "content": "3a7a3c5d6e90c41b",
+        "full": "c559cd7d216fb60a"
+      },
+      "F-034-5 状態と状態遷移": {
+        "content": "f45000d26114b3b8",
+        "full": "8148c3e2069bd2be"
+      },
+      "F-034-6 エラー／例外時の振る舞い": {
+        "content": "6d57389ec3fb5603",
+        "full": "2fc54b5d10cbbf2b"
+      },
+      "F-034-7 用語定義": {
+        "content": "2a66fbca00961391",
+        "full": "c0108985c36ccde0"
+      },
+      "F-035 showError": {
+        "content": "d4f8e5bd9d470728",
+        "full": "43b44ad1d1732107"
+      },
+      "F-035-1 機能一覧": {
+        "content": "676efbfc66b64643",
+        "full": "563e11767d41919e"
+      },
+      "F-035-2 画面／入出力項目": {
+        "content": "f2b07ecb72469f4b",
+        "full": "02910d8bdc546b6f"
+      },
+      "F-035-3 業務ルール／計算式": {
+        "content": "84f958d5b6094018",
+        "full": "05ac37a043d8d59c"
+      },
+      "F-035-4 入力値の範囲／境界": {
+        "content": "a808946649ebef98",
+        "full": "02bc61a45570d06e"
+      },
+      "F-035-5 状態と状態遷移": {
+        "content": "f256a7852d3d68b1",
+        "full": "4f36d1d882123173"
+      },
+      "F-035-6 エラー／例外時の振る舞い": {
+        "content": "55d5fde9b05c479c",
+        "full": "032bad91a5fbd27d"
+      },
+      "F-035-7 用語定義": {
+        "content": "0e5901630e515ee0",
+        "full": "f262b0873bb228a8"
+      },
+      "F-036 clearError": {
+        "content": "d4f8e5bd9d470728",
+        "full": "2774364295d2207f"
+      },
+      "F-036-1 機能一覧": {
+        "content": "65685468a974a7ad",
+        "full": "8cb5fe1ab016f19b"
+      },
+      "F-036-2 画面／入出力項目": {
+        "content": "7e220573d0156d2b",
+        "full": "3cad3ec4e7e66322"
+      },
+      "F-036-3 業務ルール／計算式": {
+        "content": "344721a40327274b",
+        "full": "24ec7ef4bc2d817d"
+      },
+      "F-036-4 入力値の範囲／境界": {
+        "content": "a6dad6974a3e2fb8",
+        "full": "52519a25c11a55fd"
+      },
+      "F-036-5 状態と状態遷移": {
+        "content": "a5a8237ffe84228c",
+        "full": "7720879f46d1f028"
+      },
+      "F-036-6 エラー／例外時の振る舞い": {
+        "content": "96c4a198a29e57f3",
+        "full": "25f5f0e1afc7ff43"
+      },
+      "F-036-7 用語定義": {
+        "content": "938c1c74f79eb3a8",
+        "full": "db7cc993398d5b5e"
+      },
+      "F-037 setLoading": {
+        "content": "d4f8e5bd9d470728",
+        "full": "653cc95c07452e78"
+      },
+      "F-037-1 機能一覧": {
+        "content": "136658bdf692beeb",
+        "full": "0fe40f09ebb511ce"
+      },
+      "F-037-2 画面／入出力項目": {
+        "content": "1024beeebaf20d9e",
+        "full": "fc60f5923fe86402"
+      },
+      "F-037-3 業務ルール／計算式": {
+        "content": "aaf18a379ecbd7fb",
+        "full": "9f9270d40edb2b70"
+      },
+      "F-037-4 入力値の範囲／境界": {
+        "content": "683e157d9f1dbf39",
+        "full": "339447f4878ee409"
+      },
+      "F-037-5 状態と状態遷移": {
+        "content": "9470da8701824eca",
+        "full": "0c8e895689646398"
+      },
+      "F-037-6 エラー／例外時の振る舞い": {
+        "content": "dd08e4071ca8f59c",
+        "full": "b1d3cb6f7c43bb58"
+      },
+      "F-037-7 用語定義": {
+        "content": "87ae8227f6dfe1f9",
+        "full": "7e886956b16b7749"
+      },
+      "F-038 markField": {
+        "content": "d4f8e5bd9d470728",
+        "full": "2408d3ba095daa51"
+      },
+      "F-038-1 機能一覧": {
+        "content": "882766900e237d04",
+        "full": "c371c7ceb689dfd7"
+      },
+      "F-038-2 画面／入出力項目": {
+        "content": "d6dd28901aadc199",
+        "full": "2063c1912e1562c2"
+      },
+      "F-038-3 業務ルール／計算式": {
+        "content": "fd11e7107142b8a2",
+        "full": "b5bf94264921d8a0"
+      },
+      "F-038-4 入力値の範囲／境界": {
+        "content": "7eb7552ca8ddbe41",
+        "full": "e25473fe0af1c8d3"
+      },
+      "F-038-5 状態と状態遷移": {
+        "content": "07055db1464eed3c",
+        "full": "d9fb730b3273c575"
+      },
+      "F-038-6 エラー／例外時の振る舞い": {
+        "content": "525ca1bd81bd595b",
+        "full": "d6ce6f4f59730972"
+      },
+      "F-038-7 用語定義": {
+        "content": "219363b694f81dd9",
+        "full": "b5bd2d099ed02b72"
+      },
+      "F-039 validateMemberId": {
+        "content": "d4f8e5bd9d470728",
+        "full": "4963a9f332782439"
+      },
+      "F-039-1 機能一覧": {
+        "content": "8ad1ff72f2f3a932",
+        "full": "98cd00c17ec97519"
+      },
+      "F-039-2 画面／入出力項目": {
+        "content": "24d94549c459273b",
+        "full": "ffd59df8cb23d9e0"
+      },
+      "F-039-3 業務ルール／計算式": {
+        "content": "a617d7457ee0e52e",
+        "full": "b9007c9d78eb5122"
+      },
+      "F-039-4 入力値の範囲／境界": {
+        "content": "f516636bfd8fff3b",
+        "full": "117acf7b9c5653d7"
+      },
+      "F-039-5 状態と状態遷移": {
+        "content": "078539dbe702cb73",
+        "full": "eb5f9a316f16d6a9"
+      },
+      "F-039-6 エラー／例外時の振る舞い": {
+        "content": "bf23c153ba3093aa",
+        "full": "21ca831ab9fc6022"
+      },
+      "F-039-7 用語定義": {
+        "content": "7153ccba88894528",
+        "full": "a422565960c50554"
+      },
+      "F-040 validatePassword": {
+        "content": "d4f8e5bd9d470728",
+        "full": "af2bc177f6ad4b82"
+      },
+      "F-040-1 機能一覧": {
+        "content": "63a6b6a4e72a7984",
+        "full": "9147918ac5b66454"
+      },
+      "F-040-2 画面／入出力項目": {
+        "content": "2631b747b786e5ce",
+        "full": "b17430def922331c"
+      },
+      "F-040-3 業務ルール／計算式": {
+        "content": "b7ec9b702a9054fb",
+        "full": "cebfbff8a663fafb"
+      },
+      "F-040-4 入力値の範囲／境界": {
+        "content": "e1090259203c95d8",
+        "full": "96369d8a24a44d0e"
+      },
+      "F-040-5 状態と状態遷移": {
+        "content": "66c4a685ad46da4a",
+        "full": "4236ffb24ba9aaa9"
+      },
+      "F-040-6 エラー／例外時の振る舞い": {
+        "content": "41705737c8de70ea",
+        "full": "00703fb228d04b90"
+      },
+      "F-040-7 用語定義": {
+        "content": "ca9d50f4a5f6c07c",
+        "full": "2d21fe9888e6f042"
+      },
+      "F-041 validateIsbn": {
+        "content": "d4f8e5bd9d470728",
+        "full": "7073bcf4e2f5fcd6"
+      },
+      "F-041-1 機能一覧": {
+        "content": "3c5bb8a8b6d9bbb9",
+        "full": "2d53a592a98423bc"
+      },
+      "F-041-2 画面／入出力項目": {
+        "content": "790213e64ef79efe",
+        "full": "63689336562ba6af"
+      },
+      "F-041-3 業務ルール／計算式": {
+        "content": "019e7e33324894c4",
+        "full": "8e6cb7379034ef15"
+      },
+      "F-041-4 入力値の範囲／境界": {
+        "content": "4bdaba062e2b6d70",
+        "full": "9c2df8b0f2da23f3"
+      },
+      "F-041-5 状態と状態遷移": {
+        "content": "49a114621d6cb524",
+        "full": "57c1a0f833789b53"
+      },
+      "F-041-6 エラー／例外時の振る舞い": {
+        "content": "e8f5fa046bb13b0f",
+        "full": "bd3b92e19c81e8a6"
+      },
+      "F-041-7 用語定義": {
+        "content": "91a7ac7e05e04878",
+        "full": "c68cb4e8743130f0"
+      },
+      "F-042 validateQuery": {
+        "content": "d4f8e5bd9d470728",
+        "full": "f8f234d60d7208f1"
+      },
+      "F-042-1 機能一覧": {
+        "content": "e7894ac339c5fa90",
+        "full": "0bd86f647e3c08f6"
+      },
+      "F-042-2 画面／入出力項目": {
+        "content": "83c2b001c5ad65ff",
+        "full": "0fca571bef2f7e75"
+      },
+      "F-042-3 業務ルール／計算式": {
+        "content": "fd32315a2b7f7f16",
+        "full": "4d6badeabc143a75"
+      },
+      "F-042-4 入力値の範囲／境界": {
+        "content": "6d96f0fd76b25ab6",
+        "full": "3fadaa2d3f85f11e"
+      },
+      "F-042-5 状態と状態遷移": {
+        "content": "4720cba27ed22dd7",
+        "full": "df06e800fbe6b7b7"
+      },
+      "F-042-6 エラー／例外時の振る舞い": {
+        "content": "dbe3339a79525b8c",
+        "full": "d251ab26847ed0c0"
+      },
+      "F-042-7 用語定義": {
+        "content": "af683bece251acf7",
+        "full": "8d98b297eb78e0c0"
+      },
+      "F-043 validateLoanCount": {
+        "content": "d4f8e5bd9d470728",
+        "full": "9ec7d0d0d7d2acd6"
+      },
+      "F-043-1 機能一覧": {
+        "content": "4ed958c7f908c357",
+        "full": "8b45ef374d23bb95"
+      },
+      "F-043-2 画面／入出力項目": {
+        "content": "7b6b1ee5d3516cae",
+        "full": "820c43741c054bf6"
+      },
+      "F-043-3 業務ルール／計算式": {
+        "content": "4cf457c6d2a774ea",
+        "full": "8261a2512e9a5ddf"
+      },
+      "F-043-4 入力値の範囲／境界": {
+        "content": "f52c60d23198a612",
+        "full": "c87a8b336bc83e10"
+      },
+      "F-043-5 状態と状態遷移": {
+        "content": "5c04b10be2bc12c8",
+        "full": "1b705bc67e85fea2"
+      },
+      "F-043-6 エラー／例外時の振る舞い": {
+        "content": "8880fb2bcd4dc0fd",
+        "full": "be35b35a87f94dd4"
+      },
+      "F-043-7 用語定義": {
+        "content": "8a658de84d8f15ce",
+        "full": "0fb8372b50614f96"
+      },
+      "F-044 validateLoanId": {
+        "content": "d4f8e5bd9d470728",
+        "full": "d8c73c0b2ac2e590"
+      },
+      "F-044-1 機能一覧": {
+        "content": "5fe19db9e9ce454b",
+        "full": "f3f68554db7bdd9c"
+      },
+      "F-044-2 画面／入出力項目": {
+        "content": "f81ebebcbd2976ee",
+        "full": "32c99d619b5fa3ec"
+      },
+      "F-044-3 業務ルール／計算式": {
+        "content": "3d76ab37ad58f07e",
+        "full": "7c232e4a6ff3550b"
+      },
+      "F-044-4 入力値の範囲／境界": {
+        "content": "f415e7ca578a9369",
+        "full": "c8a53541cb2ad487"
+      },
+      "F-044-5 状態と状態遷移": {
+        "content": "e9dbed86dabb0d59",
+        "full": "73b4eb638104378f"
+      },
+      "F-044-6 エラー／例外時の振る舞い": {
+        "content": "6cae9ae70745b749",
+        "full": "f81160c7d72fc0de"
+      },
+      "F-044-7 用語定義": {
+        "content": "354634fa5b3f79ad",
+        "full": "c002e1d7b8c3ab09"
+      },
+      "F-045 collectErrors": {
+        "content": "d4f8e5bd9d470728",
+        "full": "3c90e8dd37940686"
+      },
+      "F-045-1 機能一覧": {
+        "content": "4d14dad5fc6a985b",
+        "full": "57254f759c0cb4c7"
+      },
+      "F-045-2 画面／入出力項目": {
+        "content": "2c905a53abb38911",
+        "full": "19af8f888aa95e4e"
+      },
+      "F-045-3 業務ルール／計算式": {
+        "content": "a5b6dc7daa6b7837",
+        "full": "6ec18d55e1930bad"
+      },
+      "F-045-4 入力値の範囲／境界": {
+        "content": "940245a5f50b7ea1",
+        "full": "dc946a7b9e737248"
+      },
+      "F-045-5 状態と状態遷移": {
+        "content": "597ccb5def32ed9c",
+        "full": "0a2007e7e36cd997"
+      },
+      "F-045-6 エラー／例外時の振る舞い": {
+        "content": "1f5e00a3aa271475",
+        "full": "9a9e97278bbb2e1c"
+      },
+      "F-045-7 用語定義": {
+        "content": "463aca74757ff88d",
+        "full": "aedaadaa712f397c"
+      },
+      "3. エラー一覧": {
+        "content": "4f1f5ade785a25b5",
+        "full": "3c848c097b6253f3"
+      },
+      "4. システム文言一覧": {
+        "content": "daf63d3d98c17a6e",
+        "full": "a631ca76acdd4fc9"
+      },
+      "5. 動作環境": {
+        "content": "3dece02982303f95",
+        "full": "70b670510bd91fd7"
+      }
+    },
+    "D03": {
+      "1. 画面一覧": {
+        "content": "f1efbe8c2b814490",
+        "full": "24f27a92f62ac100"
+      },
+      "2. 画面遷移": {
+        "content": "7cc2b1451478a28e",
+        "full": "59327ac32f3ea872"
+      },
+      "3. 画面部品表": {
+        "content": "f77fa5570f2b4e6f",
+        "full": "6f74f457068d064f"
+      },
+      "S-001 図書館 貸出システム ログイン": {
+        "content": "1f3a6c817539c367",
+        "full": "ce0b9f6fbf2b13d4"
+      },
+      "S-002 貸出手続き": {
+        "content": "20f4a0280f6cb698",
+        "full": "2ca62463ae55a4a2"
+      },
+      "S-003 返却・延滞一覧": {
+        "content": "1a3b3dbb05308a4e",
+        "full": "d29624fe7f53d3ca"
+      },
+      "S-004 蔵書検索": {
+        "content": "52b06a6ca3811f59",
+        "full": "df67b27686ecace3"
+      },
+      "4. 異常系の画面と表示": {
+        "content": "64806de38e0d682e",
+        "full": "05ba204b8d1f3fef"
+      },
+      "5. 入力項目の範囲・境界": {
+        "content": "1e855afea243d241",
+        "full": "7c6764b300cfd911"
+      }
+    },
+    "D04": {
+      "データ項目定義": {
+        "content": "190a87d2f624bc55",
+        "full": "45bca6b1a9300812"
+      },
+      "レコードレイアウト": {
+        "content": "61d0a62cfbdd1288",
+        "full": "5234a993ab97116b"
+      },
+      "データの状態と遷移": {
+        "content": "d3fa9bdeefcd7e36",
+        "full": "c398b475a456baa2"
+      },
+      "CRUD 表": {
+        "content": "2e4b6c41f0a31a02",
+        "full": "97a70ec61a97b5d9"
+      },
+      "使用制限": {
+        "content": "81888e0c70e937da",
+        "full": "1ee062730621a39c"
+      }
+    },
+    "D05": {
+      "連携の組": {
+        "content": "ad588e2ed83bd3e3",
+        "full": "2c291e3903e9d9e0"
+      },
+      "定期通信": {
+        "content": "5b731b385247d600",
+        "full": "3bd5fdbfedf085a4"
+      },
+      "異常と判断する条件": {
+        "content": "b367710edd7dee39",
+        "full": "db7350f21b0be7a1"
+      }
+    },
+    "D06": {
+      "依存ライブラリ": {
+        "content": "6c4cda1d2a728aa0",
+        "full": "cc1f17af4ff1c79f"
+      }
+    },
+    "D07": {
+      "区分別の件数": {
+        "content": "bba09d4736bf4526",
+        "full": "0a3e27ef4a9384f8"
+      },
+      "移行論点一覧": {
+        "content": "952c334d77bd2a63",
+        "full": "2a675c20a3ac3f6c"
+      },
+      "変更影響分析": {
+        "content": "f13344a06f122f15",
+        "full": "1c484627efaff91f"
+      }
+    },
+    "D08": {
+      "確度のまとめ": {
+        "content": "49c6b29ba7cb5585",
+        "full": "00972c6b5aece289"
+      },
+      "自動度": {
+        "content": "b3c94a16dc71c06e",
+        "full": "4385d08019d72c7d"
+      },
+      "ファイル別の解析結果": {
+        "content": "aef1c33b2babee1f",
+        "full": "ea64ac554e9e02b6"
+      },
+      "記述→ソース位置": {
+        "content": "8c1849dd05525c3f",
+        "full": "3412be04b50a8171"
+      },
+      "ソース→記述": {
+        "content": "3bbbe8a81ae083b6",
+        "full": "18e437b06b8e087a"
+      },
+      "静的解析の限界": {
+        "content": "5c87e42e25952d12",
+        "full": "0b637267ccd0e63f"
+      },
+      "文書横断の対応表（記述→ソース位置）": {
+        "content": "7ec2fc9ca25da3ae",
+        "full": "2ba555a7defaaa2a"
+      },
+      "文書横断の対応表（ソース→文書・節）": {
+        "content": "5a6ef149a4f1e718",
+        "full": "31a1f64c9f80098f"
+      },
+      "照合の結果": {
+        "content": "7cdc93f984cc5840",
+        "full": "c30084606a57ef29"
+      }
+    },
+    "D09": {
+      "1. 確認事項一覧": {
+        "content": "7fbfa2a8ce56eb77",
+        "full": "8d2e7ba00e0643de"
+      }
+    },
+    "D11": {
+      "システム方式": {
+        "content": "d6d85940f96a9da7",
+        "full": "4a86c8e10ca168b9"
+      },
+      "アーキテクチャ": {
+        "content": "0304c7e79d20b12e",
+        "full": "dc8e1aedbf37e13a"
+      },
+      "モジュール構成": {
+        "content": "ad61e974b8b1c168",
+        "full": "3aef0e3c3899a76b"
+      },
+      "外部 I/F": {
+        "content": "0d087183420b46e9",
+        "full": "3b0afb3e42a26a7d"
+      },
+      "非機能の実装方式": {
+        "content": "40a1cd985383a330",
+        "full": "1a51f0105eb74812"
+      }
+    },
+    "D12": {
+      "モジュール一覧": {
+        "content": "dc187d185ea609e7",
+        "full": "680d1417ff8ba2a5"
+      },
+      "クラス一覧": {
+        "content": "d33d8af3562e7619",
+        "full": "aebc2c4a51aa47d0"
+      },
+      "関数一覧と入出力": {
+        "content": "eb4d4390da2b90bd",
+        "full": "29b2f4d5e4a90256"
+      },
+      "処理フロー（区分順。ソースの実行順ではない）": {
+        "content": "489975f479c94968",
+        "full": "1f57462e53cb2cee"
+      },
+      "呼び出しのシーケンス": {
+        "content": "945beccd5e733366",
+        "full": "5ca42eefbb7e01df"
+      },
+      "例外処理": {
+        "content": "3dfea082012aaec7",
+        "full": "3b5e44fe54899ca4"
+      }
+    },
+    "D13": {
+      "1. この文書の位置付け": {
+        "content": "461e7701ffb1814f",
+        "full": "de249dc1f3e92932"
+      },
+      "2. 同値分割法・境界値分析": {
+        "content": "864ee9406d9ed939",
+        "full": "5e32d963ed6747f0"
+      },
+      "3. デシジョンテーブルテスト": {
+        "content": "064f8a82e52c8283",
+        "full": "62abf2a19bcf6b22"
+      },
+      "4. 状態遷移テスト": {
+        "content": "55a4a0a2b479c75e",
+        "full": "a1c21b059c27ea8c"
+      },
+      "5. エラー推測の起点": {
+        "content": "694a5f900365fdc8",
+        "full": "5a9dced50ca86cef"
+      }
+    }
+  },
+  "docVersions": {
+    "D01": 3,
+    "D02": 3,
+    "D03": 3,
+    "D04": 3,
+    "D05": 3,
+    "D06": 3,
+    "D07": 3,
+    "D08": 3,
+    "D09": 3,
+    "D11": 3,
+    "D12": 3,
+    "D13": 3
+  },
+  "previous": {
+    "runId": "20260926-062546-b89489",
+    "startedAt": "2026-09-26T06:25:46.398Z"
+  },
+  "docChanges": {
+    "D01": [
+      {
+        "section": "1. システム構成",
+        "kind": "changed"
+      },
+      {
+        "section": "2. モジュール構成",
+        "kind": "changed"
+      }
+    ],
+    "D02": [
+      {
+        "section": "1. 機能一覧",
+        "kind": "changed"
+      },
+      {
+        "section": "F-001-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-001-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-002-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-002-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-003-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-003-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-004-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-004-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-005-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-005-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-006-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-006-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-007-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-007-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-007-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-007-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-008-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-008-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-008-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-008-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-009-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-009-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-009-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-009-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-010-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-010-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-010-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-010-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-011-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-011-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-011-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-012-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-012-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-012-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-012-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-013-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-013-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-013-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-014-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-014-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-014-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-014-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-014-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-016-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-016-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-017-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-017-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-017-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-017-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-018-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-018-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-018-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-018-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-018-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-019-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-019-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-020-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-020-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-020-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-021-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-021-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-023-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-024-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-024-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-025-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-025-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-025-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-025-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-026-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-026-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-026-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-026-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-026-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-027-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-027-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-027-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-027-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-027-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-028-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-029-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-029-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-029-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-029-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-029-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-030-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-030-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-030-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-030-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-031-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-032-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-032-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-032-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-032-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-032-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-033-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-033-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-033-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-033-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-033-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-2 画面／入出力項目",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-034-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-035-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-035-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-035-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-035-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-036-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-036-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-036-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-036-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-036-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-037-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-037-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-037-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-037-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-038-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-038-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-038-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-039-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-039-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-039-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-040-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-040-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-040-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-040-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-041-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-041-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-041-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-041-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-042-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-042-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-042-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-042-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-043-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-043-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-043-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-043-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-044-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-044-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-044-7 用語定義",
+        "kind": "changed"
+      },
+      {
+        "section": "F-045-3 業務ルール／計算式",
+        "kind": "changed"
+      },
+      {
+        "section": "F-045-4 入力値の範囲／境界",
+        "kind": "changed"
+      },
+      {
+        "section": "F-045-5 状態と状態遷移",
+        "kind": "changed"
+      },
+      {
+        "section": "F-045-6 エラー／例外時の振る舞い",
+        "kind": "changed"
+      },
+      {
+        "section": "F-045-7 用語定義",
+        "kind": "changed"
+      }
+    ],
+    "D03": [
+      {
+        "section": "1. 画面一覧",
+        "kind": "changed"
+      },
+      {
+        "section": "4. 異常系の画面と表示",
+        "kind": "changed"
+      }
+    ],
+    "D04": [
+      {
+        "section": "データ項目定義",
+        "kind": "changed"
+      },
+      {
+        "section": "レコードレイアウト",
+        "kind": "changed"
+      },
+      {
+        "section": "使用制限",
+        "kind": "changed"
+      }
+    ],
+    "D05": [
+      {
+        "section": "定期通信",
+        "kind": "changed"
+      }
+    ],
+    "D06": [],
+    "D07": [
+      {
+        "section": "区分別の件数",
+        "kind": "changed"
+      },
+      {
+        "section": "移行論点一覧",
+        "kind": "changed"
+      },
+      {
+        "section": "変更影響分析",
+        "kind": "changed"
+      }
+    ],
+    "D08": [
+      {
+        "section": "確度のまとめ",
+        "kind": "changed"
+      },
+      {
+        "section": "自動度",
+        "kind": "changed"
+      },
+      {
+        "section": "ファイル別の解析結果",
+        "kind": "moved"
+      },
+      {
+        "section": "記述→ソース位置",
+        "kind": "changed"
+      },
+      {
+        "section": "ソース→記述",
+        "kind": "changed"
+      },
+      {
+        "section": "静的解析の限界",
+        "kind": "added"
+      },
+      {
+        "section": "文書横断の対応表（記述→ソース位置）",
+        "kind": "changed"
+      },
+      {
+        "section": "文書横断の対応表（ソース→文書・節）",
+        "kind": "changed"
+      },
+      {
+        "section": "照合の結果",
+        "kind": "added"
+      }
+    ],
+    "D09": [
+      {
+        "section": "1. 確認事項一覧",
+        "kind": "changed"
+      }
+    ],
+    "D11": [
+      {
+        "section": "システム方式",
+        "kind": "changed"
+      },
+      {
+        "section": "アーキテクチャ",
+        "kind": "changed"
+      },
+      {
+        "section": "モジュール構成",
+        "kind": "changed"
+      }
+    ],
+    "D12": [
+      {
+        "section": "モジュール一覧",
+        "kind": "changed"
+      },
+      {
+        "section": "関数一覧と入出力",
+        "kind": "changed"
+      },
+      {
+        "section": "処理フロー（区分順。ソースの実行順ではない）",
+        "kind": "changed"
+      },
+      {
+        "section": "呼び出しのシーケンス",
+        "kind": "changed"
+      }
+    ],
+    "D13": [
+      {
+        "section": "2. 同値分割法・境界値分析",
+        "kind": "changed"
+      }
+    ]
+  },
+  "trace": {
+    "nodes": 792,
+    "edges": 4719,
+    "links": 1080,
+    "skippedLinks": 3692
+  },
+  "verify": {
+    "checked": 6821,
+    "matched": 6821,
+    "mismatchLocation": 0,
+    "mismatchIdentifier": 0,
+    "skipped": 319
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>図書館 貸出システム ログイン</title>
+  <link rel="stylesheet" href="styles/base.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>市立図書館 貸出システム</h1>
+    <nav class="global-nav">
+      <a href="pages/help.html" id="link-help">ヘルプ</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h2>ログイン</h2>
+    <form id="login-form" action="pages/search.html" method="post" novalidate>
+      <div class="field">
+        <label for="member-id">会員番号</label>
+        <input id="member-id" name="memberId" type="text" required pattern="M\d{6}" minlength="7" maxlength="7" placeholder="M123456" autocomplete="username">
+        <p class="hint">M と数字 6 桁（例: M123456）</p>
+      </div>
+      <div class="field">
+        <label for="password">パスワード</label>
+        <input id="password" name="password" type="password" required minlength="8" maxlength="32" autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label>
+          <input id="remember" name="remember" type="checkbox" checked>
+          会員番号を記憶する
+        </label>
+      </div>
+      <p id="login-error" class="message" role="alert" hidden></p>
+      <button id="login-submit" type="submit">ログイン</button>
+    </form>
+    <p class="note">パスワードを忘れた場合は <a href="pages/help.html#password">ヘルプ</a> を参照してください。</p>
+  </main>
+  <footer class="site-footer">
+    <small>&copy; 市立図書館</small>
+  </footer>
+  <script type="module" src="js/pages/login.js"></script>
+</body>
+</html>

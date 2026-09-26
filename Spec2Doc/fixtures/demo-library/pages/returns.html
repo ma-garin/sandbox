@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>返却・延滞一覧</title>
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>返却・延滞一覧</h1>
+    <nav class="global-nav">
+      <a href="search.html">検索</a>
+      <a href="loan.html">貸出</a>
+      <a href="returns.html" aria-current="page">返却・延滞</a>
+      <a href="help.html">ヘルプ</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h2>返却の受付</h2>
+    <form id="return-form" action="returns.html" method="post" novalidate>
+      <div class="field">
+        <label for="return-member-id">会員番号</label>
+        <input id="return-member-id" name="memberId" type="text" required pattern="M\d{6}" maxlength="7">
+      </div>
+      <div class="field">
+        <label for="return-loan-id">貸出番号</label>
+        <input id="return-loan-id" name="loanId" type="text" required pattern="L\d{8}" maxlength="9">
+      </div>
+      <div class="field">
+        <label for="overdue-days">延滞日数</label>
+        <input id="overdue-days" name="overdueDays" type="number" min="0" max="365" value="0">
+      </div>
+      <p id="fee-display" class="summary">延滞料金: 0 円</p>
+      <p id="return-error" class="message" role="alert" hidden></p>
+      <button id="return-submit" type="submit">返却する</button>
+    </form>
+    <section>
+      <h3>延滞中の貸出</h3>
+      <table id="overdue-list" class="loan-table">
+        <thead>
+          <tr><th>貸出番号</th><th>書名</th><th>返却期限</th><th>状態</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="refresh-overdue" type="button">一覧を更新</button>
+    </section>
+  </main>
+  <script type="module" src="../js/pages/returns.js"></script>
+</body>
+</html>

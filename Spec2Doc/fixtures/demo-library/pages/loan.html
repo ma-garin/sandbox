@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>貸出手続き</title>
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>貸出手続き</h1>
+    <nav class="global-nav">
+      <a href="search.html">検索</a>
+      <a href="loan.html" aria-current="page">貸出</a>
+      <a href="returns.html">返却・延滞</a>
+      <a href="help.html">ヘルプ</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h2>貸出する本を登録</h2>
+    <form id="loan-form" action="returns.html" method="post" novalidate>
+      <div class="field">
+        <label for="loan-member-id">会員番号</label>
+        <input id="loan-member-id" name="memberId" type="text" required pattern="M\d{6}" maxlength="7">
+      </div>
+      <div class="field">
+        <label for="loan-isbn">ISBN（13 桁）</label>
+        <input id="loan-isbn" name="isbn" type="text" required inputmode="numeric" pattern="\d{13}" minlength="13" maxlength="13">
+      </div>
+      <div class="field">
+        <label for="loan-count">冊数</label>
+        <input id="loan-count" name="count" type="number" required min="1" max="5" value="1" step="1">
+      </div>
+      <div class="field">
+        <label for="loan-days">貸出日数</label>
+        <input id="loan-days" name="days" type="number" required min="1" max="14" value="14">
+      </div>
+      <p id="member-summary" class="summary"></p>
+      <p id="loan-error" class="message" role="alert" hidden></p>
+      <button id="check-member" type="button">会員を確認</button>
+      <button id="loan-submit" type="submit">貸出する</button>
+      <button id="loan-save-draft" type="button">下書き保存</button>
+    </form>
+  </main>
+  <script type="module" src="../js/pages/loan.js"></script>
+</body>
+</html>

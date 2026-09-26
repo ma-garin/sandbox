@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>蔵書検索</title>
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>蔵書検索</h1>
+    <nav class="global-nav">
+      <a href="search.html" aria-current="page">検索</a>
+      <a href="loan.html" id="link-loan">貸出</a>
+      <a href="returns.html" id="link-returns">返却・延滞</a>
+      <a href="help.html">ヘルプ</a>
+      <a href="../index.html" id="link-logout">ログアウト</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h2>条件を指定して検索</h2>
+    <form id="search-form" action="search.html" method="get" novalidate>
+      <div class="field">
+        <label for="query">検索語</label>
+        <input id="query" name="q" type="search" required minlength="1" maxlength="50" placeholder="書名・著者名">
+      </div>
+      <div class="field">
+        <label for="category">分類</label>
+        <select id="category" name="category">
+          <option value="all" selected>すべて</option>
+          <option value="novel">小説</option>
+          <option value="science">自然科学</option>
+          <option value="history">歴史</option>
+          <option value="children">児童書</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="isbn-filter">ISBN（13 桁）</label>
+        <input id="isbn-filter" name="isbn" type="text" inputmode="numeric" pattern="\d{13}" minlength="13" maxlength="13">
+      </div>
+      <div class="field">
+        <label>
+          <input id="available-only" name="availableOnly" type="checkbox">
+          貸出可能な本だけ
+        </label>
+      </div>
+      <p id="search-error" class="message" role="alert" hidden></p>
+      <button id="search-submit" type="submit">検索</button>
+    </form>
+    <section class="recent">
+      <h3>最近の検索</h3>
+      <ul id="recent-list"></ul>
+      <button id="clear-recent" type="button">履歴を消す</button>
+    </section>
+    <section class="results">
+      <h3>検索結果 <span id="result-count">0</span> 件</h3>
+      <ul id="results" class="book-list"></ul>
+    </section>
+  </main>
+  <script type="module" src="../js/pages/search.js"></script>
+</body>
+</html>

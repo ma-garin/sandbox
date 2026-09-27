@@ -30,3 +30,8 @@ Spec2Doc/
 ## 現在のタスク
 
 → `CURRENT_STATE.md` を参照
+
+## 作業の注意（恒久）
+
+- Web サーバ（`npm run web`、127.0.0.1:8765）は画面（`src/web/index.html`）を起動時に読み込む。画面・サーバを変えたら `kill $(lsof -ti:8765)` で止めて起動し直してから確かめる
+- トレーサビリティ画面は `trace.json` がある実行なら表示のたびに今の版で描き直す（保存済みの `traceability.html` は trace.json が無い古い実行だけ）

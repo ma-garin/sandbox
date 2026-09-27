@@ -88,12 +88,29 @@ test('GET /trace/<runId> はトップレベルのページとして 200、API �
   const csp = res.headers.get('content-security-policy') ?? '';
   assert.doesNotMatch(csp, /sandbox/);
   assert.ok(csp.includes(sha(injected)), '差し込んだ script の hash');
-  assert.ok(csp.includes(sha(PAGE_SCRIPT)), '文書内の script の hash');
+  // trace.json がある実行は今の版で描き直すので、返した HTML の inline script すべての hash が CSP にあること
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1] ?? '');
+  assert.ok(scripts.length >= 2, '差し込みと画面本体の script がある');
+  for (const code of scripts) assert.ok(csp.includes(sha(code)), '文書内の script の hash');
+  assert.ok(html.includes('data-tab="matrix"') && html.includes('data-tab="compare"'), '今の版の画面（マトリクス・比較）で描かれる');
   for (const d of ["default-src 'none'", "style-src 'unsafe-inline'", 'img-src data:', "connect-src 'self'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'self'"]) {
     assert.ok(csp.includes(d), d);
   }
   assert.doesNotMatch(csp, /script-src[^;]*unsafe/);
   assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+});
+
+test('trace.json が無い古い実行は保存済みの traceability.html をそのまま返す', async () => {
+  // Given: trace.json が無く traceability.html だけがある実行
+  const oldId = RUN_ID.replace(/.$/, (c) => (c === 'a' ? 'b' : 'a'));
+  await mkdir(join(outDir, oldId));
+  await writeFile(join(outDir, oldId, 'traceability.html'), `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>t</title></head><body><script>${PAGE_SCRIPT}</script></body></html>`);
+  // When: 画面を開く
+  const res = await fetch(`${base}/trace/${oldId}`);
+  // Then: 保存済みの本文が返り、その script も CSP で許される
+  assert.equal(res.status, 200);
+  assert.ok((await res.text()).includes(PAGE_SCRIPT));
+  assert.ok((res.headers.get('content-security-policy') ?? '').includes(sha(PAGE_SCRIPT)));
 });
 
 test('traceCsp は src 付きの script を hash に数えず、head が無ければ先頭に差し込む', () => {

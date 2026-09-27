@@ -13,6 +13,7 @@ import { InputError, type IngestInput } from '../ingest/index.ts';
 import { DOC_TITLES } from '../doc/model.ts';
 import { isInputError, parseDocIds, parseFormats, resolveLlm } from '../cli.ts';
 import { validateReview } from '../trace/review.ts';
+import { renderTraceHtml } from '../render/trace-html.ts';
 import { AUDIT_FILE, appendAudit, diffReviewToAudit } from '../trace/audit.ts';
 import { compareTrace } from '../trace/compare.ts';
 import { toReqIF } from '../trace/export-reqif.ts';
@@ -564,12 +565,15 @@ export function createWebServer(opts: WebOptions = {}): Server {
     const runId = decodeRunId(rawRunId);
     const path = runId ? safeOutPath(outDir, runId, 'traceability.html') : undefined;
     if (!runId || !path) return badTrace(res);
-    const info = await stat(path).catch(() => undefined);
-    if (!info?.isFile()) {
+    // trace.json がある実行は今の版の画面で描き直す（過去の実行にも新しい機能を出す）。無い古い実行は保存済みの HTML を返す
+    const graph = await readGraph(outDir, runId);
+    const info = graph ? undefined : await stat(path).catch(() => undefined);
+    if (!graph && !info?.isFile()) {
       sendFailure(res, 404, { message: 'トレーサビリティの画面が見つかりません', hint: '出力形式に「HTML（トレーサビリティ）」を選んで、もう一度実行してください' });
       return;
     }
-    const html = injectTraceApi(await readFile(path, 'utf8'), runId, embed);
+    const page = graph ? renderTraceHtml(graph, undefined, { embed }) : await readFile(path, 'utf8');
+    const html = injectTraceApi(page, runId, embed);
     res.writeHead(200, {
       'content-type': 'text/html; charset=utf-8',
       'x-content-type-options': 'nosniff',

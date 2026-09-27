@@ -1,10 +1,11 @@
-// traceability.html の管理タブ（文書→節のグループ表・一括変更・右の詳細欄で状態とメモ）と抜けタブ。
+// traceability.html の管理タブ（文書→節のグループ表・一括変更・右の詳細欄で状態とメモ）と KPI。詳細欄のレビュー部品は detail.ts、抜けタブは gaps.ts。
 // app.ts の state・GRAPH・LABELS 等を使う（同じ IIFE の中。上から順に宣言だけを並べ、初期化は app.ts の末尾）。
 // 書き方の制約は lib.ts と同じ（String.raw の中。バッククォート・「$」+「{」・「</script」を書かない）。
 
 export const TRACE_MANAGE_JS = String.raw`
 var BULK_ORDER = ['ok', 'ng', 'na', 'unreviewed'];
 var ORIGIN_LABEL = { llm: 'LLM', analysis: '解析による対応付け' };
+var MANAGE_COLS = 7;
 var TOTALS = null;
 
 /** 文書・節ごとの全件（絞り込み前）。判定済みの割合の分母 */
@@ -20,44 +21,71 @@ function totals() {
   });
   return TOTALS;
 }
-function judgedText(links) {
-  var j = links.filter(function (l) { return statusOf(state.review, l.id) !== 'unreviewed'; }).length;
-  return '判定済み ' + pct(j, links.length);
+function judgedCount(links) { return links.filter(function (l) { return statusOf(state.review, l.id) !== 'unreviewed'; }).length; }
+function judgedText(links) { return '判定済み ' + pct(judgedCount(links), links.length); }
+/** グループ見出しの進み具合（判定済みの割合）の細いバー。読み上げは見出しの文字（判定済み n%）に任せる */
+function progressBar(links) {
+  var bar = el('span', 'grp-prog');
+  bar.setAttribute('aria-hidden', 'true');
+  var fill = el('span', 'grp-prog-fill');
+  fill.style.width = (links.length ? Math.round((judgedCount(links) / links.length) * 100) : 0) + '%';
+  bar.appendChild(fill);
+  return bar;
 }
 
 function renderKpi() {
   var c = statusCounts(GRAPH, state.review);
+  var sus = suspectCount(GRAPH, state.review);
   var row = $('m-kpi');
   row.textContent = '';
-  function kpi(label, value, sub) {
+  function kpi(label, value, sub, tone) {
     var card = el('div', 'card kpi');
     card.appendChild(el('span', 'kpi-label', label));
     card.appendChild(el('span', 'kpi-value', value));
-    if (sub) card.appendChild(el('span', 'kpi-delta', sub));
+    if (sub) card.appendChild(el('span', 'kpi-delta' + (tone ? ' ' + tone : ''), sub));
     row.appendChild(card);
   }
-  kpi('全件', c.total, '');
-  STATUS_KEYS.forEach(function (k) { kpi(LABELS.status[k], c[k], pct(c[k], c.total)); });
+  var gaps = GAPS.undocumented.length + GAPS.noSource.length;
+  kpi('対応（全件）', c.total, '文書の行と根拠の対応の数');
+  kpi(LABELS.status.unreviewed, c.unreviewed, '対応の ' + pct(c.unreviewed, c.total));
+  kpi('判定済みの割合', pct(c.total - c.unreviewed, c.total), LABELS.status.ok + ' ' + c.ok + '・' + LABELS.status.na + ' ' + c.na);
+  kpi(LABELS.status.ng, c.ng, c.ng ? '直す必要があります' : 'ありません', c.ng ? 'down' : '');
+  kpi('要確認', sus, sus ? '前回の実行から変わった対応' : 'ありません', sus ? 'warn' : '');
+  kpi('抜け（点・行）', gaps, '未記述 ' + GAPS.undocumented.length + ' 点・根拠なし ' + GAPS.noSource.length + ' 行', gaps ? 'warn' : '');
+  $('tab-manage-count').textContent = String(c.unreviewed);
+}
+function sectionLabel(id) {
+  var l = GRAPH.links.find(function (x) { return x.sectionNodeId === id; });
+  if (l) return l.section;
+  var n = NODE_BY_ID.get(id);
+  return n ? n.label : id;
+}
+function chipText(key, f) {
+  if (key === 'doc') return '文書: ' + docLabel(f.doc);
+  if (key === 'status') return '状態: ' + LABELS.status[f.status];
+  if (key === 'evidence') return '根拠: ' + LABELS.evidence[f.evidence];
+  if (key === 'text') return '語: ' + f.text;
+  if (key === 'node') return '点: ' + f.node.label;
+  if (key === 'section') return '節: ' + sectionLabel(f.section);
+  if (key === 'file') return 'ファイル: ' + f.file;
+  if (key === 'suspect') return '要確認のみ';
+  return '種類: ' + (LABELS.kind[f.kind] || f.kind);
 }
 function renderChips() {
   var row = $('m-chips');
   row.textContent = '';
   var f = state.filter;
-  var items = [
-    ['doc', '文書: ' + docLabel(f.doc), f.doc], ['status', '状態: ' + LABELS.status[f.status], f.status],
-    ['evidence', '根拠: ' + LABELS.evidence[f.evidence], f.evidence], ['text', '語: ' + f.text, f.text],
-    ['node', '点: ' + (f.node ? f.node.label : ''), f.node],
-  ];
-  items.forEach(function (it) {
-    if (!it[2]) return;
-    var chip = el('span', 'chip', it[1]);
+  ['doc', 'status', 'evidence', 'text', 'node', 'section', 'file', 'suspect', 'kind'].forEach(function (key) {
+    if (!f[key]) return;
+    var text = chipText(key, f);
+    var chip = el('span', 'chip', text);
     var x = el('button', 'x');
     x.type = 'button';
-    x.setAttribute('aria-label', it[1] + ' を外す');
+    x.setAttribute('aria-label', text + ' を外す');
     x.innerHTML = ICON.closeSmall;
     x.addEventListener('click', function () {
-      state.filter[it[0]] = it[0] === 'node' ? null : '';
-      var input = $('f-' + it[0]);
+      state.filter[key] = key === 'node' ? null : '';
+      var input = $('f-' + key);
       if (input) input.value = '';
       state.page = 0;
       renderManage();
@@ -102,10 +130,12 @@ function renderBulk() {
 }
 function applyBulk(status) {
   var ids = Array.from(state.checked);
-  state.review = setReviewMany(state.review, ids, status, nowIso());
+  var by = reviewerName();
+  state.review = setReviewMany(state.review, ids, status, nowIso(), by);
   state.checked.clear();
   scheduleSave();
-  toast('ok', ids.length + ' 件を「' + LABELS.status[status] + '」にしました');
+  toast('ok', ids.length + ' 件を「' + LABELS.status[status] + '」にしました', status !== 'unreviewed' && by ? '確認者「' + by + '」として記録しました' : '');
+  if (status !== 'unreviewed') noteNoReviewer();
   renderManage();
 }
 
@@ -113,7 +143,7 @@ function applyBulk(status) {
 function groupRow(key, level, title, shown, all) {
   var tr = el('tr', 'grp grp--' + level);
   var td = el('td');
-  td.colSpan = 5;
+  td.colSpan = MANAGE_COLS;
   var open = !state.collapsed.has(key);
   var b = el('button', 'grp-toggle');
   b.type = 'button';
@@ -122,6 +152,7 @@ function groupRow(key, level, title, shown, all) {
   var t = el('span', 'grp-title', title);
   t.title = title;
   b.appendChild(t);
+  b.appendChild(progressBar(all));
   b.appendChild(el('span', 'grp-meta', shown + ' 件' + (shown !== all.length ? '（全 ' + all.length + ' 件）' : '') + '・' + judgedText(all)));
   b.addEventListener('click', function () {
     if (open) state.collapsed.add(key); else state.collapsed.delete(key);
@@ -132,6 +163,7 @@ function groupRow(key, level, title, shown, all) {
   return tr;
 }
 function evidenceTag(ev) { return el('span', 'badge ev-tag ev-tag--' + ev, LABELS.evidence[ev] || ev); }
+function kindText(l) { return l.kind ? LABELS.kind[l.kind] || l.kind : ''; }
 function selectRow(id) {
   state.current = id;
   document.querySelectorAll('tr[data-link]').forEach(function (r) { r.classList.toggle('is-selected', r.getAttribute('data-link') === id); });
@@ -156,6 +188,8 @@ function linkRow(l) {
   var s = el('td', '', l.summary);
   s.title = l.summary;
   tr.appendChild(s);
+  var k = kindText(l);
+  tr.appendChild(el('td', k ? '' : 'muted', k || '—'));
   var ev = el('td');
   ev.appendChild(evidenceTag(l.evidence));
   tr.appendChild(ev);
@@ -163,6 +197,10 @@ function linkRow(l) {
   var src = el('td', all.length ? 'mono' : 'muted', all.length ? all[0] + (all.length > 1 ? ' ほか ' + (all.length - 1) : '') : 'なし');
   src.title = all.join('\n');
   tr.appendChild(src);
+  var open = isSuspectOpen(l, entryOf(state.review, l.id), GRAPH.generatedAt);
+  var sus = el('td', open ? 'sus-cell' : 'muted', open ? LABELS.suspect[l.suspect.reason] || l.suspect.reason : '—');
+  if (open) sus.title = sus.textContent;
+  tr.appendChild(sus);
   var st = statusOf(state.review, l.id);
   tr.appendChild(el('td', 'st st--' + st, LABELS.status[st]));
   tr.addEventListener('click', function () { selectRow(l.id); });
@@ -175,7 +213,7 @@ function emptyRow(tbody, cols, title, description) {
   td.colSpan = cols;
   var box = el('div', 'empty-state');
   box.appendChild(el('p', 'empty-state-title', title));
-  box.appendChild(el('p', 'empty-state-description', description));
+  if (description) box.appendChild(el('p', 'empty-state-description', description));
   td.appendChild(box);
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -232,7 +270,7 @@ function renderManage() {
     tbody.appendChild(linkRow(l));
   });
   if (!rows.length) {
-    emptyRow(tbody, 5, GRAPH.links.length ? '条件に合う行はありません' : '文書の行がありません',
+    emptyRow(tbody, MANAGE_COLS, GRAPH.links.length ? '条件に合う行はありません' : '文書の行がありません',
       GRAPH.links.length ? '上の絞り込みを × で外すと全件が出ます' : '文書を生成し直すと、根拠のある行がここに並びます');
   }
   renderBulk();
@@ -240,11 +278,12 @@ function renderManage() {
   renderLinkDetail();
 }
 
-/* ── 右の詳細欄（状態とメモの編集） ── */
+/* ── 右の詳細欄（状態・確認者・メモ・コメント・変更の履歴） ── */
 function changeStatus(id, status) {
   var idx = state.rows.findIndex(function (r) { return r.id === id; });
-  state.review = setReview(state.review, id, { status: status }, nowIso());
+  state.review = setReview(state.review, id, { status: status, reviewer: reviewerName() }, nowIso());
   scheduleSave();
+  if (status !== 'unreviewed') noteNoReviewer();
   var still = new Set(filterLinks(GRAPH, state.review, state.filter).map(function (r) { return r.id; }));
   if (idx >= 0 && !still.has(id)) {
     var rest = state.rows.filter(function (r) { return r.id === id || still.has(r.id); });
@@ -257,19 +296,23 @@ function renderLinkDetail() {
   var box = $('m-detail');
   box.textContent = '';
   var l = state.current ? LINK_BY_ID.get(state.current) : null;
-  if (!l) { box.appendChild(el('p', 'muted', '行を選ぶと、ここで状態とメモを付けられます')); return; }
+  if (!l) { box.appendChild(el('p', 'muted', '行を選ぶと、ここで状態・メモ・コメントを付けられます')); return; }
   var e = entryOf(state.review, l.id);
   box.appendChild(el('p', 'detail-kind', docLabel(l.docId)));
   box.appendChild(el('h2', 'detail-title', l.summary));
   var dl = el('dl', 'detail-meta');
   addMeta(dl, '節', l.section);
+  addMeta(dl, 'リンクの種類', kindText(l));
   addMeta(dl, '根拠', LABELS.evidence[l.evidence] || l.evidence);
   if (l.origin) addMeta(dl, '推測の出どころ', ORIGIN_LABEL[l.origin] || l.origin);
   addMeta(dl, 'D09 参照', l.d09Ref);
   addMeta(dl, 'ソース位置', l.sources.length ? l.sources.map(formatSource).join('\n') : 'なし', 'mono pre');
   if (e) addMeta(dl, '更新', formatJst(e.updatedAt));
+  if (e && e.reviewedAt) addMeta(dl, '確認者', (e.reviewer || '名前なし') + '（' + formatJst(e.reviewedAt) + '）');
   if (e && e.carriedFrom) addMeta(dl, '引き継ぎ元', e.carriedFrom);
   box.appendChild(dl);
+  detailSuspect(box, l, e);
+  detailReviewer(box);
   var cur = statusOf(state.review, l.id);
   var seg = el('div', 'seg detail-status');
   seg.setAttribute('role', 'group');
@@ -299,6 +342,7 @@ function renderLinkDetail() {
   field.appendChild(ta);
   field.appendChild(count);
   box.appendChild(field);
+  detailComments(box, l, e);
   var nav = el('div', 'detail-nav');
   var i = state.rows.findIndex(function (r) { return r.id === l.id; });
   [['前の行', i - 1], ['次の行', i + 1]].forEach(function (x) {
@@ -317,46 +361,7 @@ function renderLinkDetail() {
     nav.appendChild(g);
   }
   box.appendChild(nav);
-}
-
-/* ── 抜け ── */
-function undocRow(n) {
-  var tr = el('tr');
-  tr.appendChild(el('td', '', KIND_LABEL[n.kind]));
-  var name = el('td', 'cell-wrap');
-  var b = el('button', 'nb-btn', n.label);
-  b.type = 'button';
-  b.addEventListener('click', function () { revealNode(n); });
-  name.appendChild(b);
-  tr.appendChild(name);
-  var parent = n.parent ? NODE_BY_ID.get(n.parent) : null;
-  var where = n.path || (parent && parent.path ? parent.path + (n.line ? ':' + n.line : '') : '');
-  tr.appendChild(el('td', 'mono cell-wrap', where));
-  tr.appendChild(el('td', '', n.codeKind || (n.fileStatus ? FILE_STATUS_LABEL[n.fileStatus] : '')));
-  return tr;
-}
-function noSourceRow(l) {
-  var tr = el('tr');
-  tr.appendChild(el('td', '', l.docId));
-  tr.appendChild(el('td', 'cell-wrap', l.section));
-  tr.appendChild(el('td', 'cell-wrap', l.summary));
-  var ev = el('td');
-  ev.appendChild(evidenceTag(l.evidence));
-  tr.appendChild(ev);
-  tr.appendChild(el('td', '', LABELS.status[statusOf(state.review, l.id)]));
-  return tr;
-}
-function renderGapTable(key, rows, rowFn, cols, emptyTitle, emptyDesc) {
-  var body = $('gap-' + key + '-body');
-  body.textContent = '';
-  var page = state.gapPage[key];
-  rows.slice(page * PAGE, (page + 1) * PAGE).forEach(function (r) { body.appendChild(rowFn(r)); });
-  if (!rows.length) emptyRow(body, cols, emptyTitle, emptyDesc);
-  renderPager($('gap-' + key + '-pagebar'), rows.length, page, function (p) { state.gapPage[key] = p; renderGaps(); });
-}
-function renderGaps() {
-  renderGapTable('u', GAPS.undocumented, undocRow, 4, '未記述の要素はありません', 'すべてのファイルとコード要素がどこかの節から参照されています');
-  renderGapTable('s', GAPS.noSource, noSourceRow, 5, '根拠の無い行はありません', 'すべての行にソース位置があります');
+  detailAudit(box, l);
 }
 
 /* ── 絞り込み（既定は状態=未確認） ── */
@@ -367,11 +372,14 @@ function fillSelect(id, entries) {
 }
 function initFilters() {
   var docs = Array.from(new Set(GRAPH.links.map(function (l) { return l.docId; }))).sort();
+  var kinds = Array.from(new Set(GRAPH.links.map(function (l) { return l.kind; }).filter(Boolean))).sort();
   fillSelect('f-doc', docs.map(function (d) { return [d, docLabel(d)]; }));
   fillSelect('f-status', STATUS_KEYS.map(function (k) { return [k, LABELS.status[k]]; }));
   fillSelect('f-evidence', Object.keys(LABELS.evidence).map(function (k) { return [k, LABELS.evidence[k]]; }));
+  fillSelect('f-suspect', [['open', '要確認のみ']]);
+  fillSelect('f-kind', kinds.map(function (k) { return [k, LABELS.kind[k] || k]; }));
   $('f-status').value = state.filter.status;
-  ['doc', 'status', 'evidence'].forEach(function (k) {
+  ['doc', 'status', 'evidence', 'suspect', 'kind'].forEach(function (k) {
     $('f-' + k).addEventListener('change', function () { state.filter[k] = $('f-' + k).value; state.page = 0; renderManage(); });
   });
   var timer = 0;

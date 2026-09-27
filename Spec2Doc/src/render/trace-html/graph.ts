@@ -7,6 +7,7 @@ var ALPHA_MIN = 0.004;
 var ALPHA_DECAY = 0.03;
 var FRAME_MS = 33;
 var ALWAYS_LABEL = { folder: true, file: true, doc: true };
+var LABEL_RANK = { doc: 0, folder: 1, file: 2, code: 3, section: 4 };
 // 状態色（low/medium 等）は深刻度専用なので使わない。primary と中立色の濃淡で塗り、形でも区別する
 var KIND_COLOR_VAR = { folder: '--color-text-secondary', file: '--color-border-strong', code: '--color-primary', doc: '--color-primary-dark', section: '--color-primary-light' };
 
@@ -81,7 +82,7 @@ function createGraphView(canvas, onSelect) {
     var cs = getComputedStyle(document.documentElement);
     function v(name) { return cs.getPropertyValue(name).trim() || 'gray'; }
     Object.keys(KIND_COLOR_VAR).forEach(function (k) { colors[k] = v(KIND_COLOR_VAR[k]); });
-    colors.edge = v('--color-border-strong'); colors.text = v('--color-text');
+    colors.edge = v('--color-text-disabled'); colors.text = v('--color-text');
     colors.halo = v('--color-surface'); colors.sel = v('--color-primary');
   }
 
@@ -230,14 +231,46 @@ function createGraphView(canvas, onSelect) {
     else ctx.arc(n.x, n.y, k === 'section' ? r * 0.7 : r, 0, Math.PI * 2);
   }
 
-  function drawLabel(n) {
-    var fs = 12 / cam.k;
+  /** 名前の優先順位: 選択・ホバー > 検索一致 > 選択の隣 > 文書 > フォルダ > ファイル > コード要素 > 節 */
+  function labelRank(n, focus) {
+    if (n === selected || n === hover) return 0;
+    if (matches.has(n.id)) return 1;
+    if (focus && focus.has(n.id)) return 2;
+    return 3 + (LABEL_RANK[n.g.kind] || 0);
+  }
+
+  /** 名前は優先順に置き、先に置いた名前と重なるものは省く（選択・ホバー・検索一致は常に出す）。画面外の点は数えない */
+  function drawLabels(focus) {
+    var zoomed = cam.k >= 1.5, m = 160 / cam.k, fs = 12 / cam.k, pad = 3 / cam.k, cell = 100 / cam.k, grid = new Map();
+    var a = toWorld({ x: 0, y: 0 }), z = toWorld({ x: W, y: H });
+    var cand = nodes.filter(function (n) {
+      if (n.x < a.x - m || n.x > z.x + m || n.y < a.y - m || n.y > z.y + m) return false;
+      return ALWAYS_LABEL[n.g.kind] || zoomed || n === hover || n === selected || matches.has(n.id) || (focus && focus.has(n.id));
+    }).map(function (n) { return { n: n, rank: labelRank(n, focus) }; });
+    cand.sort(function (p, q) { return p.rank - q.rank || q.n.deg - p.n.deg; });
+    function cells(b, fn) {
+      for (var cx = Math.floor(b.x0 / cell); cx <= Math.floor(b.x1 / cell); cx++) {
+        for (var cy = Math.floor(b.y0 / cell); cy <= Math.floor(b.y1 / cell); cy++) if (fn(cx + ',' + cy)) return true;
+      }
+      return false;
+    }
+    function overlaps(b) {
+      return cells(b, function (k) {
+        return (grid.get(k) || []).some(function (o) { return o.x0 < b.x1 && b.x0 < o.x1 && o.y0 < b.y1 && b.y0 < o.y1; });
+      });
+    }
     ctx.globalAlpha = 1;
-    ctx.font = (n === hover || n === selected ? '600 ' : '') + fs + 'px system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    var label = n.g.label.length > 60 ? n.g.label.slice(0, 59) + '…' : n.g.label;
-    ctx.lineWidth = 3 / cam.k; ctx.strokeStyle = colors.halo; ctx.strokeText(label, n.x, n.y + n.r + 2 / cam.k);
-    ctx.fillStyle = colors.text; ctx.fillText(label, n.x, n.y + n.r + 2 / cam.k);
+    cand.forEach(function (c) {
+      var n = c.n, text = n.g.label.length > 60 ? n.g.label.slice(0, 59) + '…' : n.g.label;
+      ctx.font = (n === hover || n === selected ? '600 ' : '') + fs + 'px system-ui, sans-serif';
+      var w = ctx.measureText(text).width, top = n.y + n.r + 2 / cam.k;
+      var b = { x0: n.x - w / 2 - pad, x1: n.x + w / 2 + pad, y0: top - pad, y1: top + fs * 1.2 + pad };
+      if (c.rank > 1 && overlaps(b)) return;
+      cells(b, function (k) { var l = grid.get(k); if (l) l.push(b); else grid.set(k, [b]); return false; });
+      ctx.lineWidth = 3 / cam.k; ctx.strokeStyle = colors.halo; ctx.strokeText(text, n.x, top);
+      ctx.fillStyle = colors.text; ctx.fillText(text, n.x, top);
+    });
   }
 
   function draw() {
@@ -257,10 +290,7 @@ function createGraphView(canvas, onSelect) {
     links.forEach(function (l) {
       if (l.label && (l === hoverLink || (selected && (l.s === selected || l.t === selected)))) drawEdgeLabel(l);
     });
-    var zoomed = cam.k >= 1.5;
-    nodes.forEach(function (n) {
-      if (ALWAYS_LABEL[n.g.kind] || zoomed || n === hover || matches.has(n.id) || (focus && focus.has(n.id))) drawLabel(n);
-    });
+    drawLabels(focus);
     ctx.globalAlpha = 1;
   }
 

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import type { Block, DocId, Document, ListItem, Provenance, TableBlock } from '../doc/model.ts';
 import type { FileStatus, IR, IrNode } from '../ir/schema.ts';
 import { maskLineCounts, stripPositions } from '../generate/index.ts';
+import { displayName } from '../generate/common.ts';
 import { TRACE_VERSION, type TraceEdge, type TraceEdgeKind, type TraceGraph, type TraceLink, type TraceNode } from './schema.ts';
 
 export interface TraceMeta {
@@ -84,7 +85,7 @@ function labelOf(n: IrNode): string {
   const rec = n as unknown as Record<string, unknown>;
   for (const k of LABEL_KEYS) {
     const v = rec[k];
-    if (typeof v === 'string' && v.trim() !== '') return v;
+    if (typeof v === 'string' && v.trim() !== '') return displayName(v);
   }
   return n.id;
 }

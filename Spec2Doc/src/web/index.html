@@ -67,6 +67,12 @@
     .log { grid-template-columns: 1fr; gap: var(--space-1); }
     .log dd { margin-bottom: var(--space-2); }
   }
+  /* 失敗トースト（消えない）は、作成画面では画面の下端に出す。実行ボタンの真下だと入力カードの右端（デモのボタン等）を覆い、
+     閉じるまで押せない。feedback.js が位置を style 属性で書くため、ここだけ !important で上書きする */
+  /* 作成画面の失敗トーストは topbar の空いた中央に出す（入力カード・設定カードの操作部品を塞がない） */
+  @media (min-width: 769px) {
+    body:has(#view-make:not([hidden])) .toast-host:has(> .toast-error) { top: var(--space-2) !important; bottom: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+  }
 </style>
 </head>
 <body>
@@ -357,6 +363,9 @@
     if (closeLastError) { closeLastError(); closeLastError = null; }
     $('progress-box').hidden = true; $('bar').value = 0; $('status').textContent = '';
   };
+  // 利用者が次の操作を始めたら前の失敗を閉じる（消えないトーストが残ると下の部品を覆い続ける）
+  const dismissError = () => { if (closeLastError) { closeLastError(); closeLastError = null; } };
+  $('run-form').addEventListener('input', dismissError);
   const tabs = [...document.querySelectorAll('[role=tab]')];
   const select = (tab, focus) => {
     for (const t of tabs) {
@@ -525,6 +534,7 @@
     const b = $('demo');
     b.hidden = false;
     b.addEventListener('click', () => {
+      dismissError();
       select($('tab-folder'), false);
       $('folder').value = c.demoPath;
       setAllDocs(true);

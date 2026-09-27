@@ -308,6 +308,26 @@ test('トーストは基準の要素の近くに出し、狭い幅では折り�
   assert.match(html, /narrow\.addEventListener\('change', applyLayout\)/);
 });
 
+test('次の操作（入力変更・タブ切替・デモ・実行）で前の失敗トーストを閉じ、作成画面の失敗は入力カードを覆わない位置に出す', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /const dismissError = \(\) => \{ if \(closeLastError\) \{ closeLastError\(\); closeLastError = null; \} \};/);
+  // 入力変更: フォーム内の入力（文字・チェック・ファイル）すべて
+  assert.match(html, /\$\('run-form'\)\.addEventListener\('input', dismissError\);/);
+  // タブ切替: select → resetFeedback → closeLastError
+  const selectBlock = html.slice(html.indexOf('const select = (tab, focus) => {'), html.indexOf('tabs.forEach('));
+  assert.match(selectBlock, /if \(!running\) resetFeedback\(\);/);
+  assert.match(html, /t\.addEventListener\('click', \(\) => select\(t, false\)\);/);
+  // デモのボタン
+  assert.match(html, /b\.addEventListener\('click', \(\) => \{\s*dismissError\(\);/);
+  // 実行: submit の先頭で resetFeedback
+  assert.match(html, /if \(running\) return;\s*resetFeedback\(\);/);
+  // 失敗の基準は実行ボタン、作成画面では下端に出して入力カードの操作部品に重ねない
+  assert.match(html, /anchorAt\(\$\('view-make'\)\.hidden \? resultAnchor\(\) : \$\('run'\)\);\s*closeLastError = Feedback\.error\(/);
+  // 作成画面の失敗は topbar の空いた中央に出す（下端だと設定カードの LLM スイッチを塞いだ。docs/verify/p4-browser-scenarios.md B-2）
+  assert.match(html, /body:has\(#view-make:not\(\[hidden\]\)\) \.toast-host:has\(> \.toast-error\) \{ top: var\(--space-2\) !important; bottom: auto !important; left: 50% !important;/);
+  assert.doesNotMatch(html, /\.toast-host:has\(> \.toast-error\) \{ top: auto !important; bottom:/);
+});
+
 test('ライト既定・kit の骨格どおりの見出しとカードで組む', async () => {
   const html = await (await fetch(`${base}/`)).text();
   // ライト既定（OS がダークでも）。保存したテーマがあればそれを使う

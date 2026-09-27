@@ -97,6 +97,11 @@ function scheduleSave() {
 function save(keepalive) {
   clearTimeout(state.saveTimer);
   state.saveTimer = 0;
+  // サーバの確認状態を読み込む前に保存すると、画面の古い状態でサーバを上書きして消してしまう
+  if (API && !state.remoteReady) {
+    if (!state.remoteFailed) { setSaveStatus('保存済みの確認状態を読み込むまで保存を待っています'); state.saveTimer = setTimeout(save, 1000); }
+    return;
+  }
   var body = JSON.stringify(state.review);
   if (!API) {
     try {
@@ -116,6 +121,27 @@ function save(keepalive) {
     })
     .catch(function (e) {
       saveFailed('確認状態をサーバに保存できませんでした', ((e && e.message) || '通信に失敗しました。') + ' サーバが動いているか確かめてから保存し直してください', { label: 'もう一度保存する', run: save });
+    });
+}
+/* サーバから開いたときは、保存済みの確認状態を読み込んでから保存を許す（サーバの状態を優先して重ねる） */
+function loadRemote() {
+  if (!API) { state.remoteReady = true; return; }
+  state.remoteReady = false;
+  setSaveStatus('保存済みの確認状態を読み込んでいます…');
+  fetch(API, { headers: { Accept: 'application/json' } })
+    .then(function (res) {
+      if (!res.ok) throw new Error('サーバの応答が ' + res.status + ' でした。');
+      return res.json();
+    })
+    .then(function (json) {
+      state.review = mergeReviews(state.review, normalizeReview(json, GRAPH, nowIso()).review);
+      state.remoteReady = true;
+      setSaveStatus('変更はサーバに保存します');
+      renderCurrent();
+    })
+    .catch(function (e) {
+      state.remoteFailed = true;
+      saveFailed('保存済みの確認状態を読み込めませんでした', ((e && e.message) || '通信に失敗しました。') + ' 上書きを防ぐため保存を止めています。サーバが動いているか確かめてから読み込み直してください', { label: '読み込み直す', run: function () { location.reload(); } });
     });
 }
 function loadLocal() {
@@ -384,4 +410,5 @@ initFilters();
 refreshGraph();
 showDetail(null);
 showTab('graph');
+loadRemote();
 `;

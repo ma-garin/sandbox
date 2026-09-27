@@ -36,7 +36,7 @@ Spec2Doc
 
 ## 未解決の判断待ち事項
 
-- yuki-aidd-kit の `02_共通/rules/speed-harness.md` に 2026-09-27 の規則（委譲は 1 本 10 分以内・担当に npm install をさせない・撮影前にブラウザの表示設定を戻す等）を追記済みだが kit のリポジトリで未コミット。`~/.claude/AGENTS.md` への追記（kit 踏襲＝骨格まで）は kit 側の元ファイルが見つからず、配置し直しで消える可能性
+- yuki-aidd-kit の `02_共通/rules/speed-harness.md` に 2026-09-27 の規則（委譲は 1 本 10 分以内・担当に npm install をさせない・撮影前にブラウザの表示設定を戻す等）を追記し、kit の docs/speed-harness-records ブランチにコミット・push 済み（337211f。main への PR は未作成）。`~/.claude/AGENTS.md` への追記（kit 踏襲＝骨格まで）は kit 側の元ファイルが見つからず、配置し直しで消える可能性
 - 工程承認（phase-0〜9）は保守者指示（2026-09-25）で省略中
 
 ## 既知の問題・技術的負債

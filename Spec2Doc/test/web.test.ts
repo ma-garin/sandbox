@@ -392,6 +392,51 @@ test('出力形式にトレーサビリティ（既定オン）、結果にト�
   assert.match(html, /<button type="button" class="btn" id="demo" hidden>デモのサンプルで試す<\/button>/);
 });
 
+test('実行記録は GET /api/runs の一覧を kit の表で出し、行ごとに結果を開く・詳細・トレーサビリティを持つ', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /fetch\('\/api\/runs\?limit=50'/);
+  assert.match(html, /<div class="table-wrap" id="run-table">\s*<table class="table">/);
+  for (const h of ['日時', '入力元', '文書数', '解析 / 失敗', '所要時間', '前回からの変更', '操作']) {
+    assert.ok(html.includes(`<th scope="col">${h}</th>`), h);
+  }
+  // 結果を開く: GET /api/runs/<id> → 既存の showResult → 結果画面
+  assert.match(html, /fetch\('\/api\/runs\/' \+ encodeURIComponent\(runId\)\)/);
+  assert.match(html, /showResult\(r\); showLog\(r\.runId\); go\('result'\);/);
+  assert.match(html, /button\('結果を開く', 'btn btn-sm'/);
+  assert.match(html, /button\('詳細', 'btn btn--ghost btn-sm'/);
+  assert.match(html, /tr\.addEventListener\('click', \(\) => showRunDetail\(run\.runId\)\)/);
+  // 変更は中立バッジ。トレーサビリティは hasTrace のときだけ新しいタブ
+  assert.match(html, /className: 'badge badge-neutral', textContent: n > 0 \? '変更 ' \+ n \+ ' 文書' : '変更なし'/);
+  assert.match(html, /if \(run\.hasTrace && run\.traceUrl\) \{\s*const a = Object\.assign\(document\.createElement\('a'\), \{ href: run\.traceUrl, className: 'btn btn--ghost btn-sm', target: '_blank', rel: 'noopener' \}\);/);
+  // 結果画面の上部に実行記録への導線
+  const result = html.slice(html.indexOf('id="view-result"'), html.indexOf('id="result-empty"'));
+  assert.match(result, /<a class="btn btn--ghost btn-sm" id="to-log" href="#log">[\s\S]*実行記録へ<\/a>/);
+});
+
+test('実行記録は 0 件なら空状態、取得失敗は Feedback.error、開いたとき・完了時・切替で取り直す', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /if \(runs\.length === 0\) \{ \$\('log-box'\)\.hidden = true; emptyLog\(\); \}/);
+  assert.match(html, /title: 'まだ実行記録がありません'/);
+  assert.match(html, /closeLastError = Feedback\.error\(cause, \{ detail: '次の行動: ' \+ next/);
+  assert.match(html, /logFail\('実行の履歴を読み込めませんでした', 'サーバが起動しているか確かめてから、もう一度読み込んでください', loadRuns\)/);
+  assert.match(html, /logFail\('この実行の結果を読み込めませんでした'/);
+  // 取り直す契機: 画面の切替・実行完了・ページを開いたとき
+  assert.match(html, /if \(view === 'log'\) loadRuns\(\);/);
+  assert.match(html, /await showLog\(r\.runId\);\s*loadRuns\(\);[^\n]*\n\s*go\('result'\);/);
+  assert.match(html, /show\(location\.hash\.slice\(1\), false\);\s*if \(\$\('view-log'\)\.hidden\) loadRuns\(\);/);
+  // 古い応答で新しい一覧を上書きしない
+  assert.match(html, /if \(seq === runsSeq\) renderRuns\(runs\);/);
+});
+
+test('実行記録の日時は日本時間の YYYY-MM-DD HH:mm で出す', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  const src = ['pad2', 'jstTime'].map((n) => new RegExp(`const ${n} = .*;$`, 'm').exec(html)?.[0] ?? '').join('\n');
+  const jstTime = new Function(`${src}\nreturn jstTime;`)() as (iso: string) => string;
+  assert.equal(jstTime('2026-09-26T15:30:00.000Z'), '2026-09-27 00:30');
+  assert.equal(jstTime('2026-01-01T00:05:00+09:00'), '2026-01-01 00:05');
+  assert.equal(jstTime('bad'), '—');
+});
+
 test('GET /api/config はデモのフォルダがあれば絶対パス、無ければ null を返す', async () => {
   const demo = await mkdtemp(join(tmpdir(), 'spec2doc-demo-'));
   const cases: [string, string | null][] = [[demo, demo], [join(demo, 'no-such'), null]];

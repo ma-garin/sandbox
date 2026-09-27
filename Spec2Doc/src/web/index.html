@@ -44,7 +44,7 @@
   .btn-sm { min-height: var(--space-8); padding: 0 var(--space-3); font-size: var(--text-sm); }
   .btn-icon { width: var(--space-8); padding: 0; }
   .cell-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
-  .table tbody th { background: transparent; font-weight: 600; border-bottom: 1px solid var(--color-divider); vertical-align: middle; }
+  #run-rows tr { cursor: pointer; } #run-rows tr[aria-current="true"] > * { font-weight: 600; } .table tbody th { background: transparent; font-weight: 600; border-bottom: 1px solid var(--color-divider); vertical-align: middle; }
   .table tbody td { vertical-align: middle; }
   .topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
   .dl-label { font-size: var(--text-sm); color: var(--color-text-secondary); }
@@ -193,6 +193,7 @@
         </section>
 
         <section class="view" id="view-result" aria-labelledby="page-title" hidden>
+          <div class="cell-actions" id="result-nav"><a class="btn btn--ghost btn-sm" id="to-log" href="#log"><span data-icon="history" data-icon-size="16" aria-hidden="true"></span>実行記録へ</a></div>
           <div id="result-empty"></div>
           <div id="result" class="stack" hidden>
             <div class="kpi-row" id="kpis"></div>
@@ -223,7 +224,17 @@
 
         <section class="view" id="view-log" aria-labelledby="page-title" hidden>
           <div id="log-empty"></div>
-          <div id="log-box" class="card" hidden>
+          <div class="card stack" id="runs-card" hidden>
+            <h2 id="h-runs">これまでの実行</h2>
+            <div class="table-wrap" id="run-table">
+              <table class="table">
+                <thead><tr><th scope="col">日時</th><th scope="col">入力元</th><th scope="col">文書数</th><th scope="col">解析 / 失敗</th><th scope="col">所要時間</th><th scope="col">前回からの変更</th><th scope="col">操作</th></tr></thead>
+                <tbody id="run-rows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="log-box" class="card stack" hidden>
+            <h2 id="h-log-detail">実行の詳細</h2>
             <dl class="log" id="log"></dl>
             <p class="files" id="log-download"></p>
           </div>
@@ -352,6 +363,7 @@
     document.title = title + ' — Spec2Doc';
     sidebar.classList.remove('open'); $('menu').setAttribute('aria-expanded', 'false');
     if (focus) $('page-title').focus();
+    if (view === 'log') loadRuns();   // 画面を切り替えるたびに一覧を取り直す
   };
   window.addEventListener('hashchange', () => show(location.hash.slice(1), true));
   const go = (name) => { if (location.hash === '#' + name) show(name, true); else location.hash = name; };
@@ -568,8 +580,13 @@
       ]));
       $('log-download').replaceChildren(link(fileUrl('files', runId, 'run-log.json'), 'run-log.json をダウンロード', 'download', true));
       $('log-empty').replaceChildren(); $('log-box').hidden = false;
+      shownLogId = runId; markSelected();
     } catch {
       $('log-box').hidden = true;
+      if (!$('runs-card').hidden) {   // 一覧があるときは一覧を残し、失敗だけ知らせる
+        logFail('この実行の詳細を読み込めませんでした', '出力フォルダが移動・削除されていないか確かめてから、もう一度開いてください', () => showLog(runId));
+        return;
+      }
       $('log-empty').replaceChildren(Feedback.emptyState({
         icon: 'history', title: '実行記録を読み込めませんでした', description: '出力フォルダが移動・削除された可能性があります。もう一度文書を作ると新しい記録が残ります。',
         action: { label: '文書を作る', onClick: () => go('make') },
@@ -625,6 +642,7 @@
       const r = JSON.parse(ev.data);
       showResult(r);
       await showLog(r.runId);
+      loadRuns();   // 作った実行を一覧の先頭に出す
       go('result');
       // 成功は押した実行ボタンの近くに出す（feedback.js の既定。押した場所と結果を結び付ける）
       if (r.hasFailures) Feedback.info('文書を作りました。一部のファイルは解析できませんでした', { detail: '結果の D08 と D09 で対象のファイルを確かめてください。' });
@@ -642,8 +660,105 @@
     };
   });
 
+  // ── 実行の履歴: GET /api/runs を表に。ページを開いたとき・実行完了時・「実行記録」へ切り替えたときに取り直す ──
+  let shownLogId = null;   // 詳細を出している実行
+  let runsSeq = 0;         // 古い応答で新しい一覧を上書きしない
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const jstTime = (iso) => { const t = Date.parse(iso); if (Number.isNaN(t)) return '—'; const d = new Date(t + 9 * 3600 * 1000); return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()) + ' ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()); };
+  const markSelected = () => {
+    for (const tr of $('run-rows').children) {
+      if (tr.dataset.runId === shownLogId) tr.setAttribute('aria-current', 'true'); else tr.removeAttribute('aria-current');
+    }
+  };
+  const logFail = (cause, next, retry) => {
+    if (closeLastError) closeLastError();
+    closeLastError = Feedback.error(cause, { detail: '次の行動: ' + next, action: { label: 'もう一度読み込む', onClick: retry } });
+  };
+  const openRun = async (runId) => {
+    let r;
+    try {
+      const res = await fetch('/api/runs/' + encodeURIComponent(runId));
+      if (!res.ok) throw new Error(String(res.status));
+      r = await res.json();
+    } catch {
+      logFail('この実行の結果を読み込めませんでした', '出力フォルダが移動・削除されていないか確かめてから、もう一度開いてください', () => openRun(runId));
+      return;
+    }
+    showResult(r); showLog(r.runId); go('result');
+  };
+  const showRunDetail = async (runId) => {
+    await showLog(runId);
+    if (!$('log-box').hidden) $('log-box').scrollIntoView({ block: 'nearest' });
+  };
+  const runRow = (run) => {
+    const when = jstTime(run.startedAt);
+    const tr = document.createElement('tr');
+    tr.dataset.runId = run.runId;
+    tr.addEventListener('click', () => showRunDetail(run.runId));
+    const td = (text) => Object.assign(document.createElement('td'), { textContent: text });
+    const th = Object.assign(document.createElement('th'), { scope: 'row', textContent: when });
+    const n = Number(run.changedDocs) || 0;
+    const badge = Object.assign(document.createElement('span'), { className: 'badge badge-neutral', textContent: n > 0 ? '変更 ' + n + ' 文書' : '変更なし' });
+    badge.title = '前回の実行と比べて内容が変わった文書の数';
+    const changed = document.createElement('td'); changed.append(badge);
+    const button = (text, cls, label, onClick) => {
+      const b = Object.assign(document.createElement('button'), { type: 'button', className: cls, textContent: text });
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+      return b;
+    };
+    const group = Object.assign(document.createElement('div'), { className: 'cell-actions' });
+    group.setAttribute('role', 'group'); group.setAttribute('aria-label', when + ' の実行の操作');
+    group.append(
+      button('結果を開く', 'btn btn-sm', when + ' の実行の結果を開く', () => openRun(run.runId)),
+      button('詳細', 'btn btn--ghost btn-sm', when + ' の実行の詳細を見る', () => showRunDetail(run.runId)),
+    );
+    if (run.hasTrace && run.traceUrl) {
+      const a = Object.assign(document.createElement('a'), { href: run.traceUrl, className: 'btn btn--ghost btn-sm', target: '_blank', rel: 'noopener' });
+      a.setAttribute('aria-label', when + ' の実行のトレーサビリティを新しいタブで開く');
+      a.addEventListener('click', (e) => e.stopPropagation());
+      a.append(icon('open-in-new', 16), document.createTextNode('トレーサビリティ'));
+      group.append(a);
+    }
+    const actions = document.createElement('td'); actions.append(group);
+    const docs = Array.isArray(run.docs) ? run.docs.length : 0;
+    const secs = typeof run.durationMs === 'number' ? (run.durationMs / 1000).toFixed(1) + ' 秒' : '—';
+    tr.append(th, td(String(run.source ?? '')), td(String(docs)), td(run.analyzed + ' / ' + run.failed), td(secs), changed, actions);
+    return tr;
+  };
+  const renderRuns = (runs) => {
+    $('run-rows').replaceChildren(...runs.map(runRow));
+    markSelected();
+    $('runs-card').hidden = runs.length === 0;
+    if (runs.length === 0) { $('log-box').hidden = true; emptyLog(); } else $('log-empty').replaceChildren();
+  };
+  const loadRuns = async () => {
+    const seq = ++runsSeq;
+    let runs;
+    try {
+      const res = await fetch('/api/runs?limit=50', { cache: 'no-store' });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = await res.json();
+      if (!Array.isArray(body?.runs)) throw new Error('runs が無い');
+      runs = body.runs;
+    } catch {
+      if (seq !== runsSeq) return;
+      if ($('runs-card').hidden) {
+        $('log-empty').replaceChildren(Feedback.emptyState({
+          icon: 'history', title: '実行の履歴を読み込めませんでした', description: 'サーバが起動しているか確かめてから、もう一度読み込んでください。',
+          action: { label: 'もう一度読み込む', onClick: loadRuns },
+        }));
+      }
+      // 別の画面を見ているときはトーストを出さない（「実行記録」を開いたときに取り直す）
+      if (!$('view-log').hidden) logFail('実行の履歴を読み込めませんでした', 'サーバが起動しているか確かめてから、もう一度読み込んでください', loadRuns);
+      return;
+    }
+    if (seq === runsSeq) renderRuns(runs);
+  };
+
   emptyResult(); emptyLog();
   show(location.hash.slice(1), false);
+  if ($('view-log').hidden) loadRuns();   // ページを開いたとき（「実行記録」で開いたときは show が取る）
 })();
 </script>
 </body>

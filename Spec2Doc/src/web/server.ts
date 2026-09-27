@@ -2,13 +2,13 @@
 // 起動: `node src/web/server.ts`（ポートは環境変数 PORT、既定 8765）
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { mkdtemp, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
-import { run, type Progress, type RunOptions, type RunResult } from '../core.ts';
+import { run, type Progress, type RunLog, type RunOptions, type RunResult } from '../core.ts';
 import { InputError, type IngestInput } from '../ingest/index.ts';
 import { DOC_TITLES } from '../doc/model.ts';
 import { isInputError, parseDocIds, parseFormats, resolveLlm } from '../cli.ts';
@@ -200,7 +200,8 @@ export function parseExclude(text: string): string[] {
   return text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== '');
 }
 
-async function summarize(result: RunResult, outDir: string): Promise<unknown> {
+/** 実行完了の結果（SSE の result）。実行直後と履歴の 1 件取得（GET /api/runs/<runId>）の両方がこれを使う */
+async function summarize(result: Pick<RunResult, 'runId' | 'hasFailures' | 'log'>, outDir: string): Promise<unknown> {
   const { settings, outputs, fileCounts, durationMs } = result.log;
   const trace = await traceSummary(outDir, result.runId);
   return {
@@ -221,6 +222,124 @@ async function summarize(result: RunResult, outDir: string): Promise<unknown> {
     extras: outputs.filter((n) => n === 'ir.json' || n === 'run-log.json'),
     ...(trace ? { trace: { ...trace, url: `/trace/${result.runId}` } } : {}),
   };
+}
+
+/** 実行の履歴の一覧の 1 件（GET /api/runs） */
+export interface RunSummary {
+  runId: string;
+  startedAt: string;
+  /** 表示用の入力元（run-log の sourceKey。絶対パスは含めない） */
+  source: string;
+  fileCount: number;
+  analyzed: number;
+  failed: number;
+  excluded: number;
+  docs: string[];
+  formats: string[];
+  durationMs: number;
+  hasTrace: boolean;
+  /** 前回から内容の変更があった文書の数（位置のみ変更は数えない）。差分情報が無ければ 0 */
+  changedDocs: number;
+  traceUrl?: string;
+}
+
+export const RUNS_LIMIT_DEFAULT = 50;
+export const RUNS_LIMIT_MAX = 200;
+
+type LoadedRunLog = { ok: true; log: RunLog } | { ok: false; missing: boolean; reason: string };
+
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const isStrArr = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** run-log.json の形の検査。一覧・結果の組み立てに使う項目が欠けていれば理由を返す（サーバのログ用） */
+function runLogProblem(v: unknown, runId: string): string | undefined {
+  if (!isObj(v)) return '中身がオブジェクトではありません';
+  if (v['runId'] !== runId) return 'runId がフォルダ名と一致しません';
+  const startedAt = v['startedAt'];
+  if (typeof startedAt !== 'string' || Number.isNaN(Date.parse(startedAt))) return 'startedAt が日時ではありません';
+  if (!isNum(v['durationMs'])) return 'durationMs が数値ではありません';
+  const settings = v['settings'];
+  if (!isObj(settings) || !isStrArr(settings['docIds']) || !isStrArr(settings['formats'])) return 'settings（docIds・formats）が欠けています';
+  const counts = v['fileCounts'];
+  if (!isObj(counts) || !['total', 'analyzed', 'failed', 'excluded'].every((k) => isNum(counts[k]))) return 'fileCounts が欠けています';
+  if (!isStrArr(v['outputs'])) return 'outputs が欠けています';
+  const changes = v['docChanges'];
+  if (changes !== undefined && (!isObj(changes) || !Object.values(changes).every((c) => Array.isArray(c)))) return 'docChanges の形が不正です';
+  return undefined;
+}
+
+async function loadRunLog(outDir: string, runId: string): Promise<LoadedRunLog> {
+  const path = safeOutPath(outDir, runId, 'run-log.json');
+  if (!path) return { ok: false, missing: true, reason: '実行 ID が不正です' };
+  let text: string;
+  try {
+    text = await readFile(path, 'utf8');
+  } catch (e) {
+    return { ok: false, missing: true, reason: `run-log.json を読めません（${(e as NodeJS.ErrnoException).code ?? String(e)}）` };
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return { ok: false, missing: false, reason: 'run-log.json が JSON として壊れています' };
+  }
+  const problem = runLogProblem(json, runId);
+  return problem ? { ok: false, missing: false, reason: problem } : { ok: true, log: json as RunLog };
+}
+
+/** 表示用の入力元。sourceKey が無い古い記録は入力のラベルの末尾だけを出す（絶対パスを出さない） */
+function sourceOf(log: RunLog): string {
+  if (typeof log.sourceKey === 'string' && log.sourceKey !== '') return log.sourceKey;
+  const label: unknown = (log.input as { label?: unknown } | undefined)?.label;
+  return typeof label === 'string' ? (label.split(/[\\/]/).filter((s) => s !== '').pop() ?? '') : '';
+}
+
+async function toRunSummary(outDir: string, log: RunLog): Promise<RunSummary> {
+  const htmlPath = safeOutPath(outDir, log.runId, 'traceability.html');
+  const hasTrace = htmlPath ? (await stat(htmlPath).catch(() => undefined))?.isFile() === true : false;
+  const changedDocs = log.settings.docIds.filter((id) => (log.docChanges?.[id] ?? []).some((c) => c.kind !== 'moved')).length;
+  const { total, analyzed, failed, excluded } = log.fileCounts;
+  return {
+    runId: log.runId,
+    startedAt: log.startedAt,
+    source: sourceOf(log),
+    fileCount: total,
+    analyzed,
+    failed,
+    excluded,
+    docs: [...log.settings.docIds],
+    formats: [...log.settings.formats],
+    durationMs: log.durationMs,
+    hasTrace,
+    changedDocs,
+    ...(hasTrace ? { traceUrl: `/trace/${log.runId}` } : {}),
+  };
+}
+
+/** out/ の各実行フォルダの run-log.json を新しい順に並べる。壊れた・欠けた記録は外してサーバのログに理由を出す */
+export async function listRuns(outDir: string, limit: number): Promise<RunSummary[]> {
+  const entries = await readdir(outDir, { withFileTypes: true }).catch((e: NodeJS.ErrnoException) => {
+    if (e.code === 'ENOENT') return [];
+    throw e;
+  });
+  const names = entries.filter((d) => d.isDirectory() && RUN_ID_RE.test(d.name)).map((d) => d.name);
+  const loaded = await Promise.all(names.map(async (name) => ({ name, r: await loadRunLog(outDir, name) })));
+  const logs: RunLog[] = [];
+  for (const { name, r } of loaded) {
+    if (r.ok) logs.push(r.log);
+    else console.error(`[spec2doc web] 実行の履歴から外しました（${name}）: ${r.reason}`);
+  }
+  const sorted = [...logs].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt) || b.runId.localeCompare(a.runId));
+  return Promise.all(sorted.slice(0, limit).map((log) => toRunSummary(outDir, log)));
+}
+
+/** 一覧の件数。省略時は既定値、1〜200 の整数以外は undefined（400） */
+export function parseRunsLimit(raw: string | null): number | undefined {
+  if (raw === null) return RUNS_LIMIT_DEFAULT;
+  if (!/^\d{1,4}$/.test(raw)) return undefined;
+  const n = Number(raw);
+  return n >= 1 && n <= RUNS_LIMIT_MAX ? n : undefined;
 }
 
 export function createWebServer(opts: WebOptions = {}): Server {
@@ -446,6 +565,34 @@ export function createWebServer(opts: WebOptions = {}): Server {
     sendJson(res, 200, review);
   };
 
+  const handleRunsList = async (url: URL, res: ServerResponse): Promise<void> => {
+    const limit = parseRunsLimit(url.searchParams.get('limit'));
+    if (limit === undefined) {
+      sendFailure(res, 400, { message: `表示する件数の指定が不正です（1〜${RUNS_LIMIT_MAX}）`, hint: '画面を再読み込みしてから、実行の履歴を開き直してください' });
+      return;
+    }
+    sendJson(res, 200, { runs: await listRuns(outDir, limit) });
+  };
+
+  const handleRunGet = async (rawRunId: string, res: ServerResponse): Promise<void> => {
+    const runId = decodeRunId(rawRunId);
+    if (!runId || !safeOutPath(outDir, runId, 'run-log.json')) {
+      sendFailure(res, 400, { message: '実行の指定が不正です', hint: '実行の履歴の一覧から開き直してください' });
+      return;
+    }
+    const loaded = await loadRunLog(outDir, runId);
+    if (!loaded.ok) {
+      console.error(`[spec2doc web] 実行の記録を返せませんでした（${runId}）: ${loaded.reason}`);
+      sendFailure(res, 404, {
+        message: loaded.missing ? 'この実行の記録が見つかりません' : 'この実行の記録を読めませんでした',
+        hint: loaded.missing ? '実行の履歴を開き直して、一覧にある実行を選んでください' : 'もう一度実行して文書を作り直してください',
+      });
+      return;
+    }
+    const { log } = loaded;
+    sendJson(res, 200, await summarize({ runId, hasFailures: log.fileCounts.failed > 0, log }, outDir));
+  };
+
   const allowedHost = (req: IncomingMessage): boolean => {
     const addr = server.address();
     const port = typeof addr === 'object' && addr ? addr.port : 0;
@@ -501,6 +648,8 @@ export function createWebServer(opts: WebOptions = {}): Server {
     if (req.method === 'GET' && parts[0] === 'trace') {
       return parts.length === 2 ? handleTracePage(parts[1] ?? '', res) : badTrace(res);
     }
+    if (req.method === 'GET' && url.pathname === '/api/runs') return handleRunsList(url, res);
+    if (req.method === 'GET' && parts.length === 3 && parts[0] === 'api' && parts[1] === 'runs') return handleRunGet(parts[2] ?? '', res);
     if (parts.length === 4 && parts[0] === 'api' && parts[1] === 'runs' && parts[3] === 'trace-review') {
       const runId = decodeRunId(parts[2] ?? '');
       if (!runId) {

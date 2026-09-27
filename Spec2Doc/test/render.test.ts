@@ -59,7 +59,7 @@ test('html: 自己完結で、kit の骨格（.layout-2pane・目次・本文）
   assert.ok(html.startsWith('<!doctype html>'));
   const outside = html.replace(/<style>[\s\S]*?<\/style>/, '');
   assert.doesNotMatch(outside, /<link\b|<script[^>]*\bsrc=|https?:\/\//i, '外部読み込みがある');
-  assert.match(html, /<div class="layout-2pane">\s*<aside class="sidenav" id="toc-nav"><nav class="toc" aria-label="目次">/);
+  assert.match(html, /<body>\s*<header class="doc-topbar"><div class="doc-brand"><span class="doc-brand-mark" aria-hidden="true">S<\/span><span>Spec2Doc<\/span><\/div><div class="doc-topbar-meta"><span class="mono">D02<\/span><span class="doc-topbar-date">[^<]+<\/span><\/div><\/header>\s*<div class="layout-2pane doc-shell">\s*<aside class="sidenav" id="toc-nav"><nav class="toc" aria-label="目次">/);
   assert.match(html, /<main class="doc-main">/);
   assert.match(html, /<button class="btn btn--ghost toc-toggle" type="button" aria-controls="toc-nav" aria-expanded="false"><svg /, '狭幅で目次を開くボタンが無い');
   assert.match(html, /href="#sec-1"[\s\S]*href="#sec-2"[\s\S]*href="#revision"/);
@@ -68,10 +68,10 @@ test('html: 自己完結で、kit の骨格（.layout-2pane・目次・本文）
   assert.match(html, /<span class="badge ev-tag ev-tag--fact" data-evidence="fact">事実<\/span><span class="ev-src muted mono">src\/save\.js:12<\/span>/);
   assert.match(html, /<span class="badge ev-tag ev-tag--inference" data-evidence="inference">推測（[^<）]+）<\/span><span class="ev-src muted mono">src\/search\.js:40<\/span>/);
   assert.match(html, /<span class="badge ev-tag ev-tag--unknown" data-evidence="unknown">不明<\/span><span class="ev-src muted mono">D09-007<\/span>/);
-  assert.match(html, /<div class="callout callout--info" role="note">/);
+  assert.match(html, /<div class="callout callout--info doc-notice" role="note">/);
   const body = outside;
   assert.equal((body.match(/badge-(critical|high|medium|low|info)\b/g) ?? []).length, 0, '根拠ラベルに severity バッジを流用している');
-  assert.match(html, /<section class="card"[^>]*><h2 id="revision">改版履歴<\/h2>/);
+  assert.match(html, /<section class="card doc-sec"[^>]*><h2 id="revision"><span class="sec-no">\d+<\/span>改版履歴<\/h2>/);
   assert.ok(html.includes('a|b &lt;script&gt;'));
   for (const m of MARKERS) assert.ok(html.includes(m), m);
   const levels = [...outside.matchAll(/<h([1-6])\b/g)].map((m) => Number(m[1]));
@@ -154,11 +154,11 @@ test('html 見た目: ライト既定・.card ヘッダ（文書名＋メタ）�
   // 1 ライト既定
   assert.match(html, /<html lang="ja" data-theme="light">/);
   assert.match(html, /<meta name="color-scheme" content="light">/);
-  // 2 ヘッダ（.card）に文書名とメタ、その下に表示の意味の callout が 1 つ
-  assert.match(html, /<header class="card doc-header"><h1>D02 要求仕様書<\/h1><dl class="meta"><div><dt>コミット<\/dt><dd>abc123<\/dd><\/div><div><dt>生成日時<\/dt><dd>2026-09-25 09:00（JST）<\/dd><\/div><\/dl><\/header>\s*<div class="callout callout--info"/);
+  // 2 ヘッダカード（.card）に文書名・目的の説明・情報チップ、その下に表示の意味の callout が 1 つ
+  assert.match(html, /<header class="card doc-header"><h1>D02 要求仕様書<\/h1><p class="doc-lead">機能ごとに、テスト設計に必要な 7 観点（機能・画面・業務ルール・境界・状態・エラー・用語）を並べる。<\/p><dl class="meta"><div><dt>コミット<\/dt><dd>abc123<\/dd><\/div><div><dt>生成日時<\/dt><dd>2026-09-25 09:00（JST）<\/dd><\/div><div><dt>版<\/dt><dd>第 1 版<\/dd><\/div><div><dt>節の数<\/dt><dd>1<\/dd><\/div><div><dt>事実の割合<\/dt><dd>100%（1\/1 行）<\/dd><\/div><\/dl><\/header>\s*<div class="callout callout--info doc-notice"/);
   assert.equal((html.match(/class="callout /g) ?? []).length, 1);
   const noRev = (await render({ ...deep, revision: [] }, 'html')).toString('utf8');
-  assert.match(noRev, /<header class="card doc-header"><h1>D02 要求仕様書<\/h1><\/header>/, 'メタが無ければ行を出さない');
+  assert.match(noRev, /<header class="card doc-header"><h1>D02 要求仕様書<\/h1><p class="doc-lead">[^<]+<\/p><dl class="meta"><div><dt>節の数<\/dt><dd>1<\/dd><\/div><div><dt>事実の割合<\/dt><dd>[^<]+<\/dd><\/div><\/dl><\/header>/, 'メタが無ければ行を出さない');
   // 3 目次は h2・h3 まで、title 付き、1 行省略、デスクトップで tap-min を当てない、選択状態は kit のサイドバーと同じ
   const toc = /<aside class="sidenav"[\s\S]*?<\/aside>/.exec(html)?.[0] ?? '';
   assert.match(toc, /<li class="toc-l1"><a href="#sec-1" title="機能ごとの仕様">/);
@@ -169,7 +169,8 @@ test('html 見た目: ライト既定・.card ヘッダ（文書名＋メタ）�
   // 4 見出しの段差と h2 の区切り線、本文の行幅
   const size = (h: string) => new RegExp(`\\.doc-main ${h} \\{ font-size: (var\\(--text-[a-z0-9]+\\))`).exec(DOC_CSS)?.[1];
   assert.deepEqual(['h1', 'h2', 'h3', 'h4'].map(size), ['var(--text-2xl)', 'var(--text-xl)', 'var(--text-lg)', 'var(--text-md)']);
-  assert.match(DOC_CSS, /\.doc-main h2 \{[^}]*border-top: 1px solid var\(--color-border\);/);
+  assert.match(DOC_CSS, /\.doc-main h2 \{[^}]*border-bottom: 2px solid var\(--color-primary\);/);
+  assert.match(html, /<section class="card doc-sec"><h2 id="sec-1"><span class="sec-no">1<\/span>機能ごとの仕様<\/h2>\n<h3 id="sec-2">F-001 init<\/h3>/, 'h2 ごとに 1 枚のカードに h3 以下を積む');
   assert.match(DOC_CSS, /\.doc-main p, \.doc-main ul, \.doc-main ol \{ max-width: var\(--text-measure\); \}/);
   // 5 根拠タグは区分だけ、ソース位置は外に muted の小さい文字
   assert.match(html, /<p>本文<span class="ev"><span class="badge ev-tag ev-tag--fact" data-evidence="fact">事実<\/span><span class="ev-src muted mono">src\/app\.js:17-29<\/span><\/span><\/p>/);
@@ -310,4 +311,34 @@ test('入力元: html はヘッダのメタに、md・docx・xlsx は改版履�
   const none: Document = { ...base, revision: [{ generatedAt: 'x', changedSections: [] }] };
   assert.ok(!(await render(none, 'html')).toString('utf8').includes('<dt>入力元</dt>'));
   assert.ok(!(await render(none, 'md')).toString('utf8').includes('入力元'));
+});
+
+test('html ヘッダカード: 見出しの番号はバッジに、LLM 無効・設計意図の注記は表示の意味と同じ callout に 1 回だけ、事実の割合は全行のうち事実の行', async () => {
+  const d: Document = {
+    ...doc,
+    sections: [
+      { heading: '1. 機能一覧', level: 1, blocks: [
+        { type: 'paragraph', text: '説明文の欄は LLM 無効のため未生成（業務上の意味は D09-15 で確認）', evidence: 'unknown', source: [], d09Ref: 'D09-15' },
+        { type: 'paragraph', text: '本書はソースから確定できる事実を記述する。設計の意図は D09 に回す', evidence: 'fact', source: [] },
+        { type: 'table', columns: ['ID'], rows: [
+          { cells: ['F-1'], evidence: 'fact', source: [] },
+          { cells: ['F-2'], evidence: 'inference', origin: 'llm', source: [] },
+        ] },
+      ] },
+      { heading: '2. 画面', level: 1, blocks: [{ type: 'paragraph', text: '本書はソースから確定できる事実を記述する。設計の意図は D09 に回す', evidence: 'fact', source: [] }] },
+    ],
+  };
+  const html = (await render(d, 'html')).toString('utf8');
+  const notice = /<div class="callout [^"]*"[^>]*>[\s\S]*?<\/div><\/div>/.exec(html)?.[0] ?? '';
+  assert.match(notice, /表示の意味/);
+  assert.match(notice, /<ul class="doc-notes"><li>説明文の欄は LLM 無効のため未生成[^<]*<span class="ev"><span class="badge ev-tag ev-tag--unknown" data-evidence="unknown">不明<\/span><span class="ev-src muted mono">D09-15<\/span><\/span><\/li><li>本書はソースから/);
+  const main = html.slice(html.indexOf('<main'));
+  assert.equal((main.match(/LLM 無効のため未生成/g) ?? []).length, 1, 'LLM 無効の注記が重複している');
+  assert.equal((main.match(/本書はソースから確定できる/g) ?? []).length, 1, '設計意図の注記が重複している');
+  assert.equal((html.match(/class="callout /g) ?? []).length, 1);
+  assert.match(html, /<h2 id="sec-1"><span class="sec-no">1<\/span>機能一覧<\/h2>/);
+  assert.match(html, /<h2 id="sec-2"><span class="sec-no">2<\/span>画面<\/h2>/);
+  assert.match(html, /<a href="#sec-1" title="1\. 機能一覧">/, '目次は見出しの文をそのまま出す');
+  assert.match(html, /<dt>節の数<\/dt><dd>2<\/dd>/);
+  assert.match(html, /<dt>事実の割合<\/dt><dd>60%（3\/5 行）<\/dd>/);
 });

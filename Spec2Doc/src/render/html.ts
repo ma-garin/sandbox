@@ -1,11 +1,12 @@
-// HTML 出力（自己完結 1 ファイル）。デザインは yuki-aidd-kit を踏襲する:
+// HTML 出力（自己完結 1 ファイル）。デザインは yuki-aidd-kit を踏襲する（見た目の手本は kit の利用ガイド: 上端のヘッダバー・目次カード・ヒーロー・節カード）:
 // tokens.css → components.css → layout.css を無改変で <style> に埋め込み、骨格は .layout-2pane（左に目次、右に本文）、
 // 部品は kit のクラス（.table-wrap .table / .callout / .card、根拠ラベルは .badge の形＋中立色の .ev-tag）をそのまま使う。
 // 独自 CSS（DOC_CSS）は var(--*) だけで、kit に無い最小限（本文だけのスクロール・目次の現在位置・狭幅の折りたたみ目次・印刷）。
 
-import type { Block, Document, ListItem, Provenance } from '../doc/model.ts';
+import type { Block, Document, ListItem, ParagraphBlock, Provenance, Section } from '../doc/model.ts';
 import { evidenceLabel, formatSources, hasRevisionSection } from './common.ts';
 import { renderDiagramSvg } from './diagram.ts';
+import { docPurpose, extractNotices, factRatioText, splitHeadingNumber } from './html-purpose.ts';
 import { COMPONENTS_CSS, KIT_ICONS, LAYOUT_CSS, TOKENS_CSS } from './kit-css.ts';
 
 export function escapeHtml(text: string): string {
@@ -25,32 +26,49 @@ export const EVIDENCE_TAG: Readonly<Record<Provenance['evidence'], string>> = {
 };
 
 export const DOC_CSS = `
-/* ── Spec2Doc 文書（kit に無い最小限。値は var(--*) だけ） ── */
+/* ── Spec2Doc 文書（kit に無い最小限。値は var(--*) だけ。骨格は kit の利用ガイドと同じ: 上端のヘッダバー＋中央寄せの 2 ペイン） ── */
+:root { --doc-max: 1200px; --doc-toc-w: 260px; --doc-topbar-h: 56px; --doc-badge: calc(var(--space-6) + var(--space-1)); }
 html[data-theme="light"] { color-scheme: light; }
-.doc-main h1, .doc-main h2, .doc-main h3, .doc-main h4, .doc-main h5, .doc-main h6 { line-height: var(--leading-tight); color: var(--color-text); }
+body { background: var(--color-bg); }
+.doc-topbar { position: sticky; top: 0; z-index: var(--z-sticky); height: var(--doc-topbar-h); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 0 var(--space-5); background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.doc-brand { display: flex; align-items: center; gap: var(--space-3); font-weight: 700; color: var(--color-text); }
+.doc-brand-mark { flex: none; display: grid; place-items: center; width: var(--doc-badge); height: var(--doc-badge); border-radius: var(--radius-md); background: var(--color-primary); color: var(--color-on-primary); font-weight: 800; }
+.doc-topbar-meta { display: flex; align-items: center; gap: var(--space-3); min-width: 0; font-size: var(--text-sm); color: var(--color-text-secondary); }
+.doc-shell { max-width: var(--doc-max); margin: 0 auto; }
+.doc-shell > main { min-width: 0; }
+.doc-main h1, .doc-main h2, .doc-main h3, .doc-main h4, .doc-main h5, .doc-main h6 { line-height: var(--leading-tight); color: var(--color-text); scroll-margin-top: calc(var(--doc-topbar-h) + var(--space-4)); }
 .doc-main h1 { font-size: var(--text-2xl); font-weight: 700; margin: 0 0 var(--space-2); }
-.doc-main h2 { font-size: var(--text-xl); font-weight: 700; margin: var(--space-12) 0 var(--space-4); padding-top: var(--space-6); border-top: 1px solid var(--color-border); }
-.doc-main h3 { font-size: var(--text-lg); font-weight: 700; margin: var(--space-8) 0 var(--space-3); }
-.doc-main h4 { font-size: var(--text-md); font-weight: 600; margin: var(--space-6) 0 var(--space-2); }
-.doc-main h5, .doc-main h6 { font-size: var(--text-base); font-weight: 600; margin: var(--space-5) 0 var(--space-2); }
+.doc-main h2 { font-size: var(--text-xl); font-weight: 700; margin: 0 0 var(--space-5); padding-bottom: var(--space-3); border-bottom: 2px solid var(--color-primary); display: flex; align-items: center; gap: var(--space-3); }
+.doc-main h3 { font-size: var(--text-lg); font-weight: 700; margin: var(--space-8) 0 var(--space-3); padding-left: var(--space-3); border-left: 4px solid var(--color-primary); }
+.doc-main h4 { font-size: var(--text-md); font-weight: 600; margin: var(--space-6) 0 var(--space-2); padding-bottom: var(--space-1); border-bottom: 1px solid var(--color-border); }
+.doc-main h5, .doc-main h6 { font-size: var(--text-base); font-weight: 600; margin: var(--space-5) 0 var(--space-2); color: var(--color-text-secondary); }
 .doc-main p, .doc-main ul, .doc-main ol { max-width: var(--text-measure); }
-.doc-header { margin: 0 0 var(--space-4); }
-.doc-header .meta { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); }
-.doc-header .meta dt { font-weight: 600; }
-.doc-header .meta div { display: flex; gap: var(--space-2); }
-.doc-header .meta dd { margin: 0; }
+.doc-main p { margin: 0 0 var(--space-3); }
+.sec-no { flex: none; display: inline-grid; place-items: center; min-width: var(--doc-badge); height: var(--doc-badge); padding: 0 var(--space-2); border-radius: var(--radius-sm); background: var(--color-primary-light); color: var(--color-primary-dark); font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 700; }
+.doc-sec { margin: 0 0 var(--space-5); padding: var(--space-6); }
+.doc-sec > :last-child { margin-bottom: 0; }
+.doc-header { margin: 0 0 var(--space-4); padding: var(--space-6); }
+.doc-lead { margin: 0 0 var(--space-3); max-width: none; color: var(--color-text-secondary); line-height: var(--leading-loose); }
+.doc-header .meta { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.doc-header .meta div { display: inline-flex; align-items: baseline; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-2); font-size: var(--text-xs); line-height: var(--leading-tight); }
+.doc-header .meta dt { font-weight: 600; color: var(--color-text-secondary); }
+.doc-header .meta dd { margin: 0; color: var(--color-text); }
+.doc-main .doc-notice { margin: 0 0 var(--space-5); }
+.doc-notice-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.doc-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.doc-notes { margin: 0; padding-left: var(--space-5); max-width: none; }
+.doc-notes li { margin: 0 0 var(--space-1); }
 .doc-main .table-wrap { margin: 0 0 var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-.doc-main .diagram-wrap { margin: 0 0 var(--space-5); padding: var(--space-3); overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-.doc-main .diagram-wrap figcaption { margin: 0 0 var(--space-2); font-weight: 700; }
+.doc-main .diagram-wrap { margin: 0 0 var(--space-5); padding: var(--space-4); overflow-x: auto; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.doc-main .diagram-wrap figcaption { margin: 0 0 var(--space-3); font-weight: 700; }
 .doc-main .diagram-wrap svg { display: block; max-width: none; }
 .doc-main .table caption { caption-side: top; text-align: left; font-weight: 600; padding: var(--space-2) var(--space-3); }
 .doc-main .table { width: auto; min-width: 100%; }
+.doc-main .table { font-size: var(--text-sm); }
 .doc-main .table th, .doc-main .table td { white-space: nowrap; }
+.doc-main .table th, .doc-main .table td { padding: var(--space-1) var(--space-3); line-height: var(--leading-normal); vertical-align: top; }
 .doc-main .table .cell-wrap { white-space: normal; overflow-wrap: anywhere; min-width: calc(var(--text-measure) / 3); }
 .doc-main .table .cell-wrap .badge { white-space: normal; }
-.doc-main .callout { margin: 0 0 var(--space-6); flex-wrap: wrap; align-items: center; }
-.doc-main section.card { margin-top: var(--space-12); }
-.doc-main .callout + section > h2:first-child { margin-top: var(--space-8); }
 .ev { margin-left: var(--space-2); }
 .ev-tag { font-weight: 600; padding: 0 var(--space-2); line-height: var(--leading-normal); vertical-align: baseline; }
 .ev-src { margin-left: var(--space-1); font-size: var(--text-xs); }
@@ -72,31 +90,38 @@ html[data-theme="light"] { color-scheme: light; }
 .toc-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .toc-close { display: none; min-height: var(--tap-min); min-width: var(--tap-min); }
 @media (min-width: 769px) {
-  .layout-2pane { height: 100dvh; min-height: 0; }
-  .layout-2pane > main { overflow-y: auto; }
+  .doc-shell { grid-template-columns: var(--doc-toc-w) minmax(0, 1fr); gap: var(--space-6); align-items: start; min-height: 0; padding: var(--space-6) var(--space-5) var(--space-12); }
+  .doc-shell > main { padding: 0; }
+  .doc-shell > .sidenav { position: sticky; top: calc(var(--doc-topbar-h) + var(--space-6)); height: auto; max-height: calc(100dvh - var(--doc-topbar-h) - var(--space-12)); padding: var(--space-4) var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 }
 @media (max-width: 768px) {
   .toc-toggle { display: inline-flex; }
-  .sidenav.open { display: block; position: fixed; top: 0; left: 0; bottom: 0; width: 280px; max-width: 85vw; height: auto; z-index: var(--z-dropdown); box-shadow: var(--shadow-pop); }
+  .sidenav.open { display: block; position: fixed; top: 0; left: 0; bottom: 0; width: 280px; max-width: 85vw; height: auto; z-index: var(--z-modal); box-shadow: var(--shadow-pop); }
   .sidenav.open .toc-close { display: inline-flex; }
   .sidenav.open .toc a { min-height: var(--tap-min); line-height: var(--tap-min); padding-top: 0; padding-bottom: 0; }
-  .layout-2pane > main { padding: var(--space-4); }
+  .layout-2pane > main { padding: var(--space-4) var(--space-3) var(--space-8); }
+  .doc-topbar { padding: 0 var(--space-3); }
+  .doc-topbar-date { display: none; }
+  .doc-header, .doc-sec { padding: var(--space-4); }
 }
 @media print {
   body { background: var(--color-surface); font-size: var(--text-sm); }
   .sidenav, .toc-toggle { display: none; }
-  .layout-2pane { display: block; height: auto; }
+  .doc-topbar { position: static; }
+  .layout-2pane { display: block; height: auto; max-width: none; padding: 0; }
   .layout-2pane > main { overflow: visible; padding: 0; }
+  .doc-header, .doc-sec, .doc-main .diagram-wrap { box-shadow: none; }
+  .doc-sec { padding: var(--space-4) 0; border: 0; border-radius: 0; }
   .doc-main h1, .doc-main h2, .doc-main h3 { break-after: avoid; }
   .table tr, .doc-main li, .doc-main p { break-inside: avoid; }
   .table thead { display: table-header-group; }
   .doc-main .table-wrap { overflow: visible; }
-  .badge, .callout, .table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .badge, .callout, .table th, .sec-no, .doc-brand-mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .doc-main a { color: var(--color-text); text-decoration: none; }
 }
 `;
 
-/** 目次の現在位置（本文のスクロールに合わせて aria-current を付け替える）と、狭幅の off-canvas 開閉。外部読み込みなし */
+/** 目次の現在位置（ページのスクロールに合わせて aria-current を付け替える）と、狭幅の off-canvas 開閉。外部読み込みなし */
 const SCROLLSPY_JS = `
 (() => {
   const nav = document.getElementById('toc-nav');
@@ -117,15 +142,23 @@ const SCROLLSPY_JS = `
   }
 })();
 (() => {
-  const main = document.querySelector('.layout-2pane > main');
   const links = [...document.querySelectorAll('.sidenav a[href^="#"]')];
   const targets = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
-  if (!main || targets.length === 0 || !('IntersectionObserver' in window)) return;
-  const mark = (id) => links.forEach((a) => (a.getAttribute('href') === '#' + id ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
+  if (targets.length === 0 || !('IntersectionObserver' in window)) return;
+  const nav = document.getElementById('toc-nav');
+  // 目次の中だけをスクロールする（scrollIntoView は埋め込み先のページまで動かすため使わない）
+  const keepVisible = (a) => {
+    if (!nav || nav.scrollHeight <= nav.clientHeight) return;
+    if (a.offsetTop < nav.scrollTop || a.offsetTop + a.offsetHeight > nav.scrollTop + nav.clientHeight) nav.scrollTop = a.offsetTop - nav.clientHeight / 3;
+  };
+  const mark = (id) => links.forEach((a) => {
+    if (a.getAttribute('href') === '#' + id) { a.setAttribute('aria-current', 'location'); keepVisible(a); }
+    else a.removeAttribute('aria-current');
+  });
   const io = new IntersectionObserver((entries) => {
     const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
     if (hit) mark(hit.target.id);
-  }, { root: window.matchMedia('(min-width: 769px)').matches ? main : null, rootMargin: '0px 0px -70% 0px' });
+  }, { root: null, rootMargin: '-64px 0px -70% 0px' });
   targets.forEach((t) => io.observe(t));
   mark(targets[0].id);
 })();
@@ -214,46 +247,78 @@ function tocList(entries: readonly TocEntry[]): string {
     .join('')}</ol>`;
 }
 
+/** 節の見出し。h2 は番号バッジ＋本文（番号は見出しの「1.」、無ければ h2 の通し番号） */
+function headingHtml(h: number, id: string, heading: string, h2No: number): string {
+  if (h !== 2) return `<h${h} id="${id}">${escapeHtml(heading)}</h${h}>`;
+  const [no, text] = splitHeadingNumber(heading, h2No);
+  return `<h2 id="${id}"><span class="sec-no">${escapeHtml(no)}</span>${escapeHtml(text)}</h2>`;
+}
+
+/** 本文。h2 ごとに 1 枚のカード（.card.doc-sec）にまとめ、h3 以下は同じカードの中に積む */
+function bodyHtml(sections: readonly Section[], hs: readonly number[]): { html: string; h2Count: number } {
+  const cards = sections.reduce<{ h2No: number; parts: string[][] }>(
+    (acc, s, i) => {
+      const h = hs[i] ?? 2;
+      const h2No = h === 2 ? acc.h2No + 1 : acc.h2No;
+      const html = [headingHtml(h, `sec-${i + 1}`, s.heading, h2No), ...s.blocks.map(blockToHtml)].join('\n');
+      const parts = h === 2 || acc.parts.length === 0 ? [...acc.parts, [html]] : [...acc.parts.slice(0, -1), [...acc.parts.at(-1)!, html]];
+      return { h2No, parts };
+    },
+    { h2No: 0, parts: [] },
+  );
+  return { html: cards.parts.map((p) => `<section class="card doc-sec">${p.join('\n')}</section>`).join('\n'), h2Count: cards.h2No };
+}
+
+/** 表示の意味と、LLM 無効・設計意図の注記を 1 つの callout にまとめる */
+function noticeHtml(notices: readonly ParagraphBlock[]): string {
+  const legend =
+    '<div class="doc-legend"><strong>表示の意味</strong>' +
+    '<span><span class="badge ev-tag ev-tag--fact">事実</span> ソースの位置で確認済み</span>' +
+    '<span><span class="badge ev-tag ev-tag--inference">推測</span> ソースから推定</span>' +
+    '<span><span class="badge ev-tag ev-tag--unknown">不明</span> 確認事項一覧で確認が必要</span></div>';
+  const notes = notices.length > 0 ? `<ul class="doc-notes">${notices.map((n) => `<li>${escapeHtml(n.text)}${badge(n)}</li>`).join('')}</ul>` : '';
+  return `<div class="callout callout--info doc-notice" role="note"><div class="doc-notice-body">${legend}${notes}</div></div>`;
+}
+
 export function renderHtml(doc: Document): string {
   const title = `${doc.id} ${doc.title}`;
-  const hs = headingLevels(doc.sections.map((s) => s.level));
+  const { notices, sections } = extractNotices(doc.sections);
+  const hs = headingLevels(sections.map((s) => s.level));
   const showRevision = doc.revision.length > 0 && !hasRevisionSection(doc);
+  const body = bodyHtml(sections, hs);
   const entries: TocEntry[] = [
-    ...doc.sections
+    ...sections
       .map((s, i) => ({ id: `sec-${i + 1}`, heading: s.heading, h: hs[i] ?? 2 }))
       .filter((e) => e.h <= TOC_MAX_HEADING)
       .map((e) => ({ id: e.id, heading: e.heading, depth: e.h - 1 })),
     ...(showRevision ? [{ id: 'revision', heading: '改版履歴', depth: 1 }] : []),
   ];
-  const body = doc.sections
-    .map((s, i) => {
-      const h = hs[i] ?? 2;
-      return `<section><h${h} id="sec-${i + 1}">${escapeHtml(s.heading)}</h${h}>\n${s.blocks.map(blockToHtml).join('\n')}</section>`;
-    })
-    .join('\n');
   const rev = showRevision
-    ? `<section class="card" aria-labelledby="revision"><h2 id="revision">改版履歴</h2>${tableHtml(
+    ? `<section class="card doc-sec" aria-labelledby="revision">${headingHtml(2, 'revision', '改版履歴', body.h2Count + 1)}${tableHtml(
         ['生成日時', 'コミット', '変更した節'],
         doc.revision.map((r) => [escapeHtml(r.generatedAt), escapeHtml(r.commit ?? ''), escapeHtml(r.changedSections.join(', '))]),
       )}</section>`
     : '';
-  const legend =
-    '<div class="callout callout--info" role="note"><strong>表示の意味</strong>' +
-    '<span><span class="badge ev-tag ev-tag--fact">事実</span> ソースの位置で確認済み</span>' +
-    '<span><span class="badge ev-tag ev-tag--inference">推測</span> ソースから推定</span>' +
-    '<span><span class="badge ev-tag ev-tag--unknown">不明</span> 確認事項一覧で確認が必要</span></div>';
   const toc = tocList(entries);
   const latest = doc.revision.at(-1);
+  const ratio = factRatioText(doc.sections);
   const meta: [string, string | undefined][] = [
     ['入力元', latest?.source],
     ['コミット', latest?.commit],
     ['生成日時', latest?.generatedAt],
+    ['版', doc.revision.length > 0 ? `第 ${doc.revision.length} 版` : undefined],
+    ['節の数', body.h2Count > 0 ? String(body.h2Count) : undefined],
+    ['事実の割合', ratio || undefined],
   ];
   const metaHtml = meta
     .filter((m): m is [string, string] => typeof m[1] === 'string' && m[1] !== '')
     .map(([k, v]) => `<div><dt>${k}</dt><dd>${escapeHtml(v)}</dd></div>`)
     .join('');
-  const header = `<header class="card doc-header"><h1>${escapeHtml(title)}</h1>${metaHtml ? `<dl class="meta">${metaHtml}</dl>` : ''}</header>`;
+  const purpose = docPurpose(doc.id);
+  const lead = purpose ? `<p class="doc-lead">${escapeHtml(purpose)}</p>` : '';
+  const header = `<header class="card doc-header"><h1>${escapeHtml(title)}</h1>${lead}${metaHtml ? `<dl class="meta">${metaHtml}</dl>` : ''}</header>`;
+  const date = latest?.generatedAt ? `<span class="doc-topbar-date">${escapeHtml(latest.generatedAt)}</span>` : '';
+  const topbar = `<header class="doc-topbar"><div class="doc-brand"><span class="doc-brand-mark" aria-hidden="true">S</span><span>Spec2Doc</span></div><div class="doc-topbar-meta"><span class="mono">${escapeHtml(doc.id)}</span>${date}</div></header>`;
   return `<!doctype html>
 <html lang="ja" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
@@ -265,13 +330,14 @@ ${LAYOUT_CSS}
 ${DOC_CSS}
 </style></head>
 <body>
-<div class="layout-2pane">
+${topbar}
+<div class="layout-2pane doc-shell">
 <aside class="sidenav" id="toc-nav"><nav class="toc" aria-label="目次"><div class="toc-head"><p class="toc-title">目次</p><button class="btn btn--ghost toc-close" type="button" aria-label="目次を閉じる">${kitIcon('close')}</button></div>${toc}</nav></aside>
 <main class="doc-main">
 <button class="btn btn--ghost toc-toggle" type="button" aria-controls="toc-nav" aria-expanded="false">${kitIcon('checklist')}<span>目次</span></button>
 ${header}
-${legend}
-${body}
+${noticeHtml(notices)}
+${body.html}
 ${rev}
 </main>
 </div>

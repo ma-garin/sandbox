@@ -16,6 +16,9 @@ import {
   type TableRow,
 } from '../doc/model.ts';
 import type { ExplainRequest, ExplainResult, LlmClient } from '../llm/index.ts';
+import { DESIGN_INTENT_NOTE } from './notices.ts';
+
+export { DESIGN_INTENT_NOTE };
 
 // ---------- D09 登録簿 ----------
 
@@ -548,10 +551,6 @@ export function isStandardApiCall(call: string, ownNames: ReadonlySet<string> = 
 }
 
 // ---------- 範囲の注記（先行研究の示唆: Chikofsky & Cross 1990・Call Me Maybe 2025） ----------
-
-/** 設計意図は復元できない旨（D01・D02・D11・D12 の冒頭）。LLM が有効でも同じ */
-export const DESIGN_INTENT_NOTE =
-  '本書はソースから確定できる事実を記述する。設計の意図・業務上の背景・値の選定理由はソースから復元できないため記述せず、D09（確認事項）に回す。LLM の説明文（推測）はこれらを補うものではない（出典: E. Chikofsky, J. Cross, "Reverse Engineering and Design Recovery: A Taxonomy", IEEE Software, 1990, DOI: 10.1109/52.43044）';
 
 export const STATIC_LIMIT_HEADING = '静的解析の限界';
 

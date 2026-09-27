@@ -9,6 +9,7 @@ import type { IR } from '../ir/schema.ts';
 import { ALL_DOC_IDS, type Block, type DocId, type Document, type ListItem, type Provenance, type Section, type TableRow } from '../doc/model.ts';
 import { disabledLlm, LLM_DISABLED_TEXT, type LlmClient } from '../llm/index.ts';
 import { D09Registry, type DocBuilder, type GenCtx, displayName, normalizeLevels, factProv, para, unknownProv, LLM_ALL_GENERATED_TEXT, LLM_D09_KEY, notImplementedDoc, reserveLlmD09, row, section, srcText, table, zeroResult } from './common.ts';
+import { LLM_DISABLED_NOTE_PREFIX } from './notices.ts';
 
 export type { GenCtx, DocBuilder } from './common.ts';
 export { D09Registry } from './common.ts';
@@ -179,7 +180,7 @@ function containsText(doc: Document, needle: string): boolean {
 function withLlmNote(doc: Document, ctx: GenCtx): Document {
   if (!containsText(doc, LLM_DISABLED_TEXT)) return doc;
   const no = ctx.d09.register({ key: LLM_D09_KEY, topic: '', question: '', origin: doc.id });
-  const note = para(`説明文の欄は LLM 無効のため未生成（業務上の意味は ${no} で確認）`, unknownProv(no));
+  const note = para(`${LLM_DISABLED_NOTE_PREFIX}（業務上の意味は ${no} で確認）`, unknownProv(no));
   const [first, ...rest] = doc.sections;
   if (!first) return doc;
   return { ...doc, sections: [{ ...first, blocks: [note, ...first.blocks] }, ...rest] };

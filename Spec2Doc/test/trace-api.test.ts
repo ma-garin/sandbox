@@ -89,7 +89,7 @@ test('GET /trace/<runId> はトップレベルのページとして 200、API �
   assert.doesNotMatch(csp, /sandbox/);
   assert.ok(csp.includes(sha(injected)), '差し込んだ script の hash');
   assert.ok(csp.includes(sha(PAGE_SCRIPT)), '文書内の script の hash');
-  for (const d of ["default-src 'none'", "style-src 'unsafe-inline'", 'img-src data:', "connect-src 'self'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'"]) {
+  for (const d of ["default-src 'none'", "style-src 'unsafe-inline'", 'img-src data:', "connect-src 'self'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'self'"]) {
     assert.ok(csp.includes(d), d);
   }
   assert.doesNotMatch(csp, /script-src[^;]*unsafe/);

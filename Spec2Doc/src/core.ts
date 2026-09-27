@@ -8,9 +8,11 @@ import { analyze } from './analyze/index.ts';
 import { applyRunDiff, diffSections, generate, sectionDigests, type RunDiff, type SectionChange, type SectionDigest } from './generate/index.ts';
 import { render, type Format } from './render/index.ts';
 import { disabledLlm, type LlmClient, type LlmUsage } from './llm/index.ts';
-import { ALL_DOC_IDS, type DocId } from './doc/model.ts';
+import { ALL_DOC_IDS, type Block, type DocId, type Document, type TableBlock } from './doc/model.ts';
 import type { IR, IrInput } from './ir/schema.ts';
-import { buildTrace } from './trace/graph.ts';
+import { buildTrace, relPath } from './trace/graph.ts';
+import { carrySuspects, contentHash, markSuspects, suspectSinceIds, withFileHashes } from './trace/suspect.ts';
+import { addCandidates } from './trace/candidates.ts';
 import { carryOverReview, emptyReview, validateReview } from './trace/review.ts';
 import { TRACE_VERSION, type TraceGraph, type TraceReview } from './trace/schema.ts';
 import { renderTraceHtml } from './render/trace-html.ts';
@@ -64,6 +66,8 @@ export interface RunLog {
   trace: { nodes: number; edges: number; links: number; skippedLinks: number };
   /** 検証の工程（生成後・出力前の照合）の件数 */
   verify?: VerifyCounts;
+  /** D09（確認事項）の一覧表の行数（検証の工程で不明に下げた行を含む）。D09 を生成しなかった実行は null */
+  questions?: number | null;
 }
 
 export interface RunResult {
@@ -150,18 +154,57 @@ async function readJson(path: string): Promise<unknown> {
   }
 }
 
-/** 前回の実行の trace.json と trace-review.json から確認状態を引き継ぐ。どちらかが無い・不正なら空 */
+/** 前回の実行の trace.json。無い・版が違う・不正なら undefined */
+export async function readPrevGraph(prevPath: string | undefined): Promise<TraceGraph | undefined> {
+  if (!prevPath) return undefined;
+  const g = (await readJson(join(prevPath, 'trace.json'))) as TraceGraph | undefined;
+  return g && g.version === TRACE_VERSION && Array.isArray(g.links) && Array.isArray(g.nodes) ? g : undefined;
+}
+
+/** D09 の一覧表（先頭列が No.）の行数。D09 が無ければ null。0 件のときは表が段落に置き換わるので 0 */
+export function countD09Rows(docs: readonly Document[]): number | null {
+  const d09 = docs.find((d) => d.id === 'D09');
+  if (!d09) return null;
+  const isList = (b: Block): b is TableBlock => b.type === 'table' && b.columns[0] === 'No.';
+  return d09.sections.reduce((n, s) => n + s.blocks.filter(isList).reduce((m, t) => m + t.rows.length, 0), 0);
+}
+
+/** 要確認の起点（since の実行）ごとの日時。その実行の trace.json の generatedAt。読めない起点は含めない */
+async function sinceTimes(outRoot: string, prevGraph: TraceGraph | undefined): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const id of suspectSinceIds(prevGraph)) {
+    if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) continue;
+    const g = await readPrevGraph(join(outRoot, id));
+    if (g && typeof g.generatedAt === 'string') out.set(id, g.generatedAt);
+  }
+  return out;
+}
+
+/** 前回の実行の trace.json と trace-review.json から確認状態を引き継ぐ。どちらかが無い・不正なら空。
+ * 内容が変わった行も状態を残す（要確認の印が付くので画面で確認し直す） */
 export async function carryOverFromRun(prevPath: string | undefined, graph: TraceGraph): Promise<TraceReview> {
-  if (!prevPath) return emptyReview(graph.runId);
-  const prevGraph = (await readJson(join(prevPath, 'trace.json'))) as TraceGraph | undefined;
-  if (!prevGraph || prevGraph.version !== TRACE_VERSION || !Array.isArray(prevGraph.links)) return emptyReview(graph.runId);
+  const prevGraph = await readPrevGraph(prevPath);
+  if (!prevPath || !prevGraph) return emptyReview(graph.runId);
   const rawReview = await readJson(join(prevPath, 'trace-review.json'));
   if (rawReview === undefined) return emptyReview(graph.runId);
   try {
-    return carryOverReview(prevGraph, validateReview(rawReview, prevGraph), graph);
+    return carryOverReview(prevGraph, validateReview(rawReview, prevGraph), graph, { keepChanged: true });
   } catch {
     return emptyReview(graph.runId); // 前回の確認状態が不正なら引き継がない
   }
+}
+
+/** 入力ファイルの内容ハッシュ（相対パス → hash）。読めないファイルは含めない（要確認の source-changed に使う） */
+async function hashInputFiles(files: readonly { path: string; abs: string }[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const f of files) {
+    try {
+      out.set(relPath(f.path), contentHash(await readFile(f.abs)));
+    } catch {
+      // 読めないファイルはハッシュを持たない（比較の対象外）
+    }
+  }
+  return out;
 }
 
 function newRunId(now: Date): string {
@@ -230,8 +273,17 @@ export async function run(options: RunOptions, onProgress: (p: Progress) => void
     );
     const docs = generated.map((d, i) => applyRunDiff(d, diffs[i]?.[1]));
 
-    const { graph, skippedLinks } = buildTrace(ir, docs, { runId, source: describeSource(options.input), generatedAt: started.toISOString() });
-    const review = await carryOverFromRun(prev ? join(outRoot, prev.runId) : undefined, graph);
+    const built = buildTrace(ir, docs, { runId, source: describeSource(options.input), generatedAt: started.toISOString() });
+    const skippedLinks = built.skippedLinks;
+    const prevDir = prev ? join(outRoot, prev.runId) : undefined;
+    // 要確認（前回と比べて内容・根拠ソースが変わった対応、前回に無い対応）と、抜け・孤立した行のトレース先の候補を付ける
+    const hashed = withFileHashes(built.graph, await hashInputFiles(ingested.files));
+    const prevGraph = await readPrevGraph(prevDir);
+    const marked = addCandidates(markSuspects(prevGraph, hashed));
+    const review = await carryOverFromRun(prevDir, marked);
+    // 前回の要確認は、画面で確認済みにされる（reviewedAt が起点より新しい）まで元の起点・理由のまま持ち越す
+    const since = await sinceTimes(outRoot, prevGraph);
+    const graph = carrySuspects(prevGraph, marked, review, (id) => since.get(id));
 
     await mkdir(outPath, { recursive: true });
     const outputs = await timed('render', 0.75, '文書を書き出しています', async () => {
@@ -281,6 +333,7 @@ export async function run(options: RunOptions, onProgress: (p: Progress) => void
       docChanges,
       trace: { nodes: graph.nodes.length, edges: graph.edges.length, links: graph.links.length, skippedLinks },
       verify: verified.counts,
+      questions: countD09Rows(docs),
     };
     await writeFile(join(outPath, 'run-log.json'), JSON.stringify(log, null, 2));
     onProgress({ stage: 'done', message: '完了しました', ratio: 1 });

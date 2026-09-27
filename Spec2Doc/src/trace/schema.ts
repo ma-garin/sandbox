@@ -58,7 +58,31 @@ export interface TraceLink {
   d09Ref?: string;
   sources: { file: string; line?: number }[];
   irIds: string[];
+  /** リンクの種類（市販ツールの satisfies / verifies 等に相当。表示は LINK_KIND_LABEL） */
+  kind?: LinkKind;
+  /** 要確認（suspect link）。前回の実行から根拠のソースまたは記述の内容が変わった対応 */
+  suspect?: { since: string; reason: SuspectReason };
+  /** 抜けを埋めるトレース先の候補（解析から推定。根拠付き。確定ではない） */
+  candidates?: { nodeId: string; score: number; why: string }[];
 }
+
+export type LinkKind = 'describes' | 'satisfies' | 'verifies' | 'derives' | 'calls' | 'uses';
+export const LINK_KIND_LABEL: Record<LinkKind, string> = {
+  describes: '記述する',
+  satisfies: '満たす',
+  verifies: '検証する',
+  derives: '派生する',
+  calls: '呼び出す',
+  uses: '利用する',
+};
+
+/** content-changed=記述の内容が変わった／source-changed=根拠のソースが変わった／new=前回に無かった */
+export type SuspectReason = 'content-changed' | 'source-changed' | 'new';
+export const SUSPECT_REASON_LABEL: Record<SuspectReason, string> = {
+  'content-changed': '記述の内容が前回から変わった',
+  'source-changed': '根拠のソースが前回から変わった',
+  new: '前回の実行に無かった対応',
+};
 
 export interface TraceGraph {
   version: typeof TRACE_VERSION;
@@ -80,12 +104,48 @@ export interface ReviewEntry {
   updatedAt: string;
   /** 前回の実行から引き継いだ場合の元の実行 ID */
   carriedFrom?: string;
+  /** 確認者（承認した人の名前）と確認日時。status が unreviewed 以外になった時に記録 */
+  reviewer?: string;
+  reviewedAt?: string;
+  /** コメントの履歴（追記のみ。1 件 2000 文字まで） */
+  comments?: { at: string; by?: string; text: string }[];
+}
+
+/** 名前を付けて保存した絞り込み（管理表・マトリクス・関係図で共通） */
+export interface SavedView {
+  name: string;
+  tab: 'graph' | 'matrix' | 'manage' | 'gaps' | 'compare';
+  filters: Record<string, string>;
 }
 
 export interface TraceReview {
   version: typeof TRACE_VERSION;
   runId: string;
   reviews: Record<string, ReviewEntry>;
+  savedViews?: SavedView[];
+  /** 比較の基準として固定した実行（ベースライン） */
+  baselineRunId?: string;
+}
+
+/** 変更の監査記録（サーバが trace-audit.jsonl に 1 行ずつ追記。改ざん防止のため追記のみ） */
+export interface TraceAuditEvent {
+  at: string;
+  runId: string;
+  linkId: string;
+  field: 'status' | 'note' | 'comment' | 'reviewer' | 'baseline' | 'savedView';
+  from?: string;
+  to?: string;
+  by?: string;
+}
+
+/** ベースラインとの比較の結果（GET /api/runs/<runId>/trace-compare?base=<runId>） */
+export interface TraceCompare {
+  baseRunId: string;
+  runId: string;
+  added: string[];
+  removed: string[];
+  changed: string[];
+  unchanged: number;
 }
 
 export const REVIEW_STATUS_LABEL: Record<ReviewStatus, string> = {

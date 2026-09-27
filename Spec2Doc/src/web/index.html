@@ -14,6 +14,11 @@
   .app-body { overflow: hidden; }
   @media (min-width: 769px) { #menu { display: none; } }   /* サイドバーが常に見える幅では開閉ボタンは不要 */
   .input, .textarea, .select { box-sizing: border-box; width: 100%; max-width: 100%; }   /* 幅 100% でカードからはみ出さない */
+  .brand-mark { display: inline-grid; place-items: center; flex: none; width: var(--space-8); height: var(--space-8); border-radius: var(--radius-md); background: var(--color-primary); color: var(--color-on-primary); font-weight: 700; font-size: var(--text-md); line-height: 1; }
+  .nav-group { display: flex; flex-direction: column; gap: var(--space-1); }
+  .nav-group + .nav-group { margin-top: var(--space-3); }
+  .nav-group-title { padding: 0 var(--space-3); font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); }
+  .sidebar.collapsed .nav-group-title { display: none; }
   .view { display: flex; flex-direction: column; gap: var(--space-4); }
   #run-form { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
   .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
@@ -22,13 +27,14 @@
   .stack { display: flex; flex-direction: column; gap: var(--space-3); }
   .card h3 { margin: 0; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); }
   .hint { margin: 0; font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
   .gh-row { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); }
   .doc-groups { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .doc-group { display: flex; flex-direction: column; gap: var(--space-1); }
   .check { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); cursor: pointer; font-size: var(--text-sm); }
   .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--space-3); }
   input[type=checkbox] { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--color-primary); }
-  input[type=checkbox]:focus-visible, .seg > button:focus-visible, a:focus-visible, .sidebar nav a:focus-visible, summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  input[type=checkbox]:focus-visible, .seg > button:focus-visible, a:focus-visible, .sidebar nav a:focus-visible, summary:focus-visible, .wizard button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
   .seg { align-self: flex-start; flex-wrap: wrap; }
   .switch-row { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--space-8); cursor: pointer; font-size: var(--text-sm); }
   #llm:focus-visible + .switch-row .toggle { outline: 2px solid var(--color-primary); outline-offset: 2px; }
@@ -48,24 +54,75 @@
   .table tbody td { vertical-align: middle; }
   .topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
   .dl-label { font-size: var(--text-sm); color: var(--color-text-secondary); }
-  #result .kpi-row { margin-bottom: 0; }
+  #result .kpi-row, #home-kpis { margin-bottom: 0; }
   .badge-neutral { color: var(--color-text-secondary); border-color: var(--color-border); margin-left: var(--space-2); font-weight: 600; }
-  #view-doc { height: 100%; }
-  #frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+  #view-doc, #view-trace { height: 100%; }
+  #frame, #trace-frame { flex: 1 1 auto; min-height: 0; width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+  /* トレーサビリティは本文領域いっぱいに出す（余白・枠を外す） */
+  body:has(#view-trace:not([hidden])) .app-content { padding: 0; }
+  #trace-frame { border: 0; border-radius: 0; }
+  #trace-run { width: auto; min-width: 0; }
   .log { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-sm); }
   .log dt { color: var(--color-text-secondary); }
   .log dd { margin: 0; overflow-wrap: anywhere; }
-  .steps { margin: 0; padding-left: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
   code { font-family: var(--font-mono); font-size: var(--text-sm); background: var(--color-surface-2); padding: 0 var(--space-1); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
-  @media (min-width: 1100px) { #run-form { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } #card-input { grid-column: 1 / -1; } }
+
+  /* ホーム: 警告帯 → ヒーロー（3 ステップ） → KPI → 最近の実行 */
+  .alert-band { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0; }
+  .alert-band .alert-text { flex: 1 1 240px; min-width: 0; }
+  .alert-band .alert-text strong { display: block; }
+  .hero { display: flex; flex-direction: column; gap: var(--space-4); }
+  .hero h2 { margin: 0; font-size: var(--text-xl); line-height: var(--leading-tight); }
+  .hero .lead { margin: 0; color: var(--color-text-secondary); }   /* カード幅いっぱいに流す */
+  .flow { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); counter-reset: flow; }
+  .flow li { counter-increment: flow; display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); }
+  .flow li::before { content: counter(flow); display: inline-grid; place-items: center; flex: none; width: var(--space-8); height: var(--space-8); border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary-dark); font-family: var(--font-mono); font-weight: 700; }
+  .flow strong { display: block; font-size: var(--text-sm); }
+  .flow span { display: block; font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+  /* 作成: ステップ表示（① 入力 ② 文書と形式 ③ 確認して実行） */
+  .wizard { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+  .wizard li { display: flex; align-items: center; gap: var(--space-2); }
+  .wizard li + li::before { content: ""; width: var(--space-6); border-top: 1px solid var(--color-border-strong); }
+  .wizard button { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap-min); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); font: inherit; font-size: var(--text-sm); cursor: pointer; }
+  .wizard button:hover { background: var(--color-surface-2); }
+  .wizard-node { display: inline-grid; place-items: center; flex: none; width: var(--space-6); height: var(--space-6); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-surface); font-family: var(--font-mono); font-size: var(--text-xs); }
+  .wizard li.is-done .wizard-node { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
+  .wizard li.is-active button { color: var(--color-text); font-weight: 600; }
+  .wizard li.is-active .wizard-node { border-color: var(--color-primary); color: var(--color-primary-dark); }
+  .run-summary { margin: 0; font-size: var(--text-lg); font-weight: 600; font-family: var(--font-mono); overflow-wrap: anywhere; }
+  .run-band { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-info-border); border-radius: var(--radius-md); background: var(--color-info-bg); }
+  .stages { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .stages li + li::before { content: "→"; margin-right: var(--space-2); color: var(--color-text-secondary); font-weight: 400; }
+  .stages li.is-done { color: var(--color-text); }
+  .stages li.is-active { color: var(--color-text); font-weight: 700; }
+
+  /* 結果: KPI → トレーサビリティ → 文書のカテゴリ別カード */
+  .section-title { margin: 0; font-size: var(--text-lg); }
+  .trace-card { border-color: var(--color-border-strong); }
+  .cat-title { margin: 0 0 var(--space-2); font-size: var(--text-md); color: var(--color-text-secondary); }
+  .doc-cards { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+  .doc-card { display: flex; flex-direction: column; gap: var(--space-2); }
+  .doc-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+  .doc-id { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .doc-name { font-size: var(--text-md); }
+  .doc-card .desc { flex: 1 1 auto; margin: 0; font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .doc-card .badge-neutral { margin-left: 0; }
+
+  /* 使い方 */
+  .labels { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); margin: 0; font-size: var(--text-sm); align-items: baseline; }
+  .labels dd { margin: 0; }
+
+  @media (min-width: 1100px) { #run-form { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } #card-input, #card-run { grid-column: 1 / -1; } }
   @media (min-width: 1366px) { .gh-row { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
   @media (max-width: 480px) {
     .app-globalbar .muted { display: none; }
-    #kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }   /* 4 枚を 2×2 に。1 列だと一覧が画面外に押し出される */   /* 狭い幅では製品名と主な操作を優先 */
+    #kpis, #home-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }   /* 4 枚を 2×2 に。1 列だと一覧が画面外に押し出される */
     .card-head { flex-wrap: wrap; }
     .checks { grid-template-columns: minmax(0, 1fr); }
-    .log { grid-template-columns: 1fr; gap: var(--space-1); }
+    .log, .labels { grid-template-columns: 1fr; gap: var(--space-1); }
     .log dd { margin-bottom: var(--space-2); }
+    .wizard li + li::before { display: none; }
   }
   /* 失敗トースト（消えない）は、作成画面では画面の下端に出す。実行ボタンの真下だと入力カードの右端（デモのボタン等）を覆い、
      閉じるまで押せない。feedback.js が位置を style 属性で書くため、ここだけ !important で上書きする */
@@ -79,6 +136,7 @@
 <div class="app" id="app">
   <header class="app-globalbar">
     <button class="btn btn--ghost" id="menu" type="button" aria-label="メニューを開く" aria-controls="sidebar" aria-expanded="false"><span data-icon="grid-view" data-icon-size="18" aria-hidden="true"></span></button>
+    <span class="brand-mark" aria-hidden="true">S</span>
     <span class="brand">Spec2Doc</span>
     <span class="spacer"></span>
     <span class="muted">この端末だけで動作</span>
@@ -88,26 +146,82 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head"><span class="brand">メニュー</span><button class="btn btn--ghost" id="collapse" type="button" aria-label="メニューを折りたたむ" aria-controls="sidebar" aria-expanded="true">‹</button></div>
       <nav aria-label="主要">
-        <a href="#make" data-view="make" aria-current="page"><span class="icon" data-icon="add" data-icon-size="18" aria-hidden="true"></span><span class="label-text">文書の作成</span></a>
-        <a href="#result" data-view="result"><span class="icon" data-icon="description" data-icon-size="18" aria-hidden="true"></span><span class="label-text">結果</span></a>
-        <a href="#log" data-view="log"><span class="icon" data-icon="history" data-icon-size="18" aria-hidden="true"></span><span class="label-text">実行記録</span></a>
-        <a href="#help" data-view="help"><span class="icon" data-icon="help" data-icon-size="18" aria-hidden="true"></span><span class="label-text">使い方</span></a>
+        <div class="nav-group" role="group" aria-labelledby="ng-start">
+          <span class="nav-group-title" id="ng-start">はじめる</span>
+          <a href="#home" data-view="home" aria-current="page"><span class="icon" data-icon="home" data-icon-size="18" aria-hidden="true"></span><span class="label-text">ホーム</span></a>
+        </div>
+        <div class="nav-group" role="group" aria-labelledby="ng-make">
+          <span class="nav-group-title" id="ng-make">つくる</span>
+          <a href="#make" data-view="make"><span class="icon" data-icon="add" data-icon-size="18" aria-hidden="true"></span><span class="label-text">文書の作成</span></a>
+        </div>
+        <div class="nav-group" role="group" aria-labelledby="ng-see">
+          <span class="nav-group-title" id="ng-see">見る</span>
+          <a href="#result" data-view="result"><span class="icon" data-icon="description" data-icon-size="18" aria-hidden="true"></span><span class="label-text">結果</span></a>
+          <a href="#log" data-view="log"><span class="icon" data-icon="history" data-icon-size="18" aria-hidden="true"></span><span class="label-text">実行記録</span></a>
+          <a href="#trace" data-view="trace"><span class="icon" data-icon="hub" data-icon-size="18" aria-hidden="true"></span><span class="label-text">トレーサビリティ</span></a>
+        </div>
+        <div class="nav-group" role="group" aria-labelledby="ng-help">
+          <span class="nav-group-title" id="ng-help">サポート</span>
+          <a href="#help" data-view="help"><span class="icon" data-icon="help" data-icon-size="18" aria-hidden="true"></span><span class="label-text">使い方</span></a>
+        </div>
       </nav>
     </aside>
     <div class="maincol">
       <header class="app-topbar">
-        <div><div class="breadcrumb" id="crumb" hidden><a href="#result">結果</a><span>/</span><span>閲覧</span></div><h1 id="page-title" tabindex="-1">文書の作成</h1></div>
+        <div><div class="breadcrumb" id="crumb" hidden><a href="#result">結果</a><span>/</span><span>閲覧</span></div><div class="breadcrumb" id="crumb-trace" hidden><span>見る</span><span>/</span><span>トレーサビリティ</span></div><h1 id="page-title" tabindex="-1">ホーム</h1></div>
         <span class="spacer"></span>
         <div class="topbar-actions" id="doc-actions" hidden>
           <a class="btn" href="#result" id="back"><span data-icon="arrow-back" data-icon-size="16" aria-hidden="true"></span>一覧へ戻る</a>
           <span class="dl-label" id="doc-dl-label">ダウンロード</span>
           <div class="cell-actions" role="group" aria-labelledby="doc-dl-label" id="doc-downloads"></div>
         </div>
-        <button type="submit" form="run-form" class="btn btn--primary" id="run"><span data-icon="play" data-icon-size="16" aria-hidden="true"></span><span id="run-label">文書を作る</span></button>
+        <div class="topbar-actions" id="trace-actions" hidden>
+          <label class="dl-label" for="trace-run">表示する実行</label>
+          <select id="trace-run" class="input"></select>
+        </div>
       </header>
       <main class="app-content">
 
-        <section class="view" id="view-make" aria-labelledby="page-title">
+        <section class="view" id="view-home" aria-labelledby="page-title" hidden>
+          <div id="home-alerts" class="stack"></div>
+          <div class="card hero">
+            <h2 id="h-hero">ソースコードからの仕様書づくり</h2>
+            <p class="lead">GitHub・.zip・フォルダのソースを解析して、概要書からテスト観点表までの文書と、文書の行とソースの対応（トレーサビリティ）を作ります。</p>
+            <div class="actions">
+              <button type="button" class="btn btn--primary" id="home-make"><span data-icon="play" data-icon-size="16" aria-hidden="true"></span>文書を作る</button>
+              <button type="button" class="btn" id="home-demo" hidden>デモのサンプルで試す</button>
+            </div>
+            <ol class="flow" aria-label="使う流れ">
+              <li><div><strong>ソースを渡す</strong><span>GitHub の URL・.zip・フォルダのパス</span></div></li>
+              <li><div><strong>仕様書を生成</strong><span>文書と出力形式を選んで作る</span></div></li>
+              <li><div><strong>トレーサビリティで確かめる</strong><span>文書の行とソースの対応を確認</span></div></li>
+            </ol>
+            <p class="hint">所要時間の目安: デモ 19 ファイルで約 2 秒</p>
+          </div>
+          <div id="home-empty"></div>
+          <div class="kpi-row" id="home-kpis" hidden></div>
+          <div class="card stack" id="home-recent" hidden>
+            <div class="card-head">
+              <h2 id="h-recent">最近の実行</h2>
+              <a class="btn btn--ghost btn-sm" href="#log">実行記録をすべて見る</a>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th scope="col">日時</th><th scope="col">入力元</th><th scope="col">文書数</th><th scope="col">解析 / 失敗</th><th scope="col">操作</th></tr></thead>
+                <tbody id="home-rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-make" aria-labelledby="page-title" hidden>
+          <div class="card">
+            <ol class="wizard" id="wizard" aria-label="作成の手順">
+              <li data-target="card-input"><button type="button"><span class="wizard-node">1</span>入力</button></li>
+              <li data-target="docs-set"><button type="button"><span class="wizard-node">2</span>文書と形式</button></li>
+              <li data-target="card-run"><button type="button"><span class="wizard-node">3</span>確認して実行</button></li>
+            </ol>
+          </div>
           <form id="run-form" novalidate>
             <div class="card" id="card-input">
               <div class="card-head">
@@ -181,14 +295,22 @@
                 </details>
               </div>
             </div>
+
+            <div class="card stack" id="card-run">
+              <h2 id="h-run">実行の内容</h2>
+              <p class="run-summary" id="run-summary"></p>
+              <p class="hint">目安はデモ 19 ファイルでの所要時間です。ファイルが多いほど、LLM を使うほど長くなります。</p>
+              <div class="actions">
+                <button type="submit" class="btn btn--primary" id="run"><span data-icon="play" data-icon-size="16" aria-hidden="true"></span><span id="run-label">文書を作る</span></button>
+              </div>
+            </div>
           </form>
 
-          <div id="progress-box" class="card" hidden>
-            <h2 id="progress-title">進み具合</h2>
-            <div class="stack">
-              <progress id="bar" max="100" value="0" aria-labelledby="progress-title"></progress>
-              <p id="status" role="status" aria-live="polite"></p>
-            </div>
+          <div id="progress-box" class="run-band" role="status" aria-live="polite" aria-labelledby="progress-title" hidden>
+            <strong id="progress-title">進み具合</strong>
+            <ol class="stages" id="stages"><li>取得</li><li>解析</li><li>生成</li><li>照合</li><li>出力</li></ol>
+            <progress id="bar" max="100" value="0" aria-labelledby="progress-title"></progress>
+            <p id="status"></p>
           </div>
         </section>
 
@@ -197,22 +319,18 @@
           <div id="result-empty"></div>
           <div id="result" class="stack" hidden>
             <div class="kpi-row" id="kpis"></div>
-            <div class="card stack" id="trace-card" hidden>
+            <div class="card stack trace-card" id="trace-card" hidden>
               <div class="card-head">
                 <h2 id="h-trace">トレーサビリティ</h2>
-                <a class="btn btn--primary" id="trace-open" href="#" target="_blank" rel="noopener" aria-label="トレーサビリティを新しいタブで開く">開く</a>
+                <a class="btn btn--primary" id="trace-open" href="#trace"><span data-icon="hub" data-icon-size="16" aria-hidden="true"></span>トレーサビリティを開く</a>
               </div>
+              <p class="hint">文書の各行が、ソースのどのファイル・どの要素から来たかを 1 件ずつ確かめられます。</p>
               <div class="kpi-row" id="trace-kpis"></div>
             </div>
-            <div class="card stack">
-              <h2 id="h-docs-list">生成した文書</h2>
+            <div class="stack" id="docs-block">
+              <h2 id="h-docs-list" class="section-title">生成した文書</h2>
               <p id="failures" class="callout callout--high" hidden><span data-icon="warning" data-icon-size="18" aria-hidden="true"></span><span>一部のファイルの解析に失敗しました。D08 と D09 で対象のファイルを確かめてください。</span></p>
-              <div class="table-wrap" id="doc-table">
-                <table class="table">
-                  <thead><tr><th scope="col">文書</th><th scope="col">閲覧</th><th scope="col">ダウンロード</th></tr></thead>
-                  <tbody id="doc-rows"></tbody>
-                </table>
-              </div>
+              <div id="doc-cats" class="stack"></div>
               <div class="cell-actions" id="extras" role="group" aria-label="実行の記録ファイル"></div>
             </div>
           </div>
@@ -220,6 +338,11 @@
 
         <section class="view" id="view-doc" aria-labelledby="page-title" hidden>
           <iframe id="frame" title="文書の表示" sandbox="allow-scripts"></iframe>
+        </section>
+
+        <section class="view" id="view-trace" aria-labelledby="page-title" hidden>
+          <div id="trace-empty"></div>
+          <iframe id="trace-frame" title="トレーサビリティ" hidden></iframe>
         </section>
 
         <section class="view" id="view-log" aria-labelledby="page-title" hidden>
@@ -241,23 +364,37 @@
         </section>
 
         <section class="view measure" id="view-help" aria-labelledby="page-title" hidden>
-          <div class="card">
-            <h2>画面で使う</h2>
-            <ol class="steps">
-              <li>「文書の作成」で入力の種類を選び、GitHub の URL・.zip ファイル・フォルダのパスのどれかを入れます。</li>
-              <li>文書の種類と出力形式を選び、「文書を作る」を押します。</li>
-              <li>終わると「結果」に文書の一覧が出ます。HTML はこの画面で閲覧でき、各形式をダウンロードできます。</li>
-              <li>入力・設定・処理時間・ファイル件数・LLM の使用量は「実行記録」で確かめられます。</li>
+          <div class="card stack">
+            <h2>使う流れ</h2>
+            <ol class="flow">
+              <li><div><strong>ソースを渡す</strong><span>「文書の作成」で GitHub の URL・.zip ファイル・フォルダのパスのどれかを入れます。</span></div></li>
+              <li><div><strong>仕様書を生成</strong><span>文書の種類と出力形式を選び、「文書を作る」を押します。デモ 19 ファイルで約 2 秒です。</span></div></li>
+              <li><div><strong>トレーサビリティで確かめる</strong><span>文書の行とソースの対応を 1 件ずつ確かめ、未確認を減らします。</span></div></li>
             </ol>
+            <p class="hint">入力・設定・処理時間・ファイル件数・LLM の使用量は「実行記録」に残ります。</p>
           </div>
-          <div class="card">
+          <div class="card stack">
+            <h2>出力される文書</h2>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th scope="col">文書</th><th scope="col">区分</th><th scope="col">内容</th></tr></thead>
+                <tbody id="help-docs"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card stack">
+            <h2>根拠ラベル</h2>
+            <p class="hint">文書の各記述には、ソースからどう読み取ったかを示すラベルが付きます。</p>
+            <dl class="labels">
+              <dt><span class="badge badge-neutral">事実</span></dt><dd>ソースの記述からそのまま読み取れた内容です。</dd>
+              <dt><span class="badge badge-neutral">推測</span></dt><dd>名前や構造から推し量った内容です。使う前に人が確かめてください。</dd>
+              <dt><span class="badge badge-neutral">不明</span></dt><dd>ソースから確定できなかった事項です。D09 確認事項一覧にまとまっています。</dd>
+            </dl>
+          </div>
+          <div class="card stack">
             <h2>コマンドで使う</h2>
             <p class="hint">同じ処理をコマンドでも実行できます。使い方は <code>node src/cli.ts --help</code> で表示します。</p>
             <p class="hint"><code>node src/cli.ts --folder ./my-app --docs D01,D03 --format md,html</code></p>
-          </div>
-          <div class="card">
-            <h2>文書の根拠</h2>
-            <p class="hint">各記述には「事実」「推測」「不明」のどれかを付けています。「不明」の項目は D09 確認事項一覧にまとまっています。</p>
           </div>
         </section>
 
@@ -270,10 +407,26 @@
 <script>
 (() => {
   const DOCS = [['D01','概要書'],['D02','要求仕様書'],['D03','画面仕様書'],['D04','データ仕様書'],['D05','データ連携仕様書'],['D06','依存ライブラリ一覧'],['D07','移行論点・技術的負債一覧'],['D08','解析カバレッジ・追跡レポート'],['D09','確認事項一覧'],['D11','基本設計書'],['D12','詳細設計書'],['D13','テスト観点表']];
-  const VIEWS = { make: '文書の作成', result: '結果', doc: '閲覧', log: '実行記録', help: '使い方' };
+  // 文書ごとの 1 行説明（結果のカード・使い方の一覧で使う）
+  const DOC_INFO = {
+    D01: 'システムの目的・構成・使っている技術の全体像',
+    D02: '画面・API・処理から読み取った機能の要求',
+    D03: '画面ごとの項目・操作・遷移',
+    D04: 'データの項目・型・制約',
+    D05: '外部 API・ファイル・通信の入出力',
+    D06: '使っているライブラリと版',
+    D07: '移行で判断が要る点と技術的負債',
+    D08: '解析できた範囲と、できなかったファイル',
+    D09: 'ソースから確定できず、人に確かめる事項',
+    D11: '構成要素の責務と処理の流れ',
+    D12: 'モジュール・関数単位の処理',
+    D13: '仕様から導いたテストの観点',
+  };
+  const VIEWS = { home: 'ホーム', make: '文書の作成', result: '結果', doc: '閲覧', log: '実行記録', trace: 'トレーサビリティ', help: '使い方' };
   const FORMAT_LABELS = { md: 'MD', html: 'HTML', docx: 'Word', xlsx: 'Excel', json: 'JSON' };
   let currentDoc = null;   // 閲覧中の文書 { runId, id, title, files }
   const $ = (id) => document.getElementById(id);
+  const el = (tag, props) => Object.assign(document.createElement(tag), props || {});
   const icon = (name, size) => {
     const s = document.createElement('span');
     s.setAttribute('aria-hidden', 'true');
@@ -283,6 +436,8 @@
 
   // 文書の種類は読む人の関心ごとに 3 グループ
   const GROUPS = [['概要・要求', ['D01', 'D02', 'D03', 'D09']], ['データ・連携', ['D04', 'D05', 'D06']], ['設計・移行', ['D11', 'D12', 'D13', 'D07', 'D08']]];
+  // 結果・使い方ではテストを分けて 4 区分
+  const CATS = [['概要・要求', ['D01', 'D02', 'D03', 'D09']], ['データ・連携', ['D04', 'D05', 'D06']], ['設計・移行', ['D11', 'D12', 'D07', 'D08']], ['テスト', ['D13']]];
   const TITLES = Object.fromEntries(DOCS);
   for (const [name, ids] of GROUPS) {
     const group = Object.assign(document.createElement('div'), { className: 'doc-group', role: 'group' });
@@ -296,9 +451,43 @@
     }
     $('docs').append(group);
   }
-  const setAllDocs = (on) => { for (const cb of document.querySelectorAll('input[name=docs]')) cb.checked = on; };
+  // 使い方: 出力される文書の一覧
+  for (const [cat, ids] of CATS) {
+    for (const id of ids) {
+      const tr = document.createElement('tr');
+      tr.append(el('th', { scope: 'row', textContent: id + ' ' + TITLES[id] }), el('td', { textContent: cat }), el('td', { textContent: DOC_INFO[id] }));
+      $('help-docs').append(tr);
+    }
+  }
+  const setAllDocs = (on) => { for (const cb of document.querySelectorAll('input[name=docs]')) cb.checked = on; syncPlan(); };
   $('docs-all').addEventListener('click', () => setAllDocs(true));
   $('docs-none').addEventListener('click', () => setAllDocs(false));
+
+  // ── 作成のステップ表示と実行前の要約（入力のたびに更新） ──
+  const inputReady = () => {
+    const kind = $('kind').value;
+    if (kind === 'zip') return $('zip').files && $('zip').files.length > 0;
+    return (kind === 'folder' ? $('folder') : $('url')).value.trim() !== '';
+  };
+  const syncPlan = () => {
+    const docs = document.querySelectorAll('input[name=docs]:checked').length;
+    const formats = document.querySelectorAll('input[name=formats]:checked').length;
+    const llm = $('llm').checked;
+    $('run-summary').textContent = docs + ' 文書 × ' + formats + ' 形式・' + (llm ? 'LLM あり' : 'LLM なし') + '・目安 ' + (llm ? '2 秒＋LLM の応答待ち' : '2 秒');
+    const done = [inputReady(), docs > 0 && formats > 0, false];
+    const active = done.indexOf(false);
+    [...$('wizard').children].forEach((li, i) => {
+      li.classList.toggle('is-done', done[i]);
+      li.classList.toggle('is-active', i === active);
+      const b = li.querySelector('button');
+      if (i === active) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+  };
+  for (const li of $('wizard').children) {
+    li.querySelector('button').addEventListener('click', () => $(li.dataset.target).scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  }
+  $('run-form').addEventListener('input', () => syncPlan());
+  $('run-form').addEventListener('change', () => syncPlan());
 
   // ── 骨格: サイドバー・テーマ・画面の切替 ──
   const sidebar = $('sidebar');
@@ -345,9 +534,13 @@
     applyTheme(next);
     try { localStorage.setItem(THEME_KEY, next); } catch { /* 保存できなくても表示は切り替える */ }
   });
+  // 画面は #<名前>。トレーサビリティだけ #trace/<runId>（省略時は最新の実行）
   const show = (name, focus) => {
-    let view = VIEWS[name] ? name : 'make';
+    const [head, ...rest] = String(name).split('/');
+    let view = VIEWS[head] ? head : 'home';
     if (view === 'doc' && !currentDoc) view = 'result';
+    let traceArg = '';
+    if (view === 'trace') { try { traceArg = decodeURIComponent(rest.join('/')); } catch { traceArg = ''; } }
     for (const key of Object.keys(VIEWS)) $('view-' + key).hidden = key !== view;
     const navView = view === 'doc' ? 'result' : view;   // 閲覧は「結果」の配下
     for (const a of sidebar.querySelectorAll('nav a')) {
@@ -356,24 +549,48 @@
     const title = view === 'doc' ? currentDoc.id + ' ' + currentDoc.title : VIEWS[view];
     $('page-title').textContent = title;
     $('crumb').hidden = view !== 'doc';
+    $('crumb-trace').hidden = view !== 'trace';
     $('doc-actions').hidden = view !== 'doc';
-    $('run').hidden = view !== 'make';   // 主操作は「文書の作成」でだけ出す
+    $('trace-actions').hidden = view !== 'trace';
     if (view !== 'doc') $('frame').removeAttribute('src');
+    if (view !== 'trace') $('trace-frame').removeAttribute('src');
     document.querySelector('.app-content').scrollTop = 0;   // 画面を切り替えたら本文の先頭から
     document.title = title + ' — Spec2Doc';
     sidebar.classList.remove('open'); $('menu').setAttribute('aria-expanded', 'false');
     if (focus) $('page-title').focus();
     if (view === 'log') loadRuns();   // 画面を切り替えるたびに一覧を取り直す
+    if (view === 'home') loadHome();
+    if (view === 'trace') openTrace(traceArg);
   };
   window.addEventListener('hashchange', () => show(location.hash.slice(1), true));
   const go = (name) => { if (location.hash === '#' + name) show(name, true); else location.hash = name; };
+  const traceHash = (runId) => '#trace/' + encodeURIComponent(runId);
 
   // ── 入力の種類（seg） ──
   let running = false;
   let closeLastError = null;
+  const STAGES = ['取得', '解析', '生成', '照合', '出力'];
+  // SSE の progress の message から工程を決める（完了なら全工程済み）
+  const stageOf = (message) => {
+    const m = String(message);
+    if (m.includes('完了')) return STAGES.length;
+    if (m.includes('書き出')) return 4;
+    if (m.includes('照合') || m.includes('検証')) return 3;
+    if (m.includes('生成')) return 2;
+    if (m.includes('解析')) return 1;
+    return 0;
+  };
+  const renderStages = (idx) => {
+    [...$('stages').children].forEach((li, i) => {
+      const state = i < idx ? 'is-done' : i === idx ? 'is-active' : '';
+      li.className = state;
+      li.textContent = STAGES[i] + (state === 'is-done' ? '済' : state === 'is-active' ? '中' : '');
+      if (state === 'is-active') li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+  };
   const resetFeedback = () => {   // 前の実行の失敗と進み具合を消す。入力値は触らない
     if (closeLastError) { closeLastError(); closeLastError = null; }
-    $('progress-box').hidden = true; $('bar').value = 0; $('status').textContent = '';
+    $('progress-box').hidden = true; $('bar').value = 0; $('status').textContent = ''; renderStages(-1);
   };
   // 利用者が次の操作を始めたら前の失敗を閉じる（消えないトーストが残ると下の部品を覆い続ける）
   const dismissError = () => { if (closeLastError) { closeLastError(); closeLastError = null; } };
@@ -387,6 +604,7 @@
     }
     $('kind').value = tab.dataset.kind;
     if (!running) resetFeedback();
+    syncPlan();
     if (focus) tab.focus();
   };
   tabs.forEach((t, i) => {
@@ -458,13 +676,45 @@
     $('doc-downloads').replaceChildren(...dlButtons(runId, d.files, d.id + ' ' + d.title));
     go('doc');
   };
-  const kpi = (label, value, delta) => {
+  const kpi = (label, value, delta, tone) => {
     const card = Object.assign(document.createElement('div'), { className: 'card kpi' });
     card.append(
       Object.assign(document.createElement('span'), { className: 'kpi-label', textContent: label }),
       Object.assign(document.createElement('span'), { className: 'kpi-value', textContent: value }),
-      Object.assign(document.createElement('span'), { className: 'kpi-delta', textContent: delta }),
+      Object.assign(document.createElement('span'), { className: 'kpi-delta' + (tone ? ' ' + tone : ''), textContent: delta }),
     );
+    return card;
+  };
+
+  // 文書 1 件のカード: 名前・1 行の説明・開く・形式ごとのダウンロード
+  const docCard = (runId, d) => {
+    const label = d.id + ' ' + d.title;
+    const card = el('article', { className: 'card doc-card' });
+    card.setAttribute('aria-label', label);
+    const head = el('div', { className: 'doc-head' });
+    head.append(el('span', { className: 'doc-id', textContent: d.id }), el('strong', { className: 'doc-name', textContent: d.title }));
+    if (typeof d.changes === 'number') {   // 前回の実行と比べた変化（初回生成の文書は出さない）
+      const badge = Object.assign(document.createElement('span'), { className: 'badge badge-neutral', textContent: d.changes === 0 ? '変更なし' : '変更 ' + d.changes + ' 節' });
+      badge.title = '前回の実行と比べて変わった節の数';
+      head.append(badge);
+    }
+    const open = Object.assign(document.createElement('div'), { className: 'cell-actions' });
+    const html = d.files.find((f) => f.endsWith('.html'));
+    if (html) {
+      const b = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-sm', textContent: '開く' });
+      b.setAttribute('aria-label', label + ' を開く');
+      b.addEventListener('click', () => openDoc(runId, d));
+      const tab = Object.assign(document.createElement('a'), { href: fileUrl('view', runId, html), className: 'btn btn--ghost btn-sm btn-icon', target: '_blank', rel: 'noopener' });
+      tab.setAttribute('aria-label', label + ' を新しいタブで開く');
+      tab.append(icon('open-in-new', 16));
+      open.append(b, tab);
+    } else {
+      open.append(el('span', { className: 'hint', textContent: 'HTML 形式を選ぶと開けます' }));
+    }
+    const group = Object.assign(document.createElement('div'), { className: 'cell-actions' });
+    group.setAttribute('role', 'group'); group.setAttribute('aria-label', label + ' のダウンロード');
+    group.append(...dlButtons(runId, d.files, label));
+    card.append(head, el('p', { className: 'desc', textContent: DOC_INFO[d.id] || '' }), open, group);
     return card;
   };
 
@@ -472,7 +722,7 @@
     const c = r.fileCounts;
     $('kpis').replaceChildren(
       kpi('解析したファイル', String(c.analyzed), '全 ' + c.total + ' 件中'),
-      kpi('失敗', String(c.failed), c.failed ? 'D08・D09 で確認' : 'なし'),
+      kpi('失敗', String(c.failed), c.failed ? 'D08・D09 で確認' : 'なし', c.failed ? 'down' : ''),
       kpi('除外', String(c.excluded), '対象外 ' + c.unsupported + ' 件'),
       kpi('所要時間', (r.durationMs / 1000).toFixed(1) + ' 秒', '生成から書き出しまで'),
     );
@@ -485,41 +735,22 @@
         kpi('対応', t.links + ' 件', '文書の行とソースの対応'),
         kpi('判定済み', pct + '%', t.reviewed + ' / ' + t.links + ' 件（要修正 ' + (t.needsFix ?? 0) + ' 件）'),
       );
-      $('trace-open').href = t.url;
+      $('trace-open').href = traceHash(r.runId);
     }
     $('failures').hidden = !r.hasFailures;
-    const rows = $('doc-rows'); rows.replaceChildren();
     const docs = [...r.docs].sort((x, y) => x.id.localeCompare(y.id));   // D01 → D12 の番号順
-    for (const d of docs) {
-      const label = d.id + ' ' + d.title;
-      const tr = document.createElement('tr');
-      const th = Object.assign(document.createElement('th'), { scope: 'row', textContent: label });
-      if (typeof d.changes === 'number') {   // 前回の実行と比べた変化（初回生成の文書は出さない）
-        const badge = Object.assign(document.createElement('span'), { className: 'badge badge-neutral', textContent: d.changes === 0 ? '変更なし' : '変更 ' + d.changes + ' 節' });
-        badge.title = '前回の実行と比べて変わった節の数';
-        th.append(badge);
-      }
-      const view = document.createElement('td');
-      const html = d.files.find((f) => f.endsWith('.html'));
-      if (html) {
-        const cell = Object.assign(document.createElement('div'), { className: 'cell-actions' });
-        const b = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-sm', textContent: '開く' });
-        b.setAttribute('aria-label', label + ' を開く');
-        b.addEventListener('click', () => openDoc(r.runId, d));
-        const tab = Object.assign(document.createElement('a'), { href: fileUrl('view', r.runId, html), className: 'btn btn--ghost btn-sm btn-icon', target: '_blank', rel: 'noopener' });
-        tab.setAttribute('aria-label', label + ' を新しいタブで開く');
-        tab.append(icon('open-in-new', 16));
-        cell.append(b, tab); view.append(cell);
-      } else {
-        view.textContent = 'HTML 形式を選ぶと開けます';
-      }
-      const dl = document.createElement('td');
-      const group = Object.assign(document.createElement('div'), { className: 'cell-actions' });
-      group.setAttribute('role', 'group'); group.setAttribute('aria-label', label + ' のダウンロード');
-      group.append(...dlButtons(r.runId, d.files, label));
-      dl.append(group);
-      tr.append(th, view, dl); rows.append(tr);
+    const cats = [];
+    for (const [name, ids] of CATS) {
+      const inCat = docs.filter((d) => ids.includes(d.id));
+      if (inCat.length === 0) continue;
+      const sec = el('section', { className: 'doc-cat' });
+      const h = el('h3', { className: 'cat-title', id: 'cat-' + ids[0], textContent: name });
+      sec.setAttribute('aria-labelledby', h.id);
+      const grid = el('div', { className: 'doc-cards' });
+      grid.append(...inCat.map((d) => docCard(r.runId, d)));
+      sec.append(h, grid); cats.push(sec);
     }
+    $('doc-cats').replaceChildren(...cats);
     $('extras').replaceChildren(...r.extras.map((f) => {
       const name = f === 'run-log.json' ? '実行記録' : '中間表現';
       const a = Object.assign(document.createElement('a'), { href: fileUrl('files', r.runId, f), className: 'btn btn--ghost btn-sm' });
@@ -541,16 +772,23 @@
   };
 
   // デモのサンプル: フォルダ入力に切り替え、文書・出力形式を全部選んだ状態にする（実行は利用者が押す）
-  fetch('/api/config').then((res) => (res.ok ? res.json() : null)).then((c) => {
+  let demoPath = null;
+  const applyDemo = () => {
+    select($('tab-folder'), false);
+    $('folder').value = demoPath;
+    setAllDocs(true);
+    for (const el of document.querySelectorAll('input[name=formats]')) el.checked = true;
+    syncPlan();
+  };
+  const startDemo = () => { dismissError(); if (demoPath) applyDemo(); go('make'); };
+  const configReady = fetch('/api/config').then((res) => (res.ok ? res.json() : null)).then((c) => {
     if (!c || typeof c.demoPath !== 'string') return;
+    demoPath = c.demoPath;
     const b = $('demo');
     b.hidden = false;
     b.addEventListener('click', () => {
       dismissError();
-      select($('tab-folder'), false);
-      $('folder').value = c.demoPath;
-      setAllDocs(true);
-      for (const el of document.querySelectorAll('input[name=formats]')) el.checked = true;
+      applyDemo();
       $('run').focus();
     });
   }).catch(() => {});
@@ -613,7 +851,8 @@
     setRunning(true);
     anchorAt($('run'));
     const done = Feedback.busy('文書を作っています');
-    $('progress-box').hidden = false; $('bar').value = 0; $('status').textContent = '送信しています';
+    $('progress-box').hidden = false; $('bar').value = 0; $('status').textContent = '送信しています'; renderStages(0);
+    $('progress-box').scrollIntoView({ block: 'nearest' });
     const stop = (status) => { done(); setRunning(false); $('status').textContent = status; };
     let res, body;
     try {
@@ -635,10 +874,11 @@
     es.addEventListener('progress', (ev) => {
       const p = JSON.parse(ev.data);
       $('bar').value = Math.round(p.ratio * 100);
+      renderStages(stageOf(p.message));
       $('status').textContent = p.message + '（' + Math.round(p.ratio * 100) + '%）';
     });
     es.addEventListener('result', async (ev) => {
-      finish('完了しました（100%）'); $('bar').value = 100;
+      finish('完了しました（100%）'); $('bar').value = 100; renderStages(STAGES.length);
       const r = JSON.parse(ev.data);
       showResult(r);
       await showLog(r.runId);
@@ -690,6 +930,19 @@
     await showLog(runId);
     if (!$('log-box').hidden) $('log-box').scrollIntoView({ block: 'nearest' });
   };
+  const actionButton = (text, cls, label, onClick) => {
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: cls, textContent: text });
+    b.setAttribute('aria-label', label);
+    b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+    return b;
+  };
+  const traceLink = (run, when) => {
+    const a = Object.assign(document.createElement('a'), { href: traceHash(run.runId), className: 'btn btn--ghost btn-sm' });
+    a.setAttribute('aria-label', when + ' の実行のトレーサビリティを開く');
+    a.addEventListener('click', (e) => e.stopPropagation());
+    a.append(icon('hub', 16), document.createTextNode('トレーサビリティ'));
+    return a;
+  };
   const runRow = (run) => {
     const when = jstTime(run.startedAt);
     const tr = document.createElement('tr');
@@ -701,25 +954,14 @@
     const badge = Object.assign(document.createElement('span'), { className: 'badge badge-neutral', textContent: n > 0 ? '変更 ' + n + ' 文書' : '変更なし' });
     badge.title = '前回の実行と比べて内容が変わった文書の数';
     const changed = document.createElement('td'); changed.append(badge);
-    const button = (text, cls, label, onClick) => {
-      const b = Object.assign(document.createElement('button'), { type: 'button', className: cls, textContent: text });
-      b.setAttribute('aria-label', label);
-      b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
-      return b;
-    };
+    const button = actionButton;
     const group = Object.assign(document.createElement('div'), { className: 'cell-actions' });
     group.setAttribute('role', 'group'); group.setAttribute('aria-label', when + ' の実行の操作');
     group.append(
       button('結果を開く', 'btn btn-sm', when + ' の実行の結果を開く', () => openRun(run.runId)),
       button('詳細', 'btn btn--ghost btn-sm', when + ' の実行の詳細を見る', () => showRunDetail(run.runId)),
     );
-    if (run.hasTrace && run.traceUrl) {
-      const a = Object.assign(document.createElement('a'), { href: run.traceUrl, className: 'btn btn--ghost btn-sm', target: '_blank', rel: 'noopener' });
-      a.setAttribute('aria-label', when + ' の実行のトレーサビリティを新しいタブで開く');
-      a.addEventListener('click', (e) => e.stopPropagation());
-      a.append(icon('open-in-new', 16), document.createTextNode('トレーサビリティ'));
-      group.append(a);
-    }
+    if (run.hasTrace && run.traceUrl) group.append(traceLink(run, when));
     const actions = document.createElement('td'); actions.append(group);
     const docs = Array.isArray(run.docs) ? run.docs.length : 0;
     const secs = typeof run.durationMs === 'number' ? (run.durationMs / 1000).toFixed(1) + ' 秒' : '—';
@@ -731,6 +973,13 @@
     markSelected();
     $('runs-card').hidden = runs.length === 0;
     if (runs.length === 0) { $('log-box').hidden = true; emptyLog(); } else $('log-empty').replaceChildren();
+  };
+  const fetchRuns = async (limit) => {
+    const res = await fetch('/api/runs?limit=' + limit, { cache: 'no-store' });
+    if (!res.ok) throw new Error(String(res.status));
+    const body = await res.json();
+    if (!Array.isArray(body?.runs)) throw new Error('runs が無い');
+    return body.runs;
   };
   const loadRuns = async () => {
     const seq = ++runsSeq;
@@ -756,7 +1005,130 @@
     if (seq === runsSeq) renderRuns(runs);
   };
 
-  emptyResult(); emptyLog();
+  // ── ホーム: 警告帯・KPI・最近の実行 5 件。実行 0 件ならデモを主操作にした空状態 ──
+  const HOME_LIMIT = 200;
+  let homeSeq = 0;
+  const alertBand = (title, next, label, onClick) => {
+    const box = el('div', { className: 'callout callout--high alert-band' });
+    const text = el('div', { className: 'alert-text' });
+    text.append(el('strong', { textContent: title }), el('span', { textContent: next }));
+    const b = el('button', { type: 'button', className: 'btn btn-sm', textContent: label });
+    b.addEventListener('click', onClick);
+    box.append(icon('warning', 18), text, b);
+    return box;
+  };
+  const setHeroPrimary = (makeIsPrimary) => {
+    $('home-make').className = makeIsPrimary ? 'btn btn--primary' : 'btn';
+  };
+  const homeRow = (run) => {
+    const when = jstTime(run.startedAt);
+    const tr = document.createElement('tr');
+    const group = el('div', { className: 'cell-actions' });
+    group.setAttribute('role', 'group'); group.setAttribute('aria-label', when + ' の実行の操作');
+    group.append(actionButton('結果を開く', 'btn btn-sm', when + ' の実行の結果を開く', () => openRun(run.runId)));
+    if (run.hasTrace) group.append(traceLink(run, when));
+    const actions = el('td'); actions.append(group);
+    tr.append(el('th', { scope: 'row', textContent: when }), el('td', { textContent: String(run.source ?? '') }),
+      el('td', { textContent: String(Array.isArray(run.docs) ? run.docs.length : 0) }), el('td', { textContent: run.analyzed + ' / ' + run.failed }), actions);
+    return tr;
+  };
+  const renderHome = (runs, latest) => {
+    const empty = runs.length === 0;
+    $('home-kpis').hidden = empty; $('home-recent').hidden = empty;
+    $('home-demo').hidden = empty || !demoPath;
+    setHeroPrimary(!empty);
+    if (empty) {
+      $('home-alerts').replaceChildren();
+      $('home-empty').replaceChildren(Feedback.emptyState({
+        icon: 'description', title: 'まだ文書を作っていません',
+        description: demoPath ? 'デモのサンプル（19 ファイル）で、作られる文書とトレーサビリティを約 2 秒で確かめられます。' : '入力を指定して文書を作ると、ここに実行の結果が並びます。',
+        action: demoPath ? { label: 'デモで試す', onClick: startDemo } : { label: '文書を作る', onClick: () => go('make') },
+      }));
+      return;
+    }
+    $('home-empty').replaceChildren();
+    const r0 = runs[0];
+    const t = latest && latest.trace;
+    const unreviewed = t ? Math.max(0, t.links - t.reviewed) : null;
+    const questions = latest && typeof latest.questions === 'number' ? latest.questions : null;
+    const alerts = [];
+    if (r0.failed > 0) alerts.push(alertBand('最新の実行で ' + r0.failed + ' 件のファイルを解析できませんでした', '結果の D08・D09 で対象のファイルを確かめてください。', '結果を開く', () => openRun(r0.runId)));
+    if (unreviewed) alerts.push(alertBand('トレーサビリティに未確認の対応が ' + unreviewed + ' 件あります', '文書の行とソースの対応を確かめて、判定を付けてください。', 'トレーサビリティを開く', () => go('trace/' + encodeURIComponent(r0.runId))));
+    $('home-alerts').replaceChildren(...alerts);
+    $('home-kpis').replaceChildren(
+      kpi('実行の回数', runs.length >= HOME_LIMIT ? HOME_LIMIT + '+' : String(runs.length), '最新 ' + jstTime(r0.startedAt)),
+      kpi('最新の実行の文書数', String(Array.isArray(r0.docs) ? r0.docs.length : 0), (Array.isArray(r0.formats) ? r0.formats.length : 0) + ' 形式'),
+      kpi('未確認の対応', unreviewed === null ? '—' : String(unreviewed), t ? '全 ' + t.links + ' 件中（要修正 ' + (t.needsFix ?? 0) + ' 件）' : 'トレーサビリティなし', t && t.needsFix > 0 ? 'down' : ''),   /* 赤は要修正が 1 件以上のときだけ */
+      kpi('確認事項（D09）', questions === null ? '—' : String(questions), '最新の実行'),
+    );
+    $('home-rows').replaceChildren(...runs.slice(0, 5).map(homeRow));
+  };
+  const loadHome = async () => {
+    const seq = ++homeSeq;
+    let runs;
+    try {
+      runs = await fetchRuns(HOME_LIMIT);
+    } catch {
+      if (seq !== homeSeq) return;
+      $('home-kpis').hidden = true; $('home-recent').hidden = true; $('home-alerts').replaceChildren();
+      $('home-empty').replaceChildren(Feedback.emptyState({
+        icon: 'history', title: '実行の履歴を読み込めませんでした', description: 'サーバが起動しているか確かめてから、もう一度読み込んでください。',
+        action: { label: 'もう一度読み込む', onClick: loadHome },
+      }));
+      return;
+    }
+    await configReady;
+    let latest = null;
+    if (runs.length > 0) {
+      try {
+        const res = await fetch('/api/runs/' + encodeURIComponent(runs[0].runId), { cache: 'no-store' });
+        if (res.ok) latest = await res.json();
+      } catch { latest = null; }   // 要約が取れなくても一覧と KPI の残りは出す
+    }
+    if (seq === homeSeq) renderHome(runs, latest);
+  };
+  $('home-make').addEventListener('click', () => go('make'));
+  $('home-demo').addEventListener('click', startDemo);
+
+  // ── トレーサビリティ: 同一オリジンの iframe で本文いっぱいに表示。実行はプルダウンで切り替える ──
+  let traceSeq = 0;
+  const traceEmpty = (title, description, action) => {
+    $('trace-frame').hidden = true; $('trace-frame').removeAttribute('src');
+    $('trace-run').closest('.topbar-actions').hidden = true;
+    $('trace-empty').replaceChildren(Feedback.emptyState({ icon: 'hub', title, description, action }));
+  };
+  const openTrace = async (runId) => {
+    const seq = ++traceSeq;
+    let runs;
+    try {
+      runs = await fetchRuns(50);
+    } catch {
+      if (seq === traceSeq) traceEmpty('実行の履歴を読み込めませんでした', 'サーバが起動しているか確かめてから、もう一度読み込んでください。', { label: 'もう一度読み込む', onClick: () => openTrace(runId) });
+      return;
+    }
+    if (seq !== traceSeq) return;
+    const traced = runs.filter((r) => r.hasTrace);
+    const known = runs.find((r) => r.runId === runId);
+    const target = runId || (traced[0] && traced[0].runId);
+    if (!target || (known && !known.hasTrace)) {
+      traceEmpty(target ? 'この実行にはトレーサビリティがありません' : 'まだトレーサビリティがありません',
+        '出力形式に「HTML（トレーサビリティ）」を選んで文書を作ると、ここで文書とソースの対応を確かめられます。',
+        { label: '文書を作る', onClick: () => go('make') });
+      return;
+    }
+    const options = traced.map((r) => el('option', { value: r.runId, textContent: jstTime(r.startedAt) + '　' + (r.source ?? '') }));
+    if (!traced.some((r) => r.runId === target)) options.unshift(el('option', { value: target, textContent: target }));
+    $('trace-run').replaceChildren(...options);
+    $('trace-run').value = target;
+    $('trace-run').closest('.topbar-actions').hidden = false;
+    $('trace-empty').replaceChildren();
+    const src = '/trace/' + encodeURIComponent(target) + '?embed=1';
+    if ($('trace-frame').getAttribute('src') !== src) $('trace-frame').src = src;
+    $('trace-frame').hidden = false;
+  };
+  $('trace-run').addEventListener('change', () => go('trace/' + encodeURIComponent($('trace-run').value)));
+
+  emptyResult(); emptyLog(); syncPlan(); renderStages(-1);
   show(location.hash.slice(1), false);
   if ($('view-log').hidden) loadRuns();   // ページを開いたとき（「実行記録」で開いたときは show が取る）
 })();

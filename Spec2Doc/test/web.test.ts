@@ -281,8 +281,9 @@ test('骨格は kit の app シェル、操作の結果は Feedback に一本化
   for (const cls of ['class="app"', 'class="app-globalbar"', 'class="sidebar"', 'class="app-topbar"', 'class="app-content"']) {
     assert.ok(html.includes(cls), cls);
   }
-  // サイドバーは目的の時系列: 作成 → 結果 → 実行記録 → 使い方
-  const nav = ['#make', '#result', '#log', '#help'].map((h) => html.indexOf(`href="${h}"`));
+  // サイドバーは用途のグループ（はじめる／つくる／見る／サポート）で、目的の時系列: ホーム → 作成 → 結果 → 実行記録 → トレーサビリティ → 使い方
+  const nav = ['#home', '#make', '#result', '#log', '#trace', '#help'].map((h) => html.indexOf(`href="${h}" data-view=`));
+  for (const g of ['はじめる', 'つくる', '見る', 'サポート']) assert.ok(html.includes(`class="nav-group-title" id="ng-`) && html.includes(`>${g}</span>`), g);
   assert.ok(nav.every((i) => i > 0));
   assert.deepEqual([...nav].sort((x, y) => x - y), nav);
   for (const api of ['Feedback.busy(', 'Feedback.ok(', 'Feedback.error(', 'Feedback.emptyState(']) {
@@ -335,7 +336,7 @@ test('ライト既定・kit の骨格どおりの見出しとカードで組む'
   assert.match(html, /localStorage\.getItem\(THEME_KEY\)/);
   assert.match(html, /applyTheme\(savedTheme === 'dark' \? 'dark' : 'light'\)/);
   // globalbar に製品名、サイドバー上部は「メニュー」＋折りたたみ（demo-shell と同じ）
-  assert.match(html, /id="menu"[\s\S]*?<\/button>\s*<span class="brand">Spec2Doc<\/span>/);
+  assert.match(html, /id="menu"[\s\S]*?<\/button>\s*<span class="brand-mark" aria-hidden="true">S<\/span>\s*<span class="brand">Spec2Doc<\/span>/);
   assert.match(html, /<div class="sidebar-head"><span class="brand">メニュー<\/span><button[^>]*id="collapse"/);
   // fieldset/legend をやめ .card ＋ h2。除外は details で既定は閉じる。LLM の状態は文字で重ねない
   assert.doesNotMatch(html, /<fieldset|<legend/);
@@ -388,7 +389,10 @@ test('出力形式にトレーサビリティ（既定オン）、結果にト�
   const html = await (await fetch(`${base}/`)).text();
   assert.match(html, /<input type="checkbox" id="f-trace" name="formats" value="trace" checked>HTML（トレーサビリティ）/);
   assert.match(html, /id="trace-card"[^>]*hidden/);
-  assert.match(html, /id="trace-open"[^>]*target="_blank"/);
+  // トレーサビリティは別タブにせず、アプリ内の #trace/<runId> で開く
+  assert.match(html, /id="trace-open" href="#trace"/);
+  assert.doesNotMatch(html, /id="trace-open"[^>]*target="_blank"/);
+  assert.match(html, /\$\('trace-open'\)\.href = traceHash\(r\.runId\);/);
   assert.match(html, /<button type="button" class="btn" id="demo" hidden>デモのサンプルで試す<\/button>/);
 });
 
@@ -407,7 +411,8 @@ test('実行記録は GET /api/runs の一覧を kit の表で出し、行ごと
   assert.match(html, /tr\.addEventListener\('click', \(\) => showRunDetail\(run\.runId\)\)/);
   // 変更は中立バッジ。トレーサビリティは hasTrace のときだけ新しいタブ
   assert.match(html, /className: 'badge badge-neutral', textContent: n > 0 \? '変更 ' \+ n \+ ' 文書' : '変更なし'/);
-  assert.match(html, /if \(run\.hasTrace && run\.traceUrl\) \{\s*const a = Object\.assign\(document\.createElement\('a'\), \{ href: run\.traceUrl, className: 'btn btn--ghost btn-sm', target: '_blank', rel: 'noopener' \}\);/);
+  assert.match(html, /if \(run\.hasTrace && run\.traceUrl\) group\.append\(traceLink\(run, when\)\);/);
+  assert.match(html, /const traceLink = \(run, when\) => \{\s*const a = Object\.assign\(document\.createElement\('a'\), \{ href: traceHash\(run\.runId\), className: 'btn btn--ghost btn-sm' \}\);/);
   // 結果画面の上部に実行記録への導線
   const result = html.slice(html.indexOf('id="view-result"'), html.indexOf('id="result-empty"'));
   assert.match(result, /<a class="btn btn--ghost btn-sm" id="to-log" href="#log">[\s\S]*実行記録へ<\/a>/);
@@ -455,5 +460,51 @@ test('GET /api/config はデモのフォルダがあれば絶対パス、無け�
     }
   } finally {
     await rm(demo, { recursive: true, force: true });
+  }
+});
+
+test('ホームが既定の画面: 警告帯・ヒーロー・3 ステップ・KPI 4 枚・最近の実行 5 件、0 件ならデモの空状態', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /let view = VIEWS\[head\] \? head : 'home';/);
+  const home = html.slice(html.indexOf('id="view-home"'), html.indexOf('id="view-make"'));
+  assert.ok(home.indexOf('id="home-alerts"') < home.indexOf('ソースコードからの仕様書づくり'));
+  assert.ok(home.indexOf('class="flow"') < home.indexOf('id="home-kpis"'));
+  assert.ok(home.indexOf('id="home-kpis"') < home.indexOf('id="home-recent"'));
+  assert.match(home, /所要時間の目安: デモ 19 ファイルで約 2 秒/);
+  for (const k of ['実行の回数', '最新の実行の文書数', '未確認の対応', '確認事項（D09）']) assert.ok(html.includes(`kpi('${k}'`), k);
+  assert.match(html, /runs\.slice\(0, 5\)\.map\(homeRow\)/);
+  assert.match(html, /action: demoPath \? \{ label: 'デモで試す', onClick: startDemo \}/);
+});
+
+test('作成はステップ表示・実行前の要約・工程の進捗帯を持つ', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  for (const s of ['入力', '文書と形式', '確認して実行']) assert.match(html, new RegExp(`<span class="wizard-node">\\d</span>${s}</button>`), s);
+  assert.match(html, /<p class="run-summary" id="run-summary"><\/p>/);
+  assert.match(html, /docs \+ ' 文書 × ' \+ formats \+ ' 形式・'/);
+  assert.match(html, /id="progress-box" class="run-band" role="status"/);
+  assert.match(html, /<ol class="stages" id="stages"><li>取得<\/li><li>解析<\/li><li>生成<\/li><li>照合<\/li><li>出力<\/li><\/ol>/);
+  assert.match(html, /renderStages\(stageOf\(p\.message\)\);/);
+  // 塗りの主操作は作成画面では「文書を作る」の 1 つだけ（要約カードの中）
+  const make = html.slice(html.indexOf('id="view-make"'), html.indexOf('id="view-result"'));
+  assert.equal(make.match(/btn--primary/g)?.length, 1);
+});
+
+test('トレーサビリティは #trace/<runId> で同一オリジンの iframe（embed=1）に出す', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /<iframe id="trace-frame" title="トレーサビリティ" hidden><\/iframe>/);
+  assert.match(html, /const src = '\/trace\/' \+ encodeURIComponent\(target\) \+ '\?embed=1';/);
+  assert.match(html, /<div class="breadcrumb" id="crumb-trace" hidden><span>見る<\/span><span>\/<\/span><span>トレーサビリティ<\/span><\/div>/);
+  assert.match(html, /<select id="trace-run" class="input"><\/select>/);
+  assert.doesNotMatch(html, /traceUrl, className|target: '_blank', rel: 'noopener' \}\);\s*a\.setAttribute\('aria-label', when/);
+  await writeFile(join(outDir, RUN_ID, 'traceability.html'), '<!doctype html><html><head><title>t</title></head><body></body></html>');
+  for (const [q, embed] of [['', false], ['?embed=1', true]] as const) {
+    const res = await fetch(`${base}/trace/${RUN_ID}${q}`);
+    assert.equal(res.status, 200);
+    const csp = res.headers.get('content-security-policy') ?? '';
+    const body = await res.text();
+    assert.match(csp, /frame-ancestors 'self'/);
+    assert.equal(body.includes('<script>window.SPEC2DOC_EMBED=true</script>'), embed);
+    const hash = createHash('sha256').update('window.SPEC2DOC_EMBED=true', 'utf8').digest('base64');
+    assert.equal(csp.includes(`'sha256-${hash}'`), embed);
   }
 });

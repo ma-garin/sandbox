@@ -25,6 +25,8 @@ var GRAPH = DATA.graph;
 var LABELS = DATA.labels;
 var API = typeof window.SPEC2DOC_TRACE_API === 'string' && window.SPEC2DOC_TRACE_API ? window.SPEC2DOC_TRACE_API : DATA.apiUrl || '';
 var STORE_KEY = 'spec2doc-trace-' + GRAPH.runId;
+// Web アプリの本文に埋め込むとき（iframe の URL に embed=1）は globalbar・topbar を隠し、主操作を KPI 行の右に移す
+var EMBED = window.SPEC2DOC_EMBED === true || /(?:^|[?&])embed=1(?:&|$)/.test(location.search) || document.documentElement.classList.contains('is-embed');
 var NODE_BY_ID = new Map(GRAPH.nodes.map(function (n) { return [n.id, n]; }));
 var LINK_BY_ID = new Map(GRAPH.links.map(function (l) { return [l.id, l]; }));
 var GAPS = findGaps(GRAPH);
@@ -32,8 +34,8 @@ var BIG = GRAPH.nodes.length > FOLD_LIMIT;
 var OVERVIEW = overviewGraph(GRAPH);
 var state = {
   review: DATA.review || emptyReview(GRAPH.runId),
-  tab: 'graph', page: 0, gapPage: { u: 0, s: 0 },
-  filter: { doc: '', status: 'unreviewed', evidence: '', text: '', node: null },
+  tab: 'graph', page: 0, gapPage: { u: 0, s: 0, c: 0 },
+  filter: { doc: '', status: 'unreviewed', evidence: '', text: '', node: null, section: '', file: '', suspect: '', kind: '' },
   hidden: new Set(), expand: false, detail: false, expanded: null, visible: [], search: { ids: [], i: 0 },
   saveTimer: 0, saveToast: null, selected: null,
   checked: new Set(), collapsed: new Set(), current: null, rows: [], pageIds: [],
@@ -115,9 +117,11 @@ function save(keepalive) {
   setSaveStatus('保存しています…');
   fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: keepalive === true })
     .then(function (res) {
+      if (res.status === 409) throw new Error('コメントは追記だけができます。書いたコメントの削除・書き換えはできません。画面を読み込み直してから追記してください。');
       if (!res.ok) throw new Error('サーバの応答が ' + res.status + ' でした。');
       if (state.saveToast) { state.saveToast(); state.saveToast = null; }
       setSaveStatus('保存しました（' + clock() + '）');
+      loadAudit();
     })
     .catch(function (e) {
       saveFailed('確認状態をサーバに保存できませんでした', ((e && e.message) || '通信に失敗しました。') + ' サーバが動いているか確かめてから保存し直してください', { label: 'もう一度保存する', run: save });
@@ -189,7 +193,7 @@ function importFile(file) {
 }
 
 /* ── タブ ── */
-var TABS = ['graph', 'manage', 'gaps'];
+var TABS = ['graph', 'matrix', 'manage', 'gaps', 'compare'];
 function showTab(name) {
   state.tab = name;
   document.querySelectorAll('[data-tab]').forEach(function (b) {
@@ -203,9 +207,13 @@ function showTab(name) {
   renderCurrent();
 }
 function renderCurrent() {
+  renderKpi();
+  renderViews();
   if (state.tab === 'graph') { view.resize(); if (state.selected) showDetail(state.selected); }
+  if (state.tab === 'matrix') renderMatrix();
   if (state.tab === 'manage') renderManage();
   if (state.tab === 'gaps') renderGaps();
+  if (state.tab === 'compare') renderCompare();
 }
 
 /* ── 関係図（既定は概観。点を選ぶとその点の code・section を足す） ── */
@@ -235,7 +243,7 @@ function refreshGraph() {
   var f = graphData();
   var ns = f.nodes.filter(function (n) { return !state.hidden.has(n.kind); });
   var ids = new Set(ns.map(function (n) { return n.id; }));
-  var es = f.edges.filter(function (e) { return ids.has(e.from) && ids.has(e.to); });
+  var es = f.edges.filter(function (e) { return ids.has(e.from) && ids.has(e.to); }).map(function (e) { return withKindLabel(e, LABELS.kind); });
   state.visible = ns;
   view.setData(ns, es);
   $('g-count').textContent = ns.length + ' 点・' + es.length + ' 本' + (state.detail ? '' : '（概観）');
@@ -350,7 +358,8 @@ function initSide() {
   GRAPH.nodes.forEach(function (n) { counts[n.kind] = (counts[n.kind] || 0) + 1; });
   document.querySelectorAll('[data-kind]').forEach(function (cb) {
     var k = cb.getAttribute('data-kind');
-    var c = cb.parentElement.querySelector('.count');
+    var row = cb.closest('tr');
+    var c = row ? row.querySelector('.count') : null;
     if (c) c.textContent = String(counts[k] || 0);
     cb.addEventListener('change', function () {
       if (cb.checked) state.hidden.delete(k); else state.hidden.add(k);
@@ -377,8 +386,25 @@ function initSide() {
   $('g-fit').addEventListener('click', function () { view.fit(); });
 }
 function initChrome() {
+  if (EMBED) {
+    document.documentElement.classList.add('is-embed');
+    $('embed-actions').appendChild($('t-save'));
+    $('embed-actions').appendChild($('t-audit'));
+    $('embed-actions').appendChild($('io-csv'));
+  }
   $('t-meta').textContent = [GRAPH.source, '実行 ' + GRAPH.runId, formatJst(GRAPH.generatedAt), '対応 ' + GRAPH.links.length + ' 件'].filter(Boolean).join(' ・ ');
+  $('tab-graph-count').textContent = String(GRAPH.nodes.length);
+  $('tab-matrix-count').textContent = String(buildMatrix(GRAPH, state.review).docs.reduce(function (n, d) { return n + d.rows.length; }, 0));
   $('tab-gaps-count').textContent = String(GAPS.undocumented.length + GAPS.noSource.length);
+  $('tab-compare-count').hidden = true;
+  $('t-audit').addEventListener('click', openAudit);
+  $('io-xlsx').addEventListener('click', function () { exportServer('xlsx', 'Excel（マトリクス）'); });
+  $('io-reqif').addEventListener('click', function () { exportServer('reqif', 'ReqIF'); });
+  $('v-save').addEventListener('click', onSaveView);
+  $('v-name').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); onSaveView(); } });
+  $('c-base').addEventListener('change', function () { runCompare($('c-base').value); });
+  $('c-set-baseline').addEventListener('click', setThisBaseline);
+  $('mx-uncovered').addEventListener('change', function () { MX_STATE.onlyGaps = $('mx-uncovered').checked; renderMatrix(); });
   document.querySelectorAll('[data-tab]').forEach(function (b, i, all) {
     b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
     b.addEventListener('keydown', function (ev) {
@@ -397,8 +423,13 @@ function initChrome() {
     $('io-file').value = '';
   });
   var side = $('trace-side');
-  $('side-open').addEventListener('click', function () { side.classList.add('open'); });
-  $('side-close').addEventListener('click', function () { side.classList.remove('open'); });
+  var sideBackdrop = $('side-backdrop');
+  function openSide() { side.classList.add('open'); sideBackdrop.classList.add('open'); }
+  function closeSide() { side.classList.remove('open'); sideBackdrop.classList.remove('open'); }
+  $('side-open').addEventListener('click', openSide);
+  $('side-close').addEventListener('click', closeSide);
+  sideBackdrop.addEventListener('click', closeSide);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && side.classList.contains('open')) closeSide(); });
   setSaveStatus(API ? '変更はサーバに保存します' : '変更はこの端末に保存します');
   window.addEventListener('pagehide', function () { if (state.saveTimer) save(true); });
 }
@@ -411,4 +442,6 @@ refreshGraph();
 showDetail(null);
 showTab('graph');
 loadRemote();
+loadAudit();
+loadRuns();
 `;

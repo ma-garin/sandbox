@@ -20,17 +20,61 @@ function entryOf(review, linkId) {
   return Object.prototype.hasOwnProperty.call(review.reviews, linkId) ? review.reviews[linkId] : null;
 }
 
-/** 1 行の状態・メモを変えた新しい TraceReview を返す（元は変えない）。利用者が触った行は引き継ぎ元を外す */
+/** reviews 以外（保存したビュー・ベースライン）を引き継いで reviews を差し替えた新しい TraceReview */
+function withReviews(review, reviews) {
+  var next = { version: TRACE_VERSION, runId: review.runId, reviews: reviews };
+  if (Array.isArray(review.savedViews)) next.savedViews = review.savedViews;
+  if (typeof review.baselineRunId === 'string' && review.baselineRunId !== '') next.baselineRunId = review.baselineRunId;
+  return next;
+}
+
+/** 状態を変えた 1 行。判定（未確認以外）に変わった時と confirm の時は確認者・確認日時を記録し直す。メモとコメントは残す */
+function nextEntry(prev, status, now, by, confirm) {
+  var next = { status: status, updatedAt: now };
+  if (prev && typeof prev.note === 'string' && prev.note !== '') next.note = prev.note;
+  if (status !== 'unreviewed') {
+    if (confirm || !prev || prev.status !== status) {
+      if (typeof by === 'string' && by !== '') next.reviewer = by.slice(0, 100);
+      next.reviewedAt = now;
+    } else {
+      if (prev.reviewer) next.reviewer = prev.reviewer;
+      if (prev.reviewedAt) next.reviewedAt = prev.reviewedAt;
+    }
+  }
+  if (prev && Array.isArray(prev.comments) && prev.comments.length) next.comments = prev.comments;
+  return next;
+}
+
+/** 1 行の状態・メモを変えた新しい TraceReview を返す（元は変えない）。利用者が触った行は引き継ぎ元を外す。patch = { status, note, reviewer, confirm } */
 function setReview(review, linkId, patch, now) {
   var prev = entryOf(review, linkId) || { status: 'unreviewed' };
   var status = patch.status !== undefined ? patch.status : prev.status;
   if (STATUS_KEYS.indexOf(status) < 0) throw new Error('状態が不正です: ' + status);
-  var next = { status: status, updatedAt: now };
-  var note = patch.note !== undefined ? patch.note : prev.note;
-  if (typeof note === 'string' && note !== '') next.note = note.slice(0, NOTE_MAX);
+  var next = nextEntry(prev, status, now, patch.reviewer, patch.confirm === true);
+  if (patch.note !== undefined) {
+    if (typeof patch.note === 'string' && patch.note !== '') next.note = patch.note.slice(0, NOTE_MAX);
+    else delete next.note;
+  }
   var reviews = Object.assign({}, review.reviews);
   reviews[linkId] = next;
-  return { version: TRACE_VERSION, runId: review.runId, reviews: reviews };
+  return withReviews(review, reviews);
+}
+
+function cleanComments(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(function (c) { return c && typeof c.at === 'string' && typeof c.text === 'string' && c.text !== ''; }).map(function (c) {
+    var out = { at: c.at, text: c.text.slice(0, NOTE_MAX) };
+    if (typeof c.by === 'string' && c.by !== '') out.by = c.by.slice(0, 100);
+    return out;
+  });
+}
+function cleanViews(list) {
+  if (!Array.isArray(list)) return undefined;
+  return list.filter(function (v) { return v && typeof v.name === 'string' && v.name !== '' && VIEW_TABS.indexOf(v.tab) >= 0; }).map(function (v) {
+    var f = {};
+    if (v.filters && typeof v.filters === 'object') Object.keys(v.filters).forEach(function (k) { if (typeof v.filters[k] === 'string') f[k] = v.filters[k]; });
+    return { name: v.name, tab: v.tab, filters: f };
+  });
 }
 
 /** 読み込んだ JSON を検査し、この実行の link にある行だけを取り込む。形が違えば Error（利用者向けの文） */
@@ -48,17 +92,25 @@ function normalizeReview(raw, graph, now) {
     if (!known.has(id) || !e || STATUS_KEYS.indexOf(e.status) < 0) { skipped++; return; }
     var entry = { status: e.status, updatedAt: typeof e.updatedAt === 'string' ? e.updatedAt : now };
     if (typeof e.note === 'string' && e.note !== '') entry.note = e.note.slice(0, NOTE_MAX);
+    if (typeof e.reviewer === 'string' && e.reviewer !== '') entry.reviewer = e.reviewer.slice(0, 100);
+    if (typeof e.reviewedAt === 'string' && e.reviewedAt !== '') entry.reviewedAt = e.reviewedAt;
+    var comments = cleanComments(e.comments);
+    if (comments.length) entry.comments = comments;
     var from = typeof e.carriedFrom === 'string' ? e.carriedFrom : otherRun;
     if (from) entry.carriedFrom = from;
     reviews[id] = entry;
     accepted++;
   });
-  return { review: { version: TRACE_VERSION, runId: graph.runId, reviews: reviews }, accepted: accepted, skipped: skipped };
+  var head = { runId: graph.runId, savedViews: cleanViews(raw.savedViews), baselineRunId: typeof raw.baselineRunId === 'string' ? raw.baselineRunId : '' };
+  return { review: withReviews(head, reviews), accepted: accepted, skipped: skipped };
 }
 
-/** base に over の行を上書きした新しい TraceReview */
+/** base に over の行を上書きした新しい TraceReview（保存したビュー・ベースラインは over にあれば over） */
 function mergeReviews(base, over) {
-  return { version: TRACE_VERSION, runId: base.runId, reviews: Object.assign({}, base.reviews, over.reviews) };
+  var next = withReviews(base, Object.assign({}, base.reviews, over.reviews));
+  if (Array.isArray(over.savedViews)) next.savedViews = over.savedViews;
+  if (typeof over.baselineRunId === 'string' && over.baselineRunId !== '') next.baselineRunId = over.baselineRunId;
+  return next;
 }
 
 function statusCounts(graph, review) {
@@ -154,23 +206,22 @@ function filterLinks(graph, review, f) {
     if (f.doc && l.docId !== f.doc) return false;
     if (f.status && statusOf(review, l.id) !== f.status) return false;
     if (f.evidence && l.evidence !== f.evidence) return false;
+    if (f.section && l.sectionNodeId !== f.section) return false;
+    if (f.file && !l.sources.some(function (s) { return s.file === f.file; })) return false;
+    if (f.kind && (l.kind || '') !== f.kind) return false;
+    if (f.suspect && !isSuspectOpen(l, entryOf(review, l.id), graph.generatedAt)) return false;
     if (!text) return true;
     var e = entryOf(review, l.id);
     var hay = [l.section, l.summary, l.sources.map(formatSource).join(' '), e && e.note ? e.note : ''].join('\n').toLowerCase();
     return hay.indexOf(text) >= 0;
   });
 }
-/** 複数行の状態をまとめて変えた新しい TraceReview（メモは残す。コピーは 1 回だけ） */
-function setReviewMany(review, ids, status, now) {
+/** 複数行の状態をまとめて変えた新しい TraceReview（メモ・コメントは残し、確認者・日時を記録する。コピーは 1 回だけ） */
+function setReviewMany(review, ids, status, now, by) {
   if (STATUS_KEYS.indexOf(status) < 0) throw new Error('状態が不正です: ' + status);
   var reviews = Object.assign({}, review.reviews);
-  ids.forEach(function (id) {
-    var prev = entryOf(review, id);
-    var next = { status: status, updatedAt: now };
-    if (prev && prev.note) next.note = prev.note;
-    reviews[id] = next;
-  });
-  return { version: TRACE_VERSION, runId: review.runId, reviews: reviews };
+  ids.forEach(function (id) { reviews[id] = nextEntry(entryOf(review, id), status, now, by, false); });
+  return withReviews(review, reviews);
 }
 
 var OVERVIEW_KINDS = { folder: true, file: true, doc: true };

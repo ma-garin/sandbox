@@ -7,6 +7,7 @@ import type { Block, DocId, Document, ListItem, Provenance, TableBlock } from '.
 import type { FileStatus, IR, IrNode } from '../ir/schema.ts';
 import { maskLineCounts, stripPositions } from '../generate/index.ts';
 import { displayName } from '../generate/common.ts';
+import { withLinkKinds } from './kind.ts';
 import { TRACE_VERSION, type TraceEdge, type TraceEdgeKind, type TraceGraph, type TraceLink, type TraceNode } from './schema.ts';
 
 export interface TraceMeta {
@@ -362,7 +363,7 @@ export function buildTrace(ir: IR, docs: readonly Document[], meta: TraceMeta): 
   const kept = new Set(selectLinks(all.map((c) => c.link)).map((l) => l.id));
   const selected = all.filter((c) => kept.has(c.link.id));
   for (const c of selected) linkDocuments(b, c.link.sectionNodeId, c.link, byFile);
-  const links = bundleLinks(selected);
+  const links = withLinkKinds(bundleLinks(selected));
   const graph: TraceGraph = {
     version: TRACE_VERSION,
     runId: meta.runId,

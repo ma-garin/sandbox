@@ -13,7 +13,12 @@ import { InputError, type IngestInput } from '../ingest/index.ts';
 import { DOC_TITLES } from '../doc/model.ts';
 import { isInputError, parseDocIds, parseFormats, resolveLlm } from '../cli.ts';
 import { validateReview } from '../trace/review.ts';
-import { TRACE_VERSION, type TraceGraph, type TraceReview } from '../trace/schema.ts';
+import { renderTraceHtml } from '../render/trace-html.ts';
+import { AUDIT_FILE, appendAudit, diffReviewToAudit } from '../trace/audit.ts';
+import { compareTrace } from '../trace/compare.ts';
+import { toReqIF } from '../trace/export-reqif.ts';
+import { toMatrixXlsx } from '../trace/export-xlsx.ts';
+import { TRACE_VERSION, type ReviewEntry, type TraceAuditEvent, type TraceGraph, type TraceReview } from '../trace/schema.ts';
 import { BodyTooLargeError, boundaryOf, MultipartError, parseMultipart, readBody, type MultipartResult } from './multipart.ts';
 
 export type Runner = (options: RunOptions, onProgress: (p: Progress) => void) => Promise<RunResult>;
@@ -96,12 +101,13 @@ function scriptHash(body: string): string {
 export function traceCsp(html: string): string {
   const hashes = [...html.matchAll(/<script(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => scriptHash(m[1] ?? ''));
   const scriptSrc = hashes.length > 0 ? [...new Set(hashes)].join(' ') : "'none'";
-  return `default-src 'none'; script-src ${scriptSrc}; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
+  return `default-src 'none'; script-src ${scriptSrc}; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'`;
 }
 
 /** 確認状態の保存先を画面に知らせる script を head の先頭に差し込む */
-export function injectTraceApi(html: string, runId: string): string {
-  const tag = `<script>window.SPEC2DOC_TRACE_API=${JSON.stringify(`/api/runs/${runId}/trace-review`)}</script>`;
+export function injectTraceApi(html: string, runId: string, embed = false): string {
+  // embed=1（アプリの本文に埋め込む表示）では、画面側が自前のヘッダを出さないよう描画前に知らせる
+  const tag = `<script>window.SPEC2DOC_TRACE_API=${JSON.stringify(`/api/runs/${runId}/trace-review`)}</script>${embed ? '<script>window.SPEC2DOC_EMBED=true</script>' : ''}`;
   const head = /<head(\s[^>]*)?>/i.exec(html);
   if (!head) return tag + html;
   const at = head.index + head[0].length;
@@ -125,6 +131,49 @@ async function traceSummary(outDir: string, runId: string): Promise<{ nodes: num
     console.error('[spec2doc web] trace.json を読めませんでした', e);
     return undefined;
   }
+}
+
+/** 実行の trace.json。無い・読めない・版が違えば undefined */
+async function readGraph(outDir: string, runId: string): Promise<TraceGraph | undefined> {
+  const path = safeOutPath(outDir, runId, 'trace.json');
+  const text = path ? await readFile(path, 'utf8').catch(() => undefined) : undefined;
+  if (text === undefined) return undefined;
+  try {
+    const g = JSON.parse(text) as TraceGraph;
+    return g && g.version === TRACE_VERSION && Array.isArray(g.links) && Array.isArray(g.nodes) ? g : undefined;
+  } catch (e) {
+    console.error(`[spec2doc web] trace.json を読めませんでした（${runId}）`, e);
+    return undefined;
+  }
+}
+
+/** 監査記録（trace-audit.jsonl）を新しい順で返す。無ければ空。壊れた行は飛ばしてログに残す */
+export async function readAudit(outDir: string, runId: string): Promise<TraceAuditEvent[]> {
+  // 監査記録は .jsonl なので FILE_RE の外。実行 ID を検査したうえで実行のフォルダの直下に限る
+  const path = RUN_ID_RE.test(runId) ? join(resolve(outDir), runId, AUDIT_FILE) : undefined;
+  const text = path ? await readFile(path, 'utf8').catch(() => '') : '';
+  const events = text.split('\n').filter((l) => l.trim() !== '').flatMap((line): TraceAuditEvent[] => {
+    try {
+      const e: unknown = JSON.parse(line);
+      return isObj(e) && typeof e['at'] === 'string' && typeof e['field'] === 'string' ? [e as unknown as TraceAuditEvent] : [];
+    } catch {
+      console.error(`[spec2doc web] 監査記録の壊れた行を飛ばしました（${runId}）`);
+      return [];
+    }
+  });
+  return events.reverse();
+}
+
+/** 保存済みのコメントを消す・書き換える変更を探す（追記のみを強制）。違反した行の id を返す */
+export function rewrittenComments(prev: TraceReview, next: TraceReview): string | undefined {
+  const same = (a: NonNullable<ReviewEntry['comments']>[number], b: NonNullable<ReviewEntry['comments']>[number] | undefined): boolean =>
+    b !== undefined && a.at === b.at && a.text === b.text && (a.by ?? '') === (b.by ?? '');
+  return Object.entries(prev.reviews).find(([id, p]) => {
+    const kept = p.comments ?? [];
+    if (kept.length === 0) return false;
+    const now = Object.hasOwn(next.reviews, id) ? next.reviews[id]?.comments ?? [] : [];
+    return kept.some((c, i) => !same(c, now[i]));
+  })?.[0];
 }
 
 async function readReview(outDir: string, runId: string): Promise<TraceReview> {
@@ -204,6 +253,7 @@ export function parseExclude(text: string): string[] {
 async function summarize(result: Pick<RunResult, 'runId' | 'hasFailures' | 'log'>, outDir: string): Promise<unknown> {
   const { settings, outputs, fileCounts, durationMs } = result.log;
   const trace = await traceSummary(outDir, result.runId);
+  const questions = await questionCount(outDir, { ...result.log, runId: result.runId });
   return {
     runId: result.runId,
     hasFailures: result.hasFailures,
@@ -221,7 +271,26 @@ async function summarize(result: Pick<RunResult, 'runId' | 'hasFailures' | 'log'
     }),
     extras: outputs.filter((n) => n === 'ir.json' || n === 'run-log.json'),
     ...(trace ? { trace: { ...trace, url: `/trace/${result.runId}` } } : {}),
+    ...(questions !== undefined ? { questions } : {}),
   };
+}
+
+/**
+ * ホームの KPI「確認事項（D09）」。生成した D09 の一覧表の行数（検証の工程で不明に下げた行を含む。run-log の questions）。
+ * D09 を生成しなかった実行は null。questions を持たない古い実行だけ ir.json の unknowns の件数で代える。読めなければ undefined
+ */
+async function questionCount(outDir: string, log: RunLog): Promise<number | null | undefined> {
+  if (!log.settings.docIds.includes('D09')) return null;
+  if (typeof log.questions === 'number' || log.questions === null) return log.questions;
+  const path = safeOutPath(outDir, log.runId, 'ir.json');
+  if (!path) return undefined;
+  try {
+    const ir: unknown = JSON.parse(await readFile(path, 'utf8'));
+    const unknowns = isObj(ir) ? ir['unknowns'] : undefined;
+    return Array.isArray(unknowns) ? unknowns.length : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** 実行の履歴の一覧の 1 件（GET /api/runs） */
@@ -492,16 +561,19 @@ export function createWebServer(opts: WebOptions = {}): Server {
     }
   };
 
-  const handleTracePage = async (rawRunId: string, res: ServerResponse): Promise<void> => {
+  const handleTracePage = async (rawRunId: string, res: ServerResponse, embed = false): Promise<void> => {
     const runId = decodeRunId(rawRunId);
     const path = runId ? safeOutPath(outDir, runId, 'traceability.html') : undefined;
     if (!runId || !path) return badTrace(res);
-    const info = await stat(path).catch(() => undefined);
-    if (!info?.isFile()) {
+    // trace.json がある実行は今の版の画面で描き直す（過去の実行にも新しい機能を出す）。無い古い実行は保存済みの HTML を返す
+    const graph = await readGraph(outDir, runId);
+    const info = graph ? undefined : await stat(path).catch(() => undefined);
+    if (!graph && !info?.isFile()) {
       sendFailure(res, 404, { message: 'トレーサビリティの画面が見つかりません', hint: '出力形式に「HTML（トレーサビリティ）」を選んで、もう一度実行してください' });
       return;
     }
-    const html = injectTraceApi(await readFile(path, 'utf8'), runId);
+    const page = graph ? renderTraceHtml(graph, undefined, { embed }) : await readFile(path, 'utf8');
+    const html = injectTraceApi(page, runId, embed);
     res.writeHead(200, {
       'content-type': 'text/html; charset=utf-8',
       'x-content-type-options': 'nosniff',
@@ -553,6 +625,16 @@ export function createWebServer(opts: WebOptions = {}): Server {
       sendFailure(res, 400, f);
       return;
     }
+    const saved = await readReview(outDir, runId);
+    const rewritten = rewrittenComments(saved, review);
+    if (rewritten !== undefined) {
+      sendFailure(res, 409, { message: '保存済みのコメントは消したり書き換えたりできません（追記のみ）', hint: '画面を再読み込みして最新の状態にしてから、コメントを追記してください' });
+      return;
+    }
+    if (review.baselineRunId !== undefined && review.baselineRunId !== saved.baselineRunId && !(await readGraph(outDir, review.baselineRunId))) {
+      sendFailure(res, 400, { message: 'ベースラインに指定した実行が見つかりません', hint: '実行の履歴にある実行（トレーサビリティ付き）を選び直してください' });
+      return;
+    }
     const target = join(outDir, runId, 'trace-review.json');
     const tmp = `${target}.${randomBytes(6).toString('hex')}.tmp`;
     try {
@@ -562,7 +644,51 @@ export function createWebServer(opts: WebOptions = {}): Server {
       await rm(tmp, { force: true }).catch(() => {});
       throw e;
     }
+    await appendAudit(join(outDir, runId), diffReviewToAudit(saved, review, runId));
     sendJson(res, 200, review);
+  };
+
+  const traceNotFound = (res: ServerResponse): void =>
+    sendFailure(res, 404, { message: 'この実行のトレーサビリティが見つかりません', hint: '出力形式に「HTML（トレーサビリティ）」を選んで、もう一度実行してください' });
+
+  const handleAuditGet = async (runId: string, res: ServerResponse): Promise<void> => {
+    if (!(await readGraph(outDir, runId))) return traceNotFound(res);
+    sendJson(res, 200, { events: await readAudit(outDir, runId) });
+  };
+
+  const handleCompareGet = async (runId: string, url: URL, res: ServerResponse): Promise<void> => {
+    const baseId = url.searchParams.get('base') ?? '';
+    if (!RUN_ID_RE.test(baseId)) {
+      sendFailure(res, 400, { message: '比較の基準の実行の指定が不正です', hint: '実行の履歴にある実行を比較の基準に選び直してください' });
+      return;
+    }
+    const cur = await readGraph(outDir, runId);
+    if (!cur) return traceNotFound(res);
+    const baseGraph = await readGraph(outDir, baseId);
+    if (!baseGraph) {
+      sendFailure(res, 404, { message: '比較の基準の実行が見つかりません', hint: '実行の履歴にある実行（トレーサビリティ付き）を比較の基準に選び直してください' });
+      return;
+    }
+    sendJson(res, 200, compareTrace(baseGraph, cur));
+  };
+
+  const handleExportGet = async (runId: string, url: URL, res: ServerResponse): Promise<void> => {
+    const format = url.searchParams.get('format');
+    if (format !== 'reqif' && format !== 'xlsx') {
+      sendFailure(res, 400, { message: '書き出しの形式が不正です（reqif か xlsx）', hint: '画面の書き出しのボタンから選び直してください' });
+      return;
+    }
+    const graph = await readGraph(outDir, runId);
+    if (!graph) return traceNotFound(res);
+    const review = await readReview(outDir, runId);
+    const body = format === 'reqif' ? Buffer.from(toReqIF(graph, review), 'utf8') : await toMatrixXlsx(graph, review);
+    res.writeHead(200, {
+      'content-type': format === 'reqif' ? 'application/xml; charset=utf-8' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'content-disposition': `attachment; filename="trace-${runId}.${format}"`,
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    });
+    res.end(body);
   };
 
   const handleRunsList = async (url: URL, res: ServerResponse): Promise<void> => {
@@ -646,7 +772,7 @@ export function createWebServer(opts: WebOptions = {}): Server {
       return handleFile(parts[0] as 'files' | 'view', parts[1] ?? '', parts[2] ?? '', res);
     }
     if (req.method === 'GET' && parts[0] === 'trace') {
-      return parts.length === 2 ? handleTracePage(parts[1] ?? '', res) : badTrace(res);
+      return parts.length === 2 ? handleTracePage(parts[1] ?? '', res, url.searchParams.get('embed') === '1') : badTrace(res);
     }
     if (req.method === 'GET' && url.pathname === '/api/runs') return handleRunsList(url, res);
     if (req.method === 'GET' && parts.length === 3 && parts[0] === 'api' && parts[1] === 'runs') return handleRunGet(parts[2] ?? '', res);
@@ -661,6 +787,19 @@ export function createWebServer(opts: WebOptions = {}): Server {
       req.resume();
       sendFailure(res, 405, { message: 'この操作は使えません', hint: '画面を再読み込みしてからやり直してください' });
       return;
+    }
+    const traceApi = parts.length === 4 && parts[0] === 'api' && parts[1] === 'runs' ? parts[3] : undefined;
+    if (traceApi === 'trace-audit' || traceApi === 'trace-compare' || traceApi === 'trace-export') {
+      const runId = decodeRunId(parts[2] ?? '');
+      req.resume();
+      if (!runId) return badTrace(res);
+      if (req.method !== 'GET') {
+        sendFailure(res, 405, { message: 'この操作は使えません', hint: '画面を再読み込みしてからやり直してください' });
+        return;
+      }
+      if (traceApi === 'trace-audit') return handleAuditGet(runId, res);
+      if (traceApi === 'trace-compare') return handleCompareGet(runId, url, res);
+      return handleExportGet(runId, url, res);
     }
     if (req.method === 'GET' && (parts[0] === 'files' || parts[0] === 'view')) {
       sendFailure(res, 400, { message: 'ファイルの指定が不正です', hint: '結果の一覧のリンクから開いてください' });
